@@ -322,7 +322,7 @@ export default function Dashboard() {
       {holdings.length === 0 && totalAssets === 0 && transactions.length === 0 && (
         <GlassCard padding="lg" className="text-center py-8">
           <p className="text-4xl mb-3">💰</p>
-          <h3 className="text-white font-semibold mb-2">Welcome to WealthLens!</h3>
+          <h3 className="text-white font-semibold mb-2">Welcome to NetWorth Tracker!</h3>
           <p className="text-white/40 text-sm mb-4">Start by adding your portfolio holdings, assets, or transactions.</p>
           <div className="flex justify-center gap-3">
             <Button variant="primary" onClick={() => navigate('/portfolio')}>Add Holdings</Button>

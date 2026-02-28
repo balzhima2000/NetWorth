@@ -170,7 +170,8 @@ export default function Portfolio() {
   };
 
   const handleRefreshPrices = async () => {
-    if (!apiKey || refreshing) return;
+    if (!apiKey) { toast.error('Add your Alpha Vantage API key in Settings first.'); return; }
+    if (refreshing) return;
     resetApiRequestsIfNewDay();
     setRefreshing(true);
     const tickers = holdings.map((h) => h.ticker);

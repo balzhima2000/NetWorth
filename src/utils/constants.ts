@@ -1,6 +1,6 @@
 // App-wide constants
 
-export const APP_NAME = 'WealthLens';
+export const APP_NAME = 'NetWorth Tracker';
 
 export const CURRENCIES = [
   { code: 'USD', name: 'US Dollar', symbol: '$' },
