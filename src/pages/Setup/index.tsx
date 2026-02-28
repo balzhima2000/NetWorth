@@ -45,7 +45,7 @@ export default function SetupWizard() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-bg flex flex-col">
+    <div className="min-h-screen gradient-bg flex flex-col">
       {step.showProgress && (
         <div className="h-1 bg-white/10">
           <div

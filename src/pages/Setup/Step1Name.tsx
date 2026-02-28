@@ -174,9 +174,9 @@ export default function Step1Name({ onNext }: Step1NameProps) {
   return (
     <div className="relative text-center space-y-10">
       {/* Restore Backup — top-left */}
-      <div className="absolute -top-2 left-0">
+      <div className="fixed top-4 left-4 z-50">
         <Button
-          variant="ghost"
+          variant="success"
           size="sm"
           onClick={handleRestoreClick}
         >
@@ -211,11 +211,10 @@ export default function Step1Name({ onNext }: Step1NameProps) {
       </div>
 
       <Button
-        variant="primary"
-        size="lg"
+        variant="secondary"
+        size="md"
         onClick={handleContinue}
         disabled={!name.trim()}
-        fullWidth
       >
         Continue
       </Button>

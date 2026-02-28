@@ -45,9 +45,44 @@ html, body, #root {
 
 /* Animated gradient background for onboarding/hero areas */
 .gradient-bg {
-  background: radial-gradient(ellipse at top left, rgba(88, 101, 242, 0.15) 0%, transparent 50%),
-              radial-gradient(ellipse at bottom right, rgba(0, 214, 50, 0.08) 0%, transparent 50%),
-              #0a0a0f;
+  background: #0a0a0f;
+  position: relative;
+  overflow: hidden;
+}
+
+.gradient-bg::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 55%, rgba(120, 80, 200, 0.25) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 50% at 30% 40%, rgba(88, 101, 242, 0.18) 0%, transparent 55%),
+    radial-gradient(ellipse 50% 40% at 70% 60%, rgba(160, 100, 220, 0.12) 0%, transparent 50%),
+    radial-gradient(ellipse 40% 30% at 50% 50%, rgba(200, 160, 255, 0.08) 0%, transparent 40%);
+  filter: blur(40px);
+  animation: aurora-drift 12s ease-in-out infinite alternate;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.gradient-bg > * {
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes aurora-drift {
+  0% {
+    transform: translateY(0) scale(1);
+    opacity: 0.8;
+  }
+  50% {
+    transform: translateY(-15px) scale(1.03);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(10px) scale(0.98);
+    opacity: 0.85;
+  }
 }
 
 /* Selection color */
