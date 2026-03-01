@@ -47,7 +47,6 @@ html, body, #root {
 .gradient-bg {
   background: #0a0a0f;
   position: relative;
-  overflow: hidden;
 }
 
 .gradient-bg::before {
