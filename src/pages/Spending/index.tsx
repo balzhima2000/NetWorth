@@ -539,7 +539,7 @@ export default function Spending() {
               {!exchangeRates.find(r => r.currency === txCurrency) && <span className="text-amber-400 ml-1">(no exchange rate set)</span>}
             </p>
           )}
-          <Select label="Category" value={txCategory} onChange={(e) => setTxCategory(e.target.value)} options={categories.filter(c => c.type === txType || c.type === 'both').map(c => ({ value: c.id, label: `${c.emoji} ${c.name}` }))} required />
+          <Select label="Category" value={txCategory} onChange={(e) => setTxCategory(e.target.value)} options={categories.filter(c => !c.type || c.type === txType || c.type === 'both').map(c => ({ value: c.id, label: `${c.emoji} ${c.name}` }))} required />
           <Input label="Date" type="date" value={txDate} onChange={(e) => setTxDate(e.target.value)} />
           <Select label="Payment Method" value={txPayment} onChange={(e) => setTxPayment(e.target.value)} options={paymentOptions} />
           <Input label="Notes (optional)" placeholder="Description..." value={txNotes} onChange={(e) => setTxNotes(e.target.value)} />
@@ -556,7 +556,7 @@ export default function Spending() {
           </div>
           <Input label="Name" placeholder="Netflix, Rent, Salary..." value={recName} onChange={e => setRecName(e.target.value)} required />
           <Input label="Amount" type="number" placeholder="0.00" value={recAmount} onChange={e => setRecAmount(e.target.value)} required />
-          <Select label="Category" value={recCategory} onChange={e => setRecCategory(e.target.value)} options={categories.filter(c => c.type === recType || c.type === 'both').map(c => ({ value: c.id, label: `${c.emoji} ${c.name}` }))} />
+          <Select label="Category" value={recCategory} onChange={e => setRecCategory(e.target.value)} options={categories.filter(c => !c.type || c.type === recType || c.type === 'both').map(c => ({ value: c.id, label: `${c.emoji} ${c.name}` }))} />
           <Select label="Frequency" value={recFrequency} onChange={e => setRecFrequency(e.target.value as 'weekly' | 'monthly' | 'yearly')} options={FREQUENCIES} />
           {recFrequency !== 'weekly' && <Input label="Day of Month" type="number" placeholder="1" value={recDayOfMonth} onChange={e => setRecDayOfMonth(e.target.value)} hint="1–28 recommended" />}
           <Input label="Start Date" type="date" value={recStartDate} onChange={e => setRecStartDate(e.target.value)} />
