@@ -132,7 +132,7 @@ export default function Dashboard() {
             <div>
               <p className="text-white/40 text-sm mb-1">{greeting}{userNickname ? `, ${userNickname}` : ''} 👋</p>
               <p className="text-white/50 text-sm mb-3">Your Net Worth</p>
-              <h1 className="text-5xl font-bold text-white font-mono">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white font-mono">
                 {formatCurrency(netWorth, defaultCurrency, true)}
               </h1>
 
@@ -182,7 +182,7 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <GlassCard padding="md">
           <p className="text-white/50 text-sm mb-2">Total Assets</p>
-          <h3 className="text-2xl font-bold text-[#00d632] font-mono">
+          <h3 className="text-xl sm:text-2xl font-bold text-[#00d632] font-mono">
             {formatCurrency(totalAssets, defaultCurrency, true)}
           </h3>
           <div className="mt-2 space-y-0.5">
@@ -197,7 +197,7 @@ export default function Dashboard() {
 
         <GlassCard padding="md">
           <p className="text-white/50 text-sm mb-2">Total Liabilities</p>
-          <h3 className="text-2xl font-bold text-[#ff4757] font-mono">
+          <h3 className="text-xl sm:text-2xl font-bold text-[#ff4757] font-mono">
             {formatCurrency(liabilitiesTotal, defaultCurrency, true)}
           </h3>
           {liabilitiesTotal === 0 && <p className="text-xs text-white/30 mt-2">No liabilities 🎉</p>}
@@ -205,7 +205,7 @@ export default function Dashboard() {
 
         <GlassCard padding="md">
           <p className="text-white/50 text-sm mb-2">This Month Spending</p>
-          <h3 className="text-2xl font-bold text-white font-mono">
+          <h3 className="text-xl sm:text-2xl font-bold text-white font-mono">
             {formatCurrency(monthSpending, defaultCurrency, true)}
           </h3>
           <p className="text-xs text-white/30 mt-2">{monthTransactions.length} transactions</p>

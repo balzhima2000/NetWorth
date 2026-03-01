@@ -21,8 +21,8 @@ export function Tabs({ tabs, activeTab, onChange, className = '' }: TabsProps) {
           key={tab.id}
           onClick={() => onChange(tab.id)}
           className={`
-            flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium
-            transition-all duration-200 flex-1 justify-center
+            flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium
+            transition-all duration-200 flex-1 justify-center min-w-0
             ${
               activeTab === tab.id
                 ? 'bg-white/10 text-white shadow-sm'
@@ -30,8 +30,8 @@ export function Tabs({ tabs, activeTab, onChange, className = '' }: TabsProps) {
             }
           `}
         >
-          {tab.icon && <span>{tab.icon}</span>}
-          {tab.label}
+          {tab.icon && <span className="flex-shrink-0">{tab.icon}</span>}
+          <span className="truncate">{tab.label}</span>
         </button>
       ))}
     </div>

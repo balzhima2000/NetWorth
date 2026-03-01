@@ -11,12 +11,12 @@ export function TopBar({ title, actions, onToggleSidebar }: TopBarProps) {
   const nickname = useSettingsStore((s) => s.userNickname);
 
   return (
-    <header className="flex items-center justify-between h-16 px-6 border-b border-white/8 bg-[#0a0a0f] flex-shrink-0">
-      <div className="flex items-center gap-4">
+    <header className="flex items-center justify-between h-16 px-3 sm:px-6 border-b border-white/8 bg-[#0a0a0f] flex-shrink-0">
+      <div className="flex items-center gap-3 sm:gap-4 min-w-0">
         {onToggleSidebar && (
           <button
             onClick={onToggleSidebar}
-            className="text-white/50 hover:text-white transition-colors p-1"
+            className="text-white/50 hover:text-white transition-colors p-1 flex-shrink-0"
             aria-label="Toggle sidebar"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -24,12 +24,12 @@ export function TopBar({ title, actions, onToggleSidebar }: TopBarProps) {
             </svg>
           </button>
         )}
-        {title && <h1 className="text-xl font-semibold text-white">{title}</h1>}
+        {title && <h1 className="text-base sm:text-xl font-semibold text-white truncate">{title}</h1>}
       </div>
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
         {actions}
         {nickname && (
-          <span className="text-sm text-white/50">
+          <span className="hidden sm:inline text-sm text-white/50">
             Hello, <span className="text-white/80 font-medium">{nickname}</span> 👋
           </span>
         )}

@@ -243,7 +243,7 @@ export default function Portfolio() {
           <div className="flex-1 space-y-4">
             <div>
               <p className="text-white/50 text-sm mb-1">Portfolio Value</p>
-              <h2 className="text-4xl font-bold text-white font-mono">
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white font-mono">
                 {formatCurrency(totalValue, defaultCurrency, true)}
               </h2>
             </div>

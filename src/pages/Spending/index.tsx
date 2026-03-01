@@ -274,7 +274,7 @@ export default function Spending() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-white mb-1">Spending</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1">Spending</h1>
           <p className="text-white/50">Track transactions, budgets, and recurring payments</p>
         </div>
         <Button variant="primary" onClick={openAddTx}>+ Add Transaction</Button>
@@ -316,7 +316,7 @@ export default function Spending() {
 
           {showFilters && (
             <GlassCard padding="md">
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
                 <Input label="From Date" type="date" value={filterDateFrom} onChange={e => setFilterDateFrom(e.target.value)} />
                 <Input label="To Date" type="date" value={filterDateTo} onChange={e => setFilterDateTo(e.target.value)} />
                 <Select label="Category" value={filterCategory} onChange={e => setFilterCategory(e.target.value)}

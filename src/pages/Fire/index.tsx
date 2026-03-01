@@ -97,7 +97,7 @@ export default function Fire() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-white mb-1">FIRE Calculators</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1">FIRE Calculators</h1>
         <p className="text-white/50">Plan your path to financial independence. All inputs are manual — nothing is saved.</p>
       </div>
 

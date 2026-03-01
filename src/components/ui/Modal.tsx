@@ -54,15 +54,15 @@ export function Modal({ isOpen, onClose, title, children, size = 'md', footer }:
           glass rounded-2xl shadow-2xl
           flex flex-col
           max-h-[85vh] sm:max-h-[90vh]
-          mx-2 sm:mx-0
+          mx-4 sm:mx-auto
           animate-in fade-in zoom-in-95 duration-200
         `}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         {title && (
-          <div className="flex items-center justify-between p-5 border-b border-white/10 flex-shrink-0">
-            <h2 className="text-lg font-semibold text-white">{title}</h2>
+          <div className="flex items-center justify-between p-4 sm:p-5 border-b border-white/10 flex-shrink-0">
+            <h2 className="text-base sm:text-lg font-semibold text-white">{title}</h2>
             <Button
               variant="ghost"
               size="sm"
@@ -77,12 +77,12 @@ export function Modal({ isOpen, onClose, title, children, size = 'md', footer }:
           </div>
         )}
         {/* Body */}
-        <div className="flex-1 overflow-y-auto p-5">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-5">
           {children}
         </div>
         {/* Footer */}
         {footer && (
-          <div className="flex items-center justify-end gap-3 p-5 border-t border-white/10 flex-shrink-0">
+          <div className="flex items-center justify-end gap-3 p-4 sm:p-5 border-t border-white/10 flex-shrink-0">
             {footer}
           </div>
         )}

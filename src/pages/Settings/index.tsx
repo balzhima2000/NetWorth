@@ -286,7 +286,7 @@ export default function Settings() {
   return (
     <div className="space-y-6 max-w-2xl">
       <div>
-        <h1 className="text-3xl font-bold text-white mb-1">Settings</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1">Settings</h1>
         <p className="text-white/50">Manage your app configuration and data</p>
       </div>
 
