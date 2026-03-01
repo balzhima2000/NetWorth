@@ -106,7 +106,7 @@ export default function Settings() {
     if (editingCat) {
       updateCategory(editingCat.id, { name: catName, emoji: catEmoji, color: catColor });
     } else {
-      addCategory({ id: crypto.randomUUID(), name: catName, emoji: catEmoji || '💰', color: catColor, isDefault: false });
+      addCategory({ id: crypto.randomUUID(), name: catName, emoji: catEmoji || '💰', color: catColor, isDefault: false, type: 'both' });
     }
     setShowCatModal(false);
   };

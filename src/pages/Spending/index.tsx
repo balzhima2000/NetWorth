@@ -526,8 +526,8 @@ export default function Spending() {
         footer={<><Button variant="ghost" onClick={() => setShowAddTx(false)}>Cancel</Button><Button variant="primary" onClick={handleSaveTx} disabled={!txAmount || !txCategory}>{editingTx ? 'Save Changes' : 'Add Transaction'}</Button></>}>
         <div className="space-y-4">
           <div className="flex gap-2">
-            <button onClick={() => setTxType('expense')} className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all ${txType === 'expense' ? 'bg-[#ff4757] text-white' : 'bg-white/5 text-white/50 hover:bg-white/10'}`}>Expense</button>
-            <button onClick={() => setTxType('income')} className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all ${txType === 'income' ? 'bg-[#00d632] text-black' : 'bg-white/5 text-white/50 hover:bg-white/10'}`}>Income</button>
+            <button onClick={() => { setTxType('expense'); setTxCategory(''); }} className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all ${txType === 'expense' ? 'bg-[#ff4757] text-white' : 'bg-white/5 text-white/50 hover:bg-white/10'}`}>Expense</button>
+            <button onClick={() => { setTxType('income'); setTxCategory(''); }} className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all ${txType === 'income' ? 'bg-[#00d632] text-black' : 'bg-white/5 text-white/50 hover:bg-white/10'}`}>Income</button>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <Input label="Amount" type="number" placeholder="0.00" value={txAmount} onChange={(e) => setTxAmount(e.target.value)} required />
@@ -539,7 +539,7 @@ export default function Spending() {
               {!exchangeRates.find(r => r.currency === txCurrency) && <span className="text-amber-400 ml-1">(no exchange rate set)</span>}
             </p>
           )}
-          <Select label="Category" value={txCategory} onChange={(e) => setTxCategory(e.target.value)} options={categories.map(c => ({ value: c.id, label: `${c.emoji} ${c.name}` }))} required />
+          <Select label="Category" value={txCategory} onChange={(e) => setTxCategory(e.target.value)} options={categories.filter(c => c.type === txType || c.type === 'both').map(c => ({ value: c.id, label: `${c.emoji} ${c.name}` }))} required />
           <Input label="Date" type="date" value={txDate} onChange={(e) => setTxDate(e.target.value)} />
           <Select label="Payment Method" value={txPayment} onChange={(e) => setTxPayment(e.target.value)} options={paymentOptions} />
           <Input label="Notes (optional)" placeholder="Description..." value={txNotes} onChange={(e) => setTxNotes(e.target.value)} />
@@ -551,12 +551,12 @@ export default function Spending() {
         footer={<><Button variant="ghost" onClick={() => setShowAddRecurring(false)}>Cancel</Button><Button variant="primary" onClick={handleSaveRecurring} disabled={!recName || !recAmount}>{editingRecurring ? 'Save Changes' : 'Add Recurring'}</Button></>}>
         <div className="space-y-4">
           <div className="flex gap-2">
-            <button onClick={() => setRecType('expense')} className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all ${recType === 'expense' ? 'bg-[#ff4757] text-white' : 'bg-white/5 text-white/50 hover:bg-white/10'}`}>Expense</button>
-            <button onClick={() => setRecType('income')} className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all ${recType === 'income' ? 'bg-[#00d632] text-black' : 'bg-white/5 text-white/50 hover:bg-white/10'}`}>Income</button>
+            <button onClick={() => { setRecType('expense'); setRecCategory(''); }} className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all ${recType === 'expense' ? 'bg-[#ff4757] text-white' : 'bg-white/5 text-white/50 hover:bg-white/10'}`}>Expense</button>
+            <button onClick={() => { setRecType('income'); setRecCategory(''); }} className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all ${recType === 'income' ? 'bg-[#00d632] text-black' : 'bg-white/5 text-white/50 hover:bg-white/10'}`}>Income</button>
           </div>
           <Input label="Name" placeholder="Netflix, Rent, Salary..." value={recName} onChange={e => setRecName(e.target.value)} required />
           <Input label="Amount" type="number" placeholder="0.00" value={recAmount} onChange={e => setRecAmount(e.target.value)} required />
-          <Select label="Category" value={recCategory} onChange={e => setRecCategory(e.target.value)} options={categories.map(c => ({ value: c.id, label: `${c.emoji} ${c.name}` }))} />
+          <Select label="Category" value={recCategory} onChange={e => setRecCategory(e.target.value)} options={categories.filter(c => c.type === recType || c.type === 'both').map(c => ({ value: c.id, label: `${c.emoji} ${c.name}` }))} />
           <Select label="Frequency" value={recFrequency} onChange={e => setRecFrequency(e.target.value as 'weekly' | 'monthly' | 'yearly')} options={FREQUENCIES} />
           {recFrequency !== 'weekly' && <Input label="Day of Month" type="number" placeholder="1" value={recDayOfMonth} onChange={e => setRecDayOfMonth(e.target.value)} hint="1–28 recommended" />}
           <Input label="Start Date" type="date" value={recStartDate} onChange={e => setRecStartDate(e.target.value)} />
