@@ -105,10 +105,13 @@ input[type='number'] {
 
 input[type='number']::-webkit-outer-spin-button,
 input[type='number']::-webkit-inner-spin-button {
-  opacity: 1;
-  background: transparent !important;
-  box-shadow: none;
-  filter: invert(1);
+  -webkit-appearance: none;
+  appearance: none;
+  margin: 0;
+}
+
+input[type='number'] {
+  -moz-appearance: textfield;
 }
 
 /* Link reset */
