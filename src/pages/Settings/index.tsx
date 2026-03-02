@@ -110,8 +110,10 @@ export default function Settings() {
     setFetchingNewRate(true);
     try {
       const rate = await fetchExchangeRate(newRateCurrency, defaultCurrency, apiKey);
-      setNewRateValue(rate.toFixed(6));
+      addExchangeRate({ currency: newRateCurrency, rateToDefault: rate });
       decrementApiRequests();
+      toast.success(`${newRateCurrency}/${defaultCurrency} rate saved`);
+      setNewRateCurrency(''); setNewRateValue(''); setShowAddRate(false);
     } catch (e: any) {
       toast.error(`Failed to fetch rate: ${e.message}`);
     } finally {
@@ -420,7 +422,7 @@ export default function Settings() {
                 <div className="flex gap-2 flex-wrap">
                   {apiKey && newRateCurrency && (
                     <Button variant="ghost" size="sm" onClick={handleFetchNewRate} disabled={fetchingNewRate}>
-                      {fetchingNewRate ? 'Fetching...' : '⬇ Fetch live rate'}
+                      {fetchingNewRate ? 'Fetching...' : '⬇ Fetch & Save'}
                     </Button>
                   )}
                   <Button variant="primary" size="sm" onClick={handleAddRate} disabled={!newRateCurrency || !newRateValue}>Add Rate</Button>
