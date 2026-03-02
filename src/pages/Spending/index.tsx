@@ -498,9 +498,18 @@ export default function Spending() {
                             <p className={`font-mono font-semibold ${p.type === 'expense' ? 'text-[#ff4757]' : 'text-[#00d632]'}`}>
                               {p.type === 'expense' ? '-' : '+'}{formatCurrency(p.amount, p.currency ?? defaultCurrency)}
                             </p>
-                            {p.currency && p.currency !== defaultCurrency && (
-                              <p className="text-white/30 text-xs">{p.currency}</p>
-                            )}
+                            {(() => {
+                              const rpCurrency = p.currency ?? defaultCurrency;
+                              if (rpCurrency === defaultCurrency) return null;
+                              const rate = exchangeRates.find((r) => r.currency === rpCurrency);
+                              if (!rate) return <p className="text-white/30 text-xs">{rpCurrency}</p>;
+                              const converted = p.amount * rate.rateToDefault;
+                              return (
+                                <p className="text-white/30 text-xs whitespace-nowrap">
+                                  ({formatCurrency(converted, defaultCurrency)} @ {parseFloat(rate.rateToDefault.toFixed(4))})
+                                </p>
+                              );
+                            })()}
                           </div>
                           <button onClick={() => updateRecurringPayment(p.id, { isActive: !p.isActive })} className="p-1.5 rounded-lg text-white/30 hover:text-white/70 hover:bg-white/10 transition-colors text-sm" title={p.isActive ? 'Pause' : 'Resume'}>
                             {p.isActive ? '⏸' : '▶'}
