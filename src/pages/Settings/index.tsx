@@ -324,7 +324,8 @@ export default function Settings() {
           {apiKeyStatus === 'invalid' && <p className="text-[#ff4757] text-sm">❌ Invalid API key — check and try again</p>}
           <div className="p-3 bg-white/5 rounded-xl text-sm text-white/40 space-y-1">
             <p>Requests used today: <span className="text-white">{requestsUsed}/25</span> (resets: {requestsResetDate})</p>
-            <p>Get a free key at <span className="text-[#5865f2]">alphavantage.co</span> · 25 requests/day on free tier</p>
+            <p>Get a free key at <a href="https://www.alphavantage.co" target="_blank" rel="noopener noreferrer" className="text-[#5865f2] hover:underline">alphavantage.co</a> · 25 requests/day on free tier</p>
+            <p>Also see: <a href="https://www.massive.com" target="_blank" rel="noopener noreferrer" className="text-[#5865f2] hover:underline">massive.com</a></p>
           </div>
         </div>
       </GlassCard>
