@@ -4,6 +4,17 @@ import { useTransactionStore } from '../stores/transactionStore';
 import { useSettingsStore } from '../stores/settingsStore';
 import { addWeeks, addMonths, addYears, isBefore, startOfDay } from 'date-fns';
 
+/** Parse a YYYY-MM-DD string as a LOCAL date (avoids UTC-shift off-by-one) */
+function parseLocalDate(str: string): Date {
+  const [y, m, d] = str.split('-').map(Number);
+  return new Date(y, m - 1, d);
+}
+
+/** Format a Date using LOCAL components (avoids UTC-shift off-by-one) */
+function localDateStr(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
 /**
  * Hook that runs auto-add logic for recurring payments and installments on app startup.
  * Call this once in App.tsx or Dashboard.
@@ -23,9 +34,9 @@ export function useAutoAdd() {
     // Process recurring payments
     recurringPayments.forEach((rp) => {
       if (!rp.isActive) return;
-      if (rp.endDate && isBefore(new Date(rp.endDate), today)) return;
+      if (rp.endDate && isBefore(parseLocalDate(rp.endDate), today)) return;
 
-      let nextDue = startOfDay(new Date(rp.nextDueDate));
+      let nextDue = startOfDay(parseLocalDate(rp.nextDueDate));
 
       const rpCurrency = rp.currency ?? defaultCurrency;
       const rpRate = exchangeRates.find((r) => r.currency === rpCurrency);
@@ -39,7 +50,7 @@ export function useAutoAdd() {
           id: crypto.randomUUID(),
           amount: rp.amount,
           category: rp.category,
-          date: nextDue.toISOString().split('T')[0],
+          date: localDateStr(nextDue),
           notes: `${rp.name} (recurring)`,
           type: rp.type,
           paymentMethod: 'cash',
@@ -52,24 +63,28 @@ export function useAutoAdd() {
           installmentTotal: null,
         });
 
-        // Advance next due date
+        // Advance next due date — for monthly, snap back to dayOfMonth to prevent drift
         if (rp.frequency === 'weekly') {
           nextDue = addWeeks(nextDue, 1);
         } else if (rp.frequency === 'monthly') {
-          nextDue = addMonths(nextDue, 1);
+          if (rp.dayOfMonth) {
+            nextDue = startOfDay(new Date(nextDue.getFullYear(), nextDue.getMonth() + 1, rp.dayOfMonth));
+          } else {
+            nextDue = addMonths(nextDue, 1);
+          }
         } else {
           nextDue = addYears(nextDue, 1);
         }
       }
 
-      updateRecurringPayment(rp.id, { nextDueDate: nextDue.toISOString().split('T')[0] });
+      updateRecurringPayment(rp.id, { nextDueDate: localDateStr(nextDue) });
     });
 
     // Process installment plans
     installmentPlans.forEach((ip) => {
       if (!ip.isActive || ip.remainingInstallments <= 0) return;
 
-      let nextPayment = startOfDay(new Date(ip.nextPaymentDate));
+      let nextPayment = startOfDay(parseLocalDate(ip.nextPaymentDate));
       let remaining = ip.remainingInstallments;
       let installmentNum = ip.totalInstallments - remaining + 1;
 
@@ -78,7 +93,7 @@ export function useAutoAdd() {
           id: crypto.randomUUID(),
           amount: ip.installmentAmount,
           category: ip.category,
-          date: nextPayment.toISOString().split('T')[0],
+          date: localDateStr(nextPayment),
           notes: `Payment ${installmentNum} of ${ip.totalInstallments} — ${ip.name}`,
           type: 'expense',
           paymentMethod: 'cash',
@@ -98,7 +113,7 @@ export function useAutoAdd() {
 
       updateInstallmentPlan(ip.id, {
         remainingInstallments: remaining,
-        nextPaymentDate: nextPayment.toISOString().split('T')[0],
+        nextPaymentDate: localDateStr(nextPayment),
         isActive: remaining > 0,
       });
     });

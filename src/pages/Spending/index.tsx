@@ -22,22 +22,32 @@ const FREQUENCIES = [
   { value: 'yearly', label: 'Yearly' },
 ];
 
+/** Format a Date using LOCAL components to avoid UTC timezone shift */
+function localDateStr(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
 function getNextDueDate(frequency: string, startDate: string, dayOfMonth: number | null): string {
   const today = new Date();
-  const start = new Date(startDate);
+  // Parse startDate as local (YYYY-MM-DD) to avoid UTC shift
+  const [sy, sm, sd] = startDate.split('-').map(Number);
+  const start = new Date(sy, sm - 1, sd);
   if (frequency === 'monthly' && dayOfMonth) {
     const d = new Date(today.getFullYear(), today.getMonth(), dayOfMonth);
     if (d <= today) d.setMonth(d.getMonth() + 1);
-    return d.toISOString().split('T')[0];
+    return localDateStr(d);
   }
   if (frequency === 'yearly') {
     const d = new Date(today.getFullYear(), start.getMonth(), start.getDate());
     if (d <= today) d.setFullYear(d.getFullYear() + 1);
-    return d.toISOString().split('T')[0];
+    return localDateStr(d);
   }
   const d = new Date(today);
   d.setDate(d.getDate() + 7);
-  return d.toISOString().split('T')[0];
+  return localDateStr(d);
 }
 
 export default function Spending() {
