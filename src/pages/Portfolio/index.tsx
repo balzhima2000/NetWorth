@@ -12,8 +12,8 @@ import {
 import { AllocationPieChart } from '../../components/charts/AllocationPieChart';
 import { formatCurrency, formatDate, formatRelativeTime, getTodayISO } from '../../utils/formatters';
 import { calculateCurrentHoldings } from '../../utils/calculations';
-import { ASSET_CATEGORIES, ALPHA_VANTAGE_MAX_REQUESTS } from '../../utils/constants';
-import { fetchStockQuote, searchSymbol } from '../../services/alphaVantage';
+import { ASSET_CATEGORIES, ALPHA_VANTAGE_MAX_REQUESTS, CURRENCIES } from '../../utils/constants';
+import { fetchStockQuote, searchSymbol, fetchExchangeRate } from '../../services/alphaVantage';
 import type { StockTrade, CurrentHolding } from '../../types/index';
 
 type AssetCategory = 'stocks' | 'bonds' | 'crypto' | 'other';
@@ -38,6 +38,9 @@ export default function Portfolio() {
   const stocksRequestsToday = useSettingsStore((s) => s.stocksRequestsToday);
   const decrementStocksRequests = useSettingsStore((s) => s.decrementStocksRequests);
   const resetRequestsIfNewDay = useSettingsStore((s) => s.resetRequestsIfNewDay);
+  const fxApiKey = useSettingsStore((s) => s.fxApiKey);
+  const exchangeRates = useSettingsStore((s) => s.exchangeRates);
+  const decrementFxRequests = useSettingsStore((s) => s.decrementFxRequests);
 
   const manualEntries = useNetWorthStore((s) => s.manualEntries);
   const deleteManualEntry = useNetWorthStore((s) => s.deleteManualEntry);
@@ -75,6 +78,9 @@ export default function Portfolio() {
   const [tradeDate, setTradeDate] = useState(getTodayISO());
   const [assetCategory, setAssetCategory] = useState<AssetCategory>('stocks');
   const [tradeNotes, setTradeNotes] = useState('');
+  const [tradeCurrency, setTradeCurrency] = useState(defaultCurrency);
+  const [tradeRate, setTradeRate] = useState('');
+  const [fetchingTradeRate, setFetchingTradeRate] = useState(false);
   const [lookingUpName, setLookingUpName] = useState(false);
   const [tickerError, setTickerError] = useState('');
   const [deleteTradeId, setDeleteTradeId] = useState<string | null>(null);
@@ -112,6 +118,8 @@ export default function Portfolio() {
     setAssetCategory('stocks');
     setTradeNotes('');
     setTickerError('');
+    setTradeCurrency(defaultCurrency);
+    setTradeRate('');
     setShowTradeModal(true);
   };
 
@@ -126,6 +134,9 @@ export default function Portfolio() {
     setAssetCategory(trade.assetCategory);
     setTradeNotes(trade.notes);
     setTickerError('');
+    // Prices are always stored in default currency — no foreign currency state needed when editing
+    setTradeCurrency(defaultCurrency);
+    setTradeRate('');
     setShowTradeModal(true);
   };
 
@@ -151,12 +162,30 @@ export default function Portfolio() {
     return true;
   };
 
+  const handleFetchTradeRate = async () => {
+    if (!tradeCurrency || !fxApiKey) return;
+    setFetchingTradeRate(true);
+    try {
+      const rate = await fetchExchangeRate(tradeCurrency, defaultCurrency, fxApiKey);
+      setTradeRate(rate.toString());
+      decrementFxRequests();
+    } catch {
+      // silent — user can type manually
+    } finally {
+      setFetchingTradeRate(false);
+    }
+  };
+
   const handleSaveTrade = () => {
     if (!ticker || !quantity || !price) return;
     if (!validateSell()) return;
     const upperTicker = ticker.toUpperCase();
     const qty = parseFloat(quantity);
-    const px = parseFloat(price);
+    // Convert to default currency if a foreign currency + rate was provided (per-trade only)
+    const rawPx = parseFloat(price);
+    const px = tradeCurrency !== defaultCurrency && tradeRate && parseFloat(tradeRate) > 0
+      ? rawPx * parseFloat(tradeRate)
+      : rawPx;
     if (editingTrade) {
       updateTrade(editingTrade.id, {
         ticker: upperTicker, name: companyName || upperTicker, quantity: qty,
@@ -475,8 +504,45 @@ export default function Portfolio() {
             <Input label="Shares" type="number" inputMode="decimal" placeholder="10" value={quantity} onChange={(e) => setQuantity(e.target.value)} required />
             <Input label={tradeType === 'sell' ? 'Sell Price' : 'Buy Price'} type="number" inputMode="decimal" placeholder="150.00" value={price} onChange={(e) => setPrice(e.target.value)} required />
           </div>
+          <Select
+            label="Price Currency"
+            value={tradeCurrency}
+            onChange={(e) => {
+              const cur = e.target.value;
+              setTradeCurrency(cur);
+              const stored = exchangeRates.find(r => r.currency === cur);
+              setTradeRate(stored ? stored.rateToDefault.toString() : '');
+            }}
+            options={CURRENCIES.map(c => ({ value: c.code, label: `${c.code} — ${c.name}` }))}
+          />
+          {tradeCurrency !== defaultCurrency && (
+            <div className="flex gap-2 items-end">
+              <Input
+                label={`Rate (1 ${tradeCurrency} = ? ${defaultCurrency})`}
+                type="number"
+                inputMode="decimal"
+                placeholder="0.00"
+                value={tradeRate}
+                onChange={(e) => setTradeRate(e.target.value)}
+              />
+              {fxApiKey && (
+                <Button variant="ghost" size="sm" onClick={handleFetchTradeRate} disabled={fetchingTradeRate} style={{ marginBottom: '2px' }}>
+                  {fetchingTradeRate ? '…' : '⬇ Fetch'}
+                </Button>
+              )}
+            </div>
+          )}
           {quantity && price && parseFloat(quantity) > 0 && parseFloat(price) > 0 && (
-            <p className="text-white/40 text-sm">Total: <span className="text-white font-mono">{formatCurrency(parseFloat(quantity) * parseFloat(price), defaultCurrency)}</span></p>
+            <p className="text-white/40 text-sm">Total: <span className="text-white font-mono">
+              {formatCurrency(
+                parseFloat(quantity) * (
+                  tradeCurrency !== defaultCurrency && tradeRate && parseFloat(tradeRate) > 0
+                    ? parseFloat(price) * parseFloat(tradeRate)
+                    : parseFloat(price)
+                ),
+                defaultCurrency
+              )}
+            </span></p>
           )}
           <Input label="Date" type="date" value={tradeDate} onChange={(e) => setTradeDate(e.target.value)} />
           <Select label="Asset Category" value={assetCategory} onChange={(e) => setAssetCategory(e.target.value as AssetCategory)} options={ASSET_CATEGORIES.map((c) => ({ value: c.id, label: c.label }))} />

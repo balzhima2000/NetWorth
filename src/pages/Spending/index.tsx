@@ -14,6 +14,7 @@ import {
 } from '../../components/ui';
 import { formatCurrency, formatDate, getCurrentMonthYear, getTodayISO } from '../../utils/formatters';
 import { CURRENCIES } from '../../utils/constants';
+import { fetchExchangeRate } from '../../services/alphaVantage';
 import type { Transaction, RecurringPayment } from '../../types/index';
 
 const FREQUENCIES = [
@@ -67,6 +68,8 @@ export default function Spending() {
   const incomeCategories = useCategoriesStore((s) => s.incomeCategories);
   const defaultCurrency = useSettingsStore((s) => s.defaultCurrency);
   const exchangeRates = useSettingsStore((s) => s.exchangeRates);
+  const fxApiKey = useSettingsStore((s) => s.fxApiKey);
+  const decrementFxRequests = useSettingsStore((s) => s.decrementFxRequests);
   const cards = useCardsStore((s) => s.cards).filter((c) => c.isActive);
 
   const recurringPayments = useRecurringStore((s) => s.recurringPayments);
@@ -104,6 +107,8 @@ export default function Spending() {
   const [txNotes, setTxNotes] = useState('');
   const [txPayment, setTxPayment] = useState(lastUsedPaymentMethod);
   const [txCurrency, setTxCurrency] = useState(defaultCurrency);
+  const [txRate, setTxRate] = useState('');
+  const [fetchingTxRate, setFetchingTxRate] = useState(false);
   const [deleteTxId, setDeleteTxId] = useState<string | null>(null);
 
   // Budget modal
@@ -197,6 +202,7 @@ export default function Spending() {
     setTxCategory((type === 'expense' ? categories[0] : incomeCategories[0])?.id ?? '');
     setTxDate(getTodayISO());
     setTxNotes(''); setTxPayment(lastUsedPaymentMethod); setTxCurrency(defaultCurrency);
+    setTxRate('');
     setShowAddTx(true);
   };
 
@@ -207,13 +213,39 @@ export default function Spending() {
     setEditingTx(tx); setTxType(tx.type); setTxAmount(String(tx.amount));
     setTxCategory(tx.category); setTxDate(tx.date); setTxNotes(tx.notes);
     setTxPayment(tx.paymentMethod); setTxCurrency(tx.currency);
+    // Pre-fill rate from the stored convertedAmount (back-computed)
+    if (tx.currency !== defaultCurrency && tx.amount > 0) {
+      setTxRate((tx.convertedAmount / tx.amount).toFixed(6));
+    } else {
+      setTxRate('');
+    }
     setShowAddTx(true);
+  };
+
+  const handleFetchTxRate = async () => {
+    if (!txCurrency || !fxApiKey) return;
+    setFetchingTxRate(true);
+    try {
+      const rate = await fetchExchangeRate(txCurrency, defaultCurrency, fxApiKey);
+      setTxRate(rate.toString());
+      decrementFxRequests();
+    } catch (e: any) {
+      // inline error — keep field empty so user can type manually
+    } finally {
+      setFetchingTxRate(false);
+    }
   };
 
   const handleSaveTx = () => {
     if (!txAmount || !txCategory) return;
     const amount = parseFloat(txAmount);
-    const convertedAmount = getConvertedAmount(amount, txCurrency);
+    // Use the rate entered in the form (per-transaction only; does NOT update global rates)
+    let convertedAmount: number;
+    if (txCurrency !== defaultCurrency && txRate && parseFloat(txRate) > 0) {
+      convertedAmount = amount * parseFloat(txRate);
+    } else {
+      convertedAmount = getConvertedAmount(amount, txCurrency);
+    }
     const cardId = txPayment !== 'cash' ? txPayment : null;
     setLastUsedPaymentMethod(txPayment);
     if (editingTx) {
@@ -583,12 +615,41 @@ export default function Spending() {
           </div>
           <div className="grid grid-cols-2 gap-3">
             <Input label="Amount" type="number" inputMode="decimal" placeholder="0.00" value={txAmount} onChange={(e) => setTxAmount(e.target.value)} required />
-            <Select label="Currency" value={txCurrency} onChange={(e) => setTxCurrency(e.target.value)} options={CURRENCIES.map(c => ({ value: c.code, label: `${c.code} ${c.symbol}` }))} />
+            <Select label="Currency" value={txCurrency} onChange={(e) => {
+              const cur = e.target.value;
+              setTxCurrency(cur);
+              const stored = exchangeRates.find(r => r.currency === cur);
+              setTxRate(stored ? stored.rateToDefault.toString() : '');
+            }} options={CURRENCIES.map(c => ({ value: c.code, label: `${c.code} ${c.symbol}` }))} />
           </div>
+          {txCurrency !== defaultCurrency && (
+            <div className="flex gap-2 items-end -mt-2">
+              <Input
+                label={`Rate (1 ${txCurrency} = ? ${defaultCurrency})`}
+                type="number"
+                inputMode="decimal"
+                placeholder="0.00"
+                value={txRate}
+                onChange={(e) => setTxRate(e.target.value)}
+              />
+              {fxApiKey && (
+                <Button variant="ghost" size="sm" onClick={handleFetchTxRate} disabled={fetchingTxRate} style={{ marginBottom: '2px' }}>
+                  {fetchingTxRate ? '…' : '⬇ Fetch'}
+                </Button>
+              )}
+            </div>
+          )}
           {txCurrency !== defaultCurrency && txAmount && (
             <p className="text-white/40 text-xs -mt-2">
-              ≈ {formatCurrency(getConvertedAmount(parseFloat(txAmount) || 0, txCurrency), defaultCurrency)} in {defaultCurrency}
-              {!exchangeRates.find(r => r.currency === txCurrency) && <span className="text-amber-400 ml-1">(no exchange rate set)</span>}
+              ≈ {formatCurrency(
+                txRate && parseFloat(txRate) > 0
+                  ? (parseFloat(txAmount) || 0) * parseFloat(txRate)
+                  : getConvertedAmount(parseFloat(txAmount) || 0, txCurrency),
+                defaultCurrency
+              )} in {defaultCurrency}
+              {!txRate && !exchangeRates.find(r => r.currency === txCurrency) && (
+                <span className="text-amber-400 ml-1">(no exchange rate — enter rate above)</span>
+              )}
             </p>
           )}
           <Select label="Category" value={txCategory} onChange={(e) => setTxCategory(e.target.value)} options={txCategoryOptions.map(c => ({ value: c.id, label: `${c.emoji} ${c.name}` }))} required />

@@ -123,37 +123,7 @@ export default function Settings() {
   };
 
   // ── Exchange Rate State ──
-  const [newRateCurrency, setNewRateCurrency] = useState('');
-  const [newRateValue, setNewRateValue] = useState('');
-  const [showAddRate, setShowAddRate] = useState(false);
-
-  const [fetchingNewRate, setFetchingNewRate] = useState(false);
   const [refreshingRates, setRefreshingRates] = useState(false);
-
-  const handleAddRate = () => {
-    if (!newRateCurrency || !newRateValue) return;
-    const rate = parseFloat(newRateValue);
-    addExchangeRate({ currency: newRateCurrency, rateToDefault: rate });
-    recalculateRatesForCurrency(newRateCurrency, rate);
-    setNewRateCurrency(''); setNewRateValue(''); setShowAddRate(false);
-  };
-
-  const handleFetchNewRate = async () => {
-    if (!newRateCurrency || !fxApiKey) return;
-    setFetchingNewRate(true);
-    try {
-      const rate = await fetchExchangeRate(newRateCurrency, defaultCurrency, fxApiKey);
-      addExchangeRate({ currency: newRateCurrency, rateToDefault: rate });
-      recalculateRatesForCurrency(newRateCurrency, rate);
-      decrementFxRequests();
-      toast.success(`${newRateCurrency}/${defaultCurrency} rate saved`);
-      setNewRateCurrency(''); setNewRateValue(''); setShowAddRate(false);
-    } catch (e: any) {
-      toast.error(`Failed to fetch rate: ${e.message}`);
-    } finally {
-      setFetchingNewRate(false);
-    }
-  };
 
   const handleRefreshAllRates = async () => {
     if (!fxApiKey || exchangeRates.length === 0) return;
@@ -494,47 +464,13 @@ export default function Settings() {
           <div>
             <div className="flex items-center justify-between mb-2">
               <p className="text-sm font-medium text-white/70">Exchange Rates</p>
-              <div className="flex gap-2">
-                {fxApiKey && exchangeRates.length > 0 && (
-                  <Button variant="ghost" size="sm" onClick={handleRefreshAllRates} disabled={refreshingRates}>
-                    {refreshingRates ? 'Refreshing...' : '🔄 Refresh All'}
-                  </Button>
-                )}
-                <Button variant="ghost" size="sm" onClick={() => setShowAddRate(!showAddRate)}>+ Add Rate</Button>
-              </div>
+              {fxApiKey && exchangeRates.length > 0 && (
+                <Button variant="ghost" size="sm" onClick={handleRefreshAllRates} disabled={refreshingRates}>
+                  {refreshingRates ? 'Refreshing...' : '🔄 Refresh All'}
+                </Button>
+              )}
             </div>
-            <p className="text-xs text-white/30 mb-3">1 foreign currency = X {defaultCurrency}. Update periodically.</p>
-
-            {showAddRate && (
-              <div className="p-3 bg-white/5 rounded-xl border border-white/10 mb-3 space-y-3">
-                <div className="grid grid-cols-2 gap-3">
-                  <Select
-                    label="Currency"
-                    value={newRateCurrency}
-                    onChange={(e) => setNewRateCurrency(e.target.value)}
-                    options={[{ value: '', label: 'Select...' }, ...CURRENCIES.filter(c => c.code !== defaultCurrency).map(c => ({ value: c.code, label: `${c.code} — ${c.name}` }))]}
-                  />
-                  <Input
-                    label={`Rate to ${defaultCurrency}`}
-                    type="number"
-                    inputMode="decimal"
-                    placeholder="1.08"
-                    value={newRateValue}
-                    onChange={(e) => setNewRateValue(e.target.value)}
-                    hint={`1 ${newRateCurrency || 'EUR'} = ? ${defaultCurrency}`}
-                  />
-                </div>
-                <div className="flex gap-2 flex-wrap">
-                  {fxApiKey && newRateCurrency && (
-                    <Button variant="ghost" size="sm" onClick={handleFetchNewRate} disabled={fetchingNewRate}>
-                      {fetchingNewRate ? 'Fetching...' : '⬇ Fetch & Save'}
-                    </Button>
-                  )}
-                  <Button variant="primary" size="sm" onClick={handleAddRate} disabled={!newRateCurrency || !newRateValue}>Add Rate</Button>
-                  <Button variant="ghost" size="sm" onClick={() => setShowAddRate(false)}>Cancel</Button>
-                </div>
-              </div>
-            )}
+            <p className="text-xs text-white/30 mb-3">1 foreign currency = X {defaultCurrency}. Rates are set when you record an expense or trade in a foreign currency.</p>
 
             {exchangeRates.length > 0 ? (
               <div className="space-y-2">
@@ -546,7 +482,7 @@ export default function Settings() {
                 ))}
               </div>
             ) : (
-              <p className="text-white/30 text-sm">No exchange rates configured</p>
+              <p className="text-white/30 text-sm">No exchange rates yet — rates are added when you record an expense or trade in a foreign currency.</p>
             )}
           </div>
         </div>
