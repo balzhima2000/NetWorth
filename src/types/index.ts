@@ -177,9 +177,16 @@ export interface Settings {
   portfolioMode: 'simple' | 'detailed';
   defaultCurrency: string; // "USD"
   exchangeRates: ExchangeRate[];
-  alphaVantageApiKey: string;
-  alphaVantageRequestsUsedToday: number;
-  alphaVantageRequestsResetDate: string; // ISO date
+  // ── API Keys (each slot is independent and optional) ──
+  stocksApiKey: string;           // Alpha Vantage — global stock quotes
+  stocksRequestsToday: number;
+  stocksRequestsResetDate: string;
+  fxApiKey: string;               // Alpha Vantage — exchange rates (separate quota)
+  fxRequestsToday: number;
+  fxRequestsResetDate: string;
+  israeliApiKey: string;          // TASE DataHub — Israeli market (Securities - Basic, free)
+  israeliRequestsToday: number;
+  israeliRequestsResetDate: string;
   fireTarget: number | null;
   activityFeedShowTransactions: boolean;
   activityFeedShowTrades: boolean;

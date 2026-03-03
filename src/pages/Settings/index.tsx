@@ -13,6 +13,7 @@ import { GlassCard, Button, Input, Select, Modal, ConfirmDialog } from '../../co
 import { formatCurrency, formatDate } from '../../utils/formatters';
 import { CURRENCIES, CARD_COLORS, MANUAL_ASSET_CATEGORIES, MANUAL_LIABILITY_CATEGORIES } from '../../utils/constants';
 import { testApiKey, fetchExchangeRate } from '../../services/alphaVantage';
+import { testTaseKey } from '../../services/taseDataHub';
 import { exportFullBackup, exportTransactionsCSV, parseBackup } from '../../services/exportImport';
 import type { SpendingCategory, Card, ManualEntry } from '../../types/index';
 
@@ -36,16 +37,27 @@ export default function Settings() {
   // ── Settings Store ──
   const defaultCurrency = useSettingsStore((s) => s.defaultCurrency);
   const setDefaultCurrency = useSettingsStore((s) => s.setDefaultCurrency);
-  const apiKey = useSettingsStore((s) => s.alphaVantageApiKey);
-  const setApiKey = useSettingsStore((s) => s.setAlphaVantageApiKey);
-  const requestsUsed = useSettingsStore((s) => s.alphaVantageRequestsUsedToday);
-  const decrementApiRequests = useSettingsStore((s) => s.decrementApiRequests);
+  // Stocks API (Alpha Vantage)
+  const stocksApiKey = useSettingsStore((s) => s.stocksApiKey);
+  const setStocksApiKey = useSettingsStore((s) => s.setStocksApiKey);
+  const stocksRequestsToday = useSettingsStore((s) => s.stocksRequestsToday);
+  // FX API (Alpha Vantage, separate key)
+  const fxApiKey = useSettingsStore((s) => s.fxApiKey);
+  const setFxApiKey = useSettingsStore((s) => s.setFxApiKey);
+  const fxRequestsToday = useSettingsStore((s) => s.fxRequestsToday);
+  const decrementFxRequests = useSettingsStore((s) => s.decrementFxRequests);
+  // Israeli Market API (TASE DataHub)
+  const israeliApiKey = useSettingsStore((s) => s.israeliApiKey);
+  const setIsraeliApiKey = useSettingsStore((s) => s.setIsraeliApiKey);
+  const israeliRequestsToday = useSettingsStore((s) => s.israeliRequestsToday);
   const lastBackupDate = useSettingsStore((s) => s.lastBackupDate);
   const setLastBackupDate = useSettingsStore((s) => s.setLastBackupDate);
   const exchangeRates = useSettingsStore((s) => s.exchangeRates);
   const addExchangeRate = useSettingsStore((s) => s.addExchangeRate);
   const removeExchangeRate = useSettingsStore((s) => s.removeExchangeRate);
   const setHasCompletedSetup = useSettingsStore((s) => s.setHasCompletedSetup);
+  // Transaction store — for retroactive rate recalculation
+  const recalculateRatesForCurrency = useTransactionStore((s) => s.recalculateRatesForCurrency);
 
   // ── Data Stores ──
   const cards = useCardsStore((s) => s.cards);
@@ -74,21 +86,40 @@ export default function Settings() {
   const recurringPayments = useRecurringStore((s) => s.recurringPayments);
   const installmentPlans = useRecurringStore((s) => s.installmentPlans);
 
-  // ── API Key State ──
-  const [newApiKey, setNewApiKey] = useState(apiKey);
-  const [apiKeyStatus, setApiKeyStatus] = useState<'idle' | 'testing' | 'valid' | 'invalid'>('idle');
+  // ── API Key State (3 independent slots) ──
+  type KeyStatus = 'idle' | 'testing' | 'valid' | 'invalid';
+  const [newStocksKey, setNewStocksKey] = useState(stocksApiKey);
+  const [stocksKeyStatus, setStocksKeyStatus] = useState<KeyStatus>('idle');
+  const [newFxKey, setNewFxKey] = useState(fxApiKey);
+  const [fxKeyStatus, setFxKeyStatus] = useState<KeyStatus>('idle');
+  const [newIsraeliKey, setNewIsraeliKey] = useState(israeliApiKey);
+  const [israeliKeyStatus, setIsraeliKeyStatus] = useState<KeyStatus>('idle');
 
-  const handleTestApiKey = async () => {
-    if (!newApiKey) return;
-    setApiKeyStatus('testing');
-    const valid = await testApiKey(newApiKey);
-    setApiKeyStatus(valid ? 'valid' : 'invalid');
-    if (valid) {
-      setApiKey(newApiKey);
-      toast.success('API key saved. Looks valid!');
-    } else {
-      toast.error('API key is invalid or request failed.');
-    }
+  const handleTestStocksKey = async () => {
+    if (!newStocksKey) return;
+    setStocksKeyStatus('testing');
+    const valid = await testApiKey(newStocksKey);
+    setStocksKeyStatus(valid ? 'valid' : 'invalid');
+    if (valid) { setStocksApiKey(newStocksKey); toast.success('Stocks API key saved!'); }
+    else toast.error('Invalid API key.');
+  };
+
+  const handleTestFxKey = async () => {
+    if (!newFxKey) return;
+    setFxKeyStatus('testing');
+    const valid = await testApiKey(newFxKey);
+    setFxKeyStatus(valid ? 'valid' : 'invalid');
+    if (valid) { setFxApiKey(newFxKey); toast.success('Exchange Rate API key saved!'); }
+    else toast.error('Invalid API key.');
+  };
+
+  const handleTestIsraeliKey = async () => {
+    if (!newIsraeliKey) return;
+    setIsraeliKeyStatus('testing');
+    const valid = await testTaseKey(newIsraeliKey);
+    setIsraeliKeyStatus(valid ? 'valid' : 'invalid');
+    if (valid) { setIsraeliApiKey(newIsraeliKey); toast.success('TASE DataHub key saved!'); }
+    else toast.error('Invalid or unreachable TASE key.');
   };
 
   // ── Exchange Rate State ──
@@ -101,17 +132,20 @@ export default function Settings() {
 
   const handleAddRate = () => {
     if (!newRateCurrency || !newRateValue) return;
-    addExchangeRate({ currency: newRateCurrency, rateToDefault: parseFloat(newRateValue) });
+    const rate = parseFloat(newRateValue);
+    addExchangeRate({ currency: newRateCurrency, rateToDefault: rate });
+    recalculateRatesForCurrency(newRateCurrency, rate);
     setNewRateCurrency(''); setNewRateValue(''); setShowAddRate(false);
   };
 
   const handleFetchNewRate = async () => {
-    if (!newRateCurrency || !apiKey) return;
+    if (!newRateCurrency || !fxApiKey) return;
     setFetchingNewRate(true);
     try {
-      const rate = await fetchExchangeRate(newRateCurrency, defaultCurrency, apiKey);
+      const rate = await fetchExchangeRate(newRateCurrency, defaultCurrency, fxApiKey);
       addExchangeRate({ currency: newRateCurrency, rateToDefault: rate });
-      decrementApiRequests();
+      recalculateRatesForCurrency(newRateCurrency, rate);
+      decrementFxRequests();
       toast.success(`${newRateCurrency}/${defaultCurrency} rate saved`);
       setNewRateCurrency(''); setNewRateValue(''); setShowAddRate(false);
     } catch (e: any) {
@@ -122,18 +156,19 @@ export default function Settings() {
   };
 
   const handleRefreshAllRates = async () => {
-    if (!apiKey || exchangeRates.length === 0) return;
+    if (!fxApiKey || exchangeRates.length === 0) return;
     setRefreshingRates(true);
     let updated = 0;
     for (const rate of exchangeRates) {
-      if (requestsUsed + updated >= 25) {
+      if (fxRequestsToday + updated >= 25) {
         toast.error('API limit reached — some rates not updated');
         break;
       }
       try {
-        const newRate = await fetchExchangeRate(rate.currency, defaultCurrency, apiKey);
+        const newRate = await fetchExchangeRate(rate.currency, defaultCurrency, fxApiKey);
         addExchangeRate({ currency: rate.currency, rateToDefault: newRate });
-        decrementApiRequests();
+        recalculateRatesForCurrency(rate.currency, newRate);
+        decrementFxRequests();
         updated++;
       } catch (e: any) {
         toast.error(`Failed to refresh ${rate.currency}: ${e.message}`);
@@ -346,32 +381,102 @@ export default function Settings() {
       {/* ── API CONFIGURATION ── */}
       <GlassCard padding="lg">
         <h2 className="text-xl font-semibold text-white mb-4">🔑 API Configuration</h2>
-        <div className="space-y-3">
-          <Input
-            label="Alpha Vantage API Key"
-            type="password"
-            placeholder="Enter your API key..."
-            value={newApiKey}
-            onChange={(e) => { setNewApiKey(e.target.value); setApiKeyStatus('idle'); }}
-          />
-          <div className="flex gap-2">
-            <Button variant="secondary" onClick={handleTestApiKey} disabled={!newApiKey || apiKeyStatus === 'testing'}>
-              {apiKeyStatus === 'testing' ? 'Testing...' : 'Test Key'}
-            </Button>
-            <Button variant="ghost" onClick={() => { setApiKey(newApiKey); setApiKeyStatus('idle'); }} disabled={!newApiKey}>
-              Save Without Testing
-            </Button>
+        <p className="text-white/40 text-sm mb-4">Each API is optional — features fall back to manual entry when no key is set.</p>
+        <div className="space-y-5">
+
+          {/* Stocks — Alpha Vantage */}
+          <div className="p-4 bg-white/5 rounded-xl border border-white/8 space-y-3">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-semibold text-white">📈 Global Stocks</p>
+              <span className="text-xs text-white/40 bg-white/5 px-2 py-0.5 rounded-full">Alpha Vantage</span>
+            </div>
+            <Input
+              type="password"
+              placeholder="Enter API key..."
+              value={newStocksKey}
+              onChange={(e) => { setNewStocksKey(e.target.value); setStocksKeyStatus('idle'); }}
+            />
+            <div className="flex gap-2 flex-wrap">
+              <Button variant="secondary" size="sm" onClick={handleTestStocksKey} disabled={!newStocksKey || stocksKeyStatus === 'testing'}>
+                {stocksKeyStatus === 'testing' ? 'Testing...' : 'Test Key'}
+              </Button>
+              <Button variant="ghost" size="sm" onClick={() => { setStocksApiKey(newStocksKey); setStocksKeyStatus('idle'); toast.success('Stocks key saved.'); }} disabled={!newStocksKey}>
+                Save Without Testing
+              </Button>
+              {stocksApiKey && <Button variant="ghost" size="sm" onClick={() => { setStocksApiKey(''); setNewStocksKey(''); setStocksKeyStatus('idle'); toast.success('Stocks key removed.'); }}>Remove</Button>}
+            </div>
+            {stocksKeyStatus === 'valid' && <p className="text-[#00d632] text-xs">✅ Valid — saved!</p>}
+            {stocksKeyStatus === 'invalid' && <p className="text-[#ff4757] text-xs">❌ Invalid key</p>}
+            <div className="text-xs text-white/30 space-y-0.5">
+              {stocksApiKey
+                ? <p>Requests used today: <span className="text-white/60">{stocksRequestsToday}/25</span></p>
+                : <p className="text-amber-400/60">Not configured — stock prices entered manually</p>}
+              <p>Get a free key: <a href="https://www.alphavantage.co" target="_blank" rel="noopener noreferrer" className="!text-blue-400 hover:!text-blue-300 underline underline-offset-2">alphavantage.co</a>{' · '}<a href="https://www.massive.com" target="_blank" rel="noopener noreferrer" className="!text-blue-400 hover:!text-blue-300 underline underline-offset-2">massive.com</a></p>
+            </div>
           </div>
-          {apiKeyStatus === 'valid' && <p className="text-[#00d632] text-sm">✅ Valid API key — saved!</p>}
-          {apiKeyStatus === 'invalid' && <p className="text-[#ff4757] text-sm">❌ Invalid API key — check and try again</p>}
-          <div className="p-3 bg-white/5 rounded-xl text-sm text-white/40 space-y-1">
-            <p>Requests used today: <span className="text-white">{requestsUsed}/25</span></p>
-            <p>
-              Get a free key at: <a href="https://www.alphavantage.co" target="_blank" rel="noopener noreferrer" className="!text-blue-400 hover:!text-blue-300 underline underline-offset-2">alphavantage.co</a>
-              <span className="text-white/30"> {' · '} </span>
-              <a href="https://www.massive.com" target="_blank" rel="noopener noreferrer" className="!text-blue-400 hover:!text-blue-300 underline underline-offset-2">massive.com</a>
-            </p>
+
+          {/* Exchange Rates — Alpha Vantage */}
+          <div className="p-4 bg-white/5 rounded-xl border border-white/8 space-y-3">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-semibold text-white">💱 Exchange Rates</p>
+              <span className="text-xs text-white/40 bg-white/5 px-2 py-0.5 rounded-full">Alpha Vantage</span>
+            </div>
+            <Input
+              type="password"
+              placeholder="Enter API key..."
+              value={newFxKey}
+              onChange={(e) => { setNewFxKey(e.target.value); setFxKeyStatus('idle'); }}
+            />
+            <div className="flex gap-2 flex-wrap">
+              <Button variant="secondary" size="sm" onClick={handleTestFxKey} disabled={!newFxKey || fxKeyStatus === 'testing'}>
+                {fxKeyStatus === 'testing' ? 'Testing...' : 'Test Key'}
+              </Button>
+              <Button variant="ghost" size="sm" onClick={() => { setFxApiKey(newFxKey); setFxKeyStatus('idle'); toast.success('Exchange Rate key saved.'); }} disabled={!newFxKey}>
+                Save Without Testing
+              </Button>
+              {fxApiKey && <Button variant="ghost" size="sm" onClick={() => { setFxApiKey(''); setNewFxKey(''); setFxKeyStatus('idle'); toast.success('FX key removed. Stored rates kept.'); }}>Remove</Button>}
+            </div>
+            {fxKeyStatus === 'valid' && <p className="text-[#00d632] text-xs">✅ Valid — saved!</p>}
+            {fxKeyStatus === 'invalid' && <p className="text-[#ff4757] text-xs">❌ Invalid key</p>}
+            <div className="text-xs text-white/30 space-y-0.5">
+              {fxApiKey
+                ? <p>Requests used today: <span className="text-white/60">{fxRequestsToday}/25</span></p>
+                : <p className="text-amber-400/60">Not configured — exchange rates entered manually</p>}
+              <p>Get a free key: <a href="https://www.alphavantage.co" target="_blank" rel="noopener noreferrer" className="!text-blue-400 hover:!text-blue-300 underline underline-offset-2">alphavantage.co</a>{' · '}<a href="https://www.massive.com" target="_blank" rel="noopener noreferrer" className="!text-blue-400 hover:!text-blue-300 underline underline-offset-2">massive.com</a></p>
+            </div>
           </div>
+
+          {/* Israeli Market — TASE DataHub */}
+          <div className="p-4 bg-white/5 rounded-xl border border-white/8 space-y-3">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-semibold text-white">🇮🇱 Israeli Market (TASE)</p>
+              <span className="text-xs text-white/40 bg-white/5 px-2 py-0.5 rounded-full">TASE DataHub</span>
+            </div>
+            <Input
+              type="password"
+              placeholder="Enter API key..."
+              value={newIsraeliKey}
+              onChange={(e) => { setNewIsraeliKey(e.target.value); setIsraeliKeyStatus('idle'); }}
+            />
+            <div className="flex gap-2 flex-wrap">
+              <Button variant="secondary" size="sm" onClick={handleTestIsraeliKey} disabled={!newIsraeliKey || israeliKeyStatus === 'testing'}>
+                {israeliKeyStatus === 'testing' ? 'Testing...' : 'Test Key'}
+              </Button>
+              <Button variant="ghost" size="sm" onClick={() => { setIsraeliApiKey(newIsraeliKey); setIsraeliKeyStatus('idle'); toast.success('TASE key saved.'); }} disabled={!newIsraeliKey}>
+                Save Without Testing
+              </Button>
+              {israeliApiKey && <Button variant="ghost" size="sm" onClick={() => { setIsraeliApiKey(''); setNewIsraeliKey(''); setIsraeliKeyStatus('idle'); toast.success('TASE key removed.'); }}>Remove</Button>}
+            </div>
+            {israeliKeyStatus === 'valid' && <p className="text-[#00d632] text-xs">✅ Valid — saved!</p>}
+            {israeliKeyStatus === 'invalid' && <p className="text-[#ff4757] text-xs">❌ Invalid key</p>}
+            <div className="text-xs text-white/30 space-y-0.5">
+              {israeliApiKey
+                ? <p>Requests today: <span className="text-white/60">{israeliRequestsToday}</span> <span className="text-white/20">(limit: 10/2 sec)</span></p>
+                : <p className="text-amber-400/60">Not configured — TASE prices entered manually</p>}
+              <p>Register free (Securities - Basic): <a href="https://datahub.tase.co.il/login" target="_blank" rel="noopener noreferrer" className="!text-blue-400 hover:!text-blue-300 underline underline-offset-2">datahub.tase.co.il</a></p>
+            </div>
+          </div>
+
         </div>
       </GlassCard>
 
@@ -390,7 +495,7 @@ export default function Settings() {
             <div className="flex items-center justify-between mb-2">
               <p className="text-sm font-medium text-white/70">Exchange Rates</p>
               <div className="flex gap-2">
-                {apiKey && exchangeRates.length > 0 && (
+                {fxApiKey && exchangeRates.length > 0 && (
                   <Button variant="ghost" size="sm" onClick={handleRefreshAllRates} disabled={refreshingRates}>
                     {refreshingRates ? 'Refreshing...' : '🔄 Refresh All'}
                   </Button>
@@ -420,7 +525,7 @@ export default function Settings() {
                   />
                 </div>
                 <div className="flex gap-2 flex-wrap">
-                  {apiKey && newRateCurrency && (
+                  {fxApiKey && newRateCurrency && (
                     <Button variant="ghost" size="sm" onClick={handleFetchNewRate} disabled={fetchingNewRate}>
                       {fetchingNewRate ? 'Fetching...' : '⬇ Fetch & Save'}
                     </Button>

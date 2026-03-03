@@ -2,6 +2,8 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { Settings, ExchangeRate } from '../types/index';
 
+const today = () => new Date().toISOString().split('T')[0];
+
 interface SettingsStore extends Settings {
   setHasCompletedSetup: (v: boolean) => void;
   setUserName: (name: string) => void;
@@ -11,9 +13,15 @@ interface SettingsStore extends Settings {
   setExchangeRates: (rates: ExchangeRate[]) => void;
   addExchangeRate: (rate: ExchangeRate) => void;
   removeExchangeRate: (currency: string) => void;
-  setAlphaVantageApiKey: (key: string) => void;
-  decrementApiRequests: () => void;
-  resetApiRequestsIfNewDay: () => void;
+  // ── Per-slot API key setters ──
+  setStocksApiKey: (key: string) => void;
+  setFxApiKey: (key: string) => void;
+  setIsraeliApiKey: (key: string) => void;
+  // ── Per-slot request counters ──
+  decrementStocksRequests: () => void;
+  decrementFxRequests: () => void;
+  decrementIsraeliRequests: () => void;
+  resetRequestsIfNewDay: () => void;
   setFireTarget: (target: number | null) => void;
   setActivityFeedSettings: (settings: { showTransactions?: boolean; showTrades?: boolean; showRecurring?: boolean }) => void;
   setLastBackupDate: (date: string) => void;
@@ -27,9 +35,15 @@ const defaultSettings: Settings = {
   portfolioMode: 'detailed',
   defaultCurrency: 'USD',
   exchangeRates: [],
-  alphaVantageApiKey: '',
-  alphaVantageRequestsUsedToday: 0,
-  alphaVantageRequestsResetDate: new Date().toISOString().split('T')[0],
+  stocksApiKey: '',
+  stocksRequestsToday: 0,
+  stocksRequestsResetDate: today(),
+  fxApiKey: '',
+  fxRequestsToday: 0,
+  fxRequestsResetDate: today(),
+  israeliApiKey: '',
+  israeliRequestsToday: 0,
+  israeliRequestsResetDate: today(),
   fireTarget: null,
   activityFeedShowTransactions: true,
   activityFeedShowTrades: true,
@@ -59,20 +73,32 @@ export const useSettingsStore = create<SettingsStore>()(
         set((state) => ({
           exchangeRates: state.exchangeRates.filter((r) => r.currency !== currency),
         })),
-      setAlphaVantageApiKey: (key) => set({ alphaVantageApiKey: key }),
-      decrementApiRequests: () =>
-        set((state) => ({
-          alphaVantageRequestsUsedToday: state.alphaVantageRequestsUsedToday + 1,
-        })),
-      resetApiRequestsIfNewDay: () => {
-        const today = new Date().toISOString().split('T')[0];
+      setStocksApiKey: (key) => set({ stocksApiKey: key }),
+      setFxApiKey: (key) => set({ fxApiKey: key }),
+      setIsraeliApiKey: (key) => set({ israeliApiKey: key }),
+      decrementStocksRequests: () =>
+        set((state) => ({ stocksRequestsToday: state.stocksRequestsToday + 1 })),
+      decrementFxRequests: () =>
+        set((state) => ({ fxRequestsToday: state.fxRequestsToday + 1 })),
+      decrementIsraeliRequests: () =>
+        set((state) => ({ israeliRequestsToday: state.israeliRequestsToday + 1 })),
+      resetRequestsIfNewDay: () => {
+        const t = today();
         const state = get();
-        if (state.alphaVantageRequestsResetDate !== today) {
-          set({
-            alphaVantageRequestsUsedToday: 0,
-            alphaVantageRequestsResetDate: today,
-          });
+        const updates: Partial<Settings> = {};
+        if (state.stocksRequestsResetDate !== t) {
+          updates.stocksRequestsToday = 0;
+          updates.stocksRequestsResetDate = t;
         }
+        if (state.fxRequestsResetDate !== t) {
+          updates.fxRequestsToday = 0;
+          updates.fxRequestsResetDate = t;
+        }
+        if (state.israeliRequestsResetDate !== t) {
+          updates.israeliRequestsToday = 0;
+          updates.israeliRequestsResetDate = t;
+        }
+        if (Object.keys(updates).length > 0) set(updates);
       },
       setFireTarget: (target) => set({ fireTarget: target }),
       setActivityFeedSettings: ({ showTransactions, showTrades, showRecurring }) =>
@@ -84,6 +110,25 @@ export const useSettingsStore = create<SettingsStore>()(
       setLastBackupDate: (date) => set({ lastBackupDate: date }),
       setBudgetAlertsEnabled: (enabled) => set({ budgetAlertsEnabled: enabled }),
     }),
-    { name: 'nw-settings' }
+    {
+      name: 'nw-settings',
+      version: 2,
+      migrate: (persisted: any, version) => {
+        if (version < 2) {
+          const t = today();
+          // Migrate old single alphaVantageApiKey → pre-fill both stocks and fx slots
+          persisted.stocksApiKey = persisted.alphaVantageApiKey ?? '';
+          persisted.fxApiKey     = persisted.alphaVantageApiKey ?? '';
+          persisted.stocksRequestsToday     = persisted.alphaVantageRequestsUsedToday ?? 0;
+          persisted.fxRequestsToday         = persisted.alphaVantageRequestsUsedToday ?? 0;
+          persisted.stocksRequestsResetDate = persisted.alphaVantageRequestsResetDate ?? t;
+          persisted.fxRequestsResetDate     = persisted.alphaVantageRequestsResetDate ?? t;
+          persisted.israeliApiKey           = '';
+          persisted.israeliRequestsToday    = 0;
+          persisted.israeliRequestsResetDate = t;
+        }
+        return persisted;
+      },
+    }
   )
 );

@@ -34,10 +34,10 @@ export default function Portfolio() {
   const portfolioMode = useSettingsStore((s) => s.portfolioMode);
   const setPortfolioMode = useSettingsStore((s) => s.setPortfolioMode);
   const defaultCurrency = useSettingsStore((s) => s.defaultCurrency);
-  const apiKey = useSettingsStore((s) => s.alphaVantageApiKey);
-  const requestsUsed = useSettingsStore((s) => s.alphaVantageRequestsUsedToday);
-  const decrementApiRequests = useSettingsStore((s) => s.decrementApiRequests);
-  const resetApiRequestsIfNewDay = useSettingsStore((s) => s.resetApiRequestsIfNewDay);
+  const stocksApiKey = useSettingsStore((s) => s.stocksApiKey);
+  const stocksRequestsToday = useSettingsStore((s) => s.stocksRequestsToday);
+  const decrementStocksRequests = useSettingsStore((s) => s.decrementStocksRequests);
+  const resetRequestsIfNewDay = useSettingsStore((s) => s.resetRequestsIfNewDay);
 
   const manualEntries = useNetWorthStore((s) => s.manualEntries);
   const deleteManualEntry = useNetWorthStore((s) => s.deleteManualEntry);
@@ -62,7 +62,7 @@ export default function Portfolio() {
 
   const [refreshing, setRefreshing] = useState(false);
   const [refreshProgress, setRefreshProgress] = useState('');
-  const requestsRemaining = ALPHA_VANTAGE_MAX_REQUESTS - requestsUsed;
+  const requestsRemaining = ALPHA_VANTAGE_MAX_REQUESTS - stocksRequestsToday;
 
   const [showTradeModal, setShowTradeModal] = useState(false);
   const [editingTrade, setEditingTrade] = useState<StockTrade | null>(null);
@@ -130,10 +130,10 @@ export default function Portfolio() {
   };
 
   const handleTickerBlur = async () => {
-    if (!ticker || !apiKey || companyName) return;
+    if (!ticker || !stocksApiKey || companyName) return;
     setLookingUpName(true);
     try {
-      const result = await searchSymbol(ticker, apiKey);
+      const result = await searchSymbol(ticker, stocksApiKey);
       if (result) setCompanyName(result.name);
     } catch {}
     setLookingUpName(false);
@@ -181,22 +181,22 @@ export default function Portfolio() {
   };
 
   const handleRefreshPrices = async () => {
-    if (!apiKey) { toast.error('Add your Alpha Vantage API key in Settings first.'); return; }
+    if (!stocksApiKey) { toast.error('Add your Alpha Vantage Stocks API key in Settings first.'); return; }
     if (refreshing) return;
-    resetApiRequestsIfNewDay();
+    resetRequestsIfNewDay();
     setRefreshing(true);
     const tickers = holdings.map((h) => h.ticker);
     let done = 0;
     for (const t of tickers) {
-      if (requestsUsed + done >= ALPHA_VANTAGE_MAX_REQUESTS) {
+      if (stocksRequestsToday + done >= ALPHA_VANTAGE_MAX_REQUESTS) {
         setRefreshProgress(`Rate limit reached after ${done} updates`);
         break;
       }
       setRefreshProgress(`Updating ${t} (${done + 1}/${tickers.length})...`);
       try {
-        const quote = await fetchStockQuote(t, apiKey);
+        const quote = await fetchStockQuote(t, stocksApiKey);
         updateCurrentPrice(t, quote.price);
-        decrementApiRequests();
+        decrementStocksRequests();
         done++;
       } catch (e: any) {
         if (e.message === 'Rate limit reached') break;
@@ -278,7 +278,7 @@ export default function Portfolio() {
             </div>
             <div className="flex flex-wrap gap-2">
               <Button variant="primary" onClick={() => openAddTrade()}>+ Add Trade</Button>
-              <Button variant="secondary" onClick={handleRefreshPrices} disabled={!apiKey || refreshing || requestsRemaining <= 0}>
+              <Button variant="secondary" onClick={handleRefreshPrices} disabled={!stocksApiKey || refreshing || requestsRemaining <= 0}>
                 {refreshing ? '⏳ Refreshing...' : '🔄 Refresh Prices'}
               </Button>
               <Button variant="ghost" onClick={() => {
@@ -289,8 +289,8 @@ export default function Portfolio() {
                 ⚖️ Allocation
               </Button>
             </div>
-            {!apiKey && <p className="text-white/30 text-xs">Add an API key in Settings to enable live price refresh</p>}
-            {apiKey && <p className="text-white/30 text-xs">{requestsRemaining}/{ALPHA_VANTAGE_MAX_REQUESTS} API requests remaining today</p>}
+            {!stocksApiKey && <p className="text-white/30 text-xs">Add a Stocks API key in Settings to enable live price refresh</p>}
+            {stocksApiKey && <p className="text-white/30 text-xs">{requestsRemaining}/{ALPHA_VANTAGE_MAX_REQUESTS} API requests remaining today</p>}
             {refreshProgress && <p className="text-[#00d632] text-xs animate-pulse">{refreshProgress}</p>}
           </div>
 
