@@ -158,12 +158,20 @@ export default function Spending() {
       return d.getMonth() + 1 === month && d.getFullYear() === year;
     }), [transactions, month, year]);
 
+  // Always convert using the current live exchange rates so that transactions
+  // entered in foreign currencies (without a rate at the time) are still counted correctly.
+  const convertLive = (amount: number, currency: string): number => {
+    if (currency === defaultCurrency) return amount;
+    const rate = exchangeRates.find((r) => r.currency === currency);
+    return rate ? amount * rate.rateToDefault : amount;
+  };
+
   const monthSpending = monthTransactions
     .filter((t) => t.type === 'expense')
-    .reduce((sum, t) => sum + t.convertedAmount, 0);
+    .reduce((sum, t) => sum + convertLive(t.amount, t.currency), 0);
   const monthIncome = monthTransactions
     .filter((t) => t.type === 'income')
-    .reduce((sum, t) => sum + t.convertedAmount, 0);
+    .reduce((sum, t) => sum + convertLive(t.amount, t.currency), 0);
 
   // Upcoming recurring expenses due later this month (not yet auto-added as transactions)
   const { upcomingTotal, upcomingCount } = useMemo(() => {
