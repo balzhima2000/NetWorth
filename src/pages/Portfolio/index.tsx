@@ -13,8 +13,8 @@ import { AllocationPieChart } from '../../components/charts/AllocationPieChart';
 import { formatCurrency, formatDate, formatRelativeTime, getTodayISO } from '../../utils/formatters';
 import { calculateCurrentHoldings } from '../../utils/calculations';
 import { ASSET_CATEGORIES, ALPHA_VANTAGE_MAX_REQUESTS, CURRENCIES } from '../../utils/constants';
-import { fetchStockQuote, searchSymbol, fetchExchangeRate } from '../../services/alphaVantage';
-import { fetchTaseSecurityPrice } from '../../services/taseDataHub';
+import { fetchStockQuote, searchSymbol, fetchExchangeRate, fetchHistoricalPrice } from '../../services/alphaVantage';
+import { fetchTaseSecurityPrice, fetchTaseHistoricalPrice } from '../../services/taseDataHub';
 import type { StockTrade, CurrentHolding } from '../../types/index';
 
 type AssetCategory = 'stocks' | 'bonds' | 'crypto' | 'other';
@@ -83,6 +83,7 @@ export default function Portfolio() {
   const [tradeCurrency, setTradeCurrency] = useState(defaultCurrency);
   const [tradeRate, setTradeRate] = useState('');
   const [fetchingTradeRate, setFetchingTradeRate] = useState(false);
+  const [fetchingHistoricalPrice, setFetchingHistoricalPrice] = useState(false);
   const [lookingUpName, setLookingUpName] = useState(false);
   const [tickerError, setTickerError] = useState('');
   const [tradeMkt, setTradeMkt] = useState<'global' | 'tase'>('global');
@@ -178,6 +179,28 @@ export default function Portfolio() {
       // silent — user can type manually
     } finally {
       setFetchingTradeRate(false);
+    }
+  };
+
+  const handleFetchHistoricalPrice = async () => {
+    if (!ticker || !tradeDate) return;
+    setFetchingHistoricalPrice(true);
+    try {
+      let fetched: number;
+      if (tradeMkt === 'tase') {
+        if (!israeliApiKey) throw new Error('Add your TASE API key in Settings first.');
+        fetched = await fetchTaseHistoricalPrice(parseInt(ticker), tradeDate, israeliApiKey);
+      } else {
+        if (!stocksApiKey) throw new Error('Add your Stocks API key in Settings first.');
+        fetched = await fetchHistoricalPrice(ticker, tradeDate, stocksApiKey);
+        decrementStocksRequests();
+      }
+      setPrice(fetched.toString());
+      toast.success(`Closing price for ${tradeDate} fetched.`);
+    } catch (e: any) {
+      toast.error(e.message || 'Could not fetch historical price.');
+    } finally {
+      setFetchingHistoricalPrice(false);
     }
   };
 
@@ -545,7 +568,21 @@ export default function Portfolio() {
           </div>
           <div className="grid grid-cols-2 gap-3">
             <Input label="Shares" type="number" inputMode="decimal" placeholder="10" value={quantity} onChange={(e) => setQuantity(e.target.value)} required />
-            <Input label={tradeType === 'sell' ? 'Sell Price' : 'Buy Price'} type="number" inputMode="decimal" placeholder="150.00" value={price} onChange={(e) => setPrice(e.target.value)} required />
+            <div className="flex gap-2 items-end">
+              <Input label={tradeType === 'sell' ? 'Sell Price' : 'Buy Price'} type="number" inputMode="decimal" placeholder="150.00" value={price} onChange={(e) => setPrice(e.target.value)} required />
+              {(tradeMkt === 'global' ? stocksApiKey : israeliApiKey) && ticker && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleFetchHistoricalPrice}
+                  disabled={fetchingHistoricalPrice || !ticker || !tradeDate}
+                  style={{ marginBottom: '2px' }}
+                  title="Fetch end-of-day closing price for this date"
+                >
+                  {fetchingHistoricalPrice ? '…' : '⬇ Fetch'}
+                </Button>
+              )}
+            </div>
           </div>
           <Select
             label="Price Currency"

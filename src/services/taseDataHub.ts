@@ -131,6 +131,46 @@ export async function fetchTaseSecurityPrice(
 }
 
 /**
+ * Fetch the closing price for a TASE security on a specific date.
+ * Uses the Securities EoD endpoint which returns the last 7 trading days.
+ * If the requested date is not in that window, throws a descriptive error.
+ *
+ * Date field names vary across TASE responses — common candidates are checked.
+ */
+export async function fetchTaseHistoricalPrice(
+  securityId: number,
+  date: string, // ISO date, e.g. "2024-01-15"
+  apiKey: string
+): Promise<number> {
+  const url = `${BASE}/v1/securities/trading/eod/seven-days/by-security?securityId=${securityId}`;
+  const res = await fetch(url, { headers: headers(apiKey) });
+  if (!res.ok) throw new Error(`EoD HTTP ${res.status}`);
+  const data = await res.json();
+  const list: any[] = data?.result ?? data ?? [];
+  if (!list.length) throw new Error(`No EoD data for securityId ${securityId}`);
+
+  // Find the entry matching the requested date (field name may vary)
+  const entry = list.find((item: any) => {
+    const d: string =
+      item.tradingDate ?? item.TradingDate ??
+      item.date        ?? item.Date        ??
+      item.tradeDate   ?? item.TradeDate   ?? '';
+    return d.startsWith(date); // handles "2024-01-15" and "2024-01-15T00:00:00" formats
+  });
+
+  if (!entry) {
+    throw new Error(
+      `No TASE price data for ${date}. Only the last 7 trading days are available ` +
+      `via the free EoD endpoint. Dates further back must be entered manually.`
+    );
+  }
+
+  const price = extractPrice(entry);
+  if (price == null) throw new Error('No price field in EoD response for that date');
+  return price;
+}
+
+/**
  * Search TASE securities by name or ticker (TA-125 stocks only).
  * The Mutual Funds product endpoints are all ID-based — no name search available.
  * For ETFs and mutual funds, enter the numeric security ID directly.
