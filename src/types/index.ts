@@ -12,12 +12,14 @@ export interface StockTrade {
   sellDate: string | null;
   notes: string;
   assetCategory: 'stocks' | 'bonds' | 'crypto' | 'other';
+  market?: 'global' | 'tase'; // undefined = 'global' (backwards-compatible)
 }
 
 export interface CurrentHolding {
   ticker: string;
   name: string;
   assetCategory: 'stocks' | 'bonds' | 'crypto' | 'other';
+  market: 'global' | 'tase';
   sharesHeld: number;
   blendedCostBasis: number; // weighted avg buy price
   currentPrice: number;

@@ -66,6 +66,7 @@ export function calculateCurrentHoldings(
       ticker,
       name: latestTrade.name,
       assetCategory: latestTrade.assetCategory,
+      market: latestTrade.market ?? 'global',
       sharesHeld,
       blendedCostBasis,
       currentPrice,

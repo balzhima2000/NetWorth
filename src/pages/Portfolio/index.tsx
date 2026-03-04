@@ -14,6 +14,7 @@ import { formatCurrency, formatDate, formatRelativeTime, getTodayISO } from '../
 import { calculateCurrentHoldings } from '../../utils/calculations';
 import { ASSET_CATEGORIES, ALPHA_VANTAGE_MAX_REQUESTS, CURRENCIES } from '../../utils/constants';
 import { fetchStockQuote, searchSymbol, fetchExchangeRate } from '../../services/alphaVantage';
+import { fetchTaseSecurityPrice } from '../../services/taseDataHub';
 import type { StockTrade, CurrentHolding } from '../../types/index';
 
 type AssetCategory = 'stocks' | 'bonds' | 'crypto' | 'other';
@@ -41,6 +42,7 @@ export default function Portfolio() {
   const fxApiKey = useSettingsStore((s) => s.fxApiKey);
   const exchangeRates = useSettingsStore((s) => s.exchangeRates);
   const decrementFxRequests = useSettingsStore((s) => s.decrementFxRequests);
+  const israeliApiKey = useSettingsStore((s) => s.israeliApiKey);
 
   const manualEntries = useNetWorthStore((s) => s.manualEntries);
   const deleteManualEntry = useNetWorthStore((s) => s.deleteManualEntry);
@@ -83,6 +85,7 @@ export default function Portfolio() {
   const [fetchingTradeRate, setFetchingTradeRate] = useState(false);
   const [lookingUpName, setLookingUpName] = useState(false);
   const [tickerError, setTickerError] = useState('');
+  const [tradeMkt, setTradeMkt] = useState<'global' | 'tase'>('global');
   const [deleteTradeId, setDeleteTradeId] = useState<string | null>(null);
   const [showSwitchConfirm, setShowSwitchConfirm] = useState(false);
 
@@ -120,6 +123,7 @@ export default function Portfolio() {
     setTickerError('');
     setTradeCurrency(defaultCurrency);
     setTradeRate('');
+    setTradeMkt('global');
     setShowTradeModal(true);
   };
 
@@ -137,6 +141,7 @@ export default function Portfolio() {
     // Prices are always stored in default currency — no foreign currency state needed when editing
     setTradeCurrency(defaultCurrency);
     setTradeRate('');
+    setTradeMkt(trade.market ?? 'global');
     setShowTradeModal(true);
   };
 
@@ -193,7 +198,7 @@ export default function Portfolio() {
         buyDate: tradeType === 'buy' ? tradeDate : editingTrade.buyDate,
         sellPrice: tradeType === 'sell' ? px : null,
         sellDate: tradeType === 'sell' ? tradeDate : null,
-        assetCategory, notes: tradeNotes,
+        assetCategory, notes: tradeNotes, market: tradeMkt,
       });
     } else {
       addTrade({
@@ -202,7 +207,7 @@ export default function Portfolio() {
         buyDate: tradeType === 'buy' ? tradeDate : getTodayISO(),
         sellPrice: tradeType === 'sell' ? px : null,
         sellDate: tradeType === 'sell' ? tradeDate : null,
-        assetCategory, notes: tradeNotes,
+        assetCategory, notes: tradeNotes, market: tradeMkt,
       });
     }
     setShowTradeModal(false);
@@ -210,21 +215,29 @@ export default function Portfolio() {
   };
 
   const handleRefreshPrices = async () => {
-    if (!stocksApiKey) { toast.error('Add your Alpha Vantage Stocks API key in Settings first.'); return; }
+    const globalHoldings = holdings.filter((h) => (h.market ?? 'global') === 'global');
+    const taseHoldings = holdings.filter((h) => h.market === 'tase');
+    if (globalHoldings.length > 0 && !stocksApiKey && taseHoldings.length === 0) {
+      toast.error('Add your Alpha Vantage Stocks API key in Settings first.');
+      return;
+    }
     if (refreshing) return;
     resetRequestsIfNewDay();
     setRefreshing(true);
-    const tickers = holdings.map((h) => h.ticker);
+    const total = holdings.length;
     let done = 0;
-    for (const t of tickers) {
+
+    // ── Global holdings (Alpha Vantage) ──
+    for (const h of globalHoldings) {
+      if (!stocksApiKey) break;
       if (stocksRequestsToday + done >= ALPHA_VANTAGE_MAX_REQUESTS) {
         setRefreshProgress(`Rate limit reached after ${done} updates`);
         break;
       }
-      setRefreshProgress(`Updating ${t} (${done + 1}/${tickers.length})...`);
+      setRefreshProgress(`Updating ${h.ticker} (${done + 1}/${total})...`);
       try {
-        const quote = await fetchStockQuote(t, stocksApiKey);
-        updateCurrentPrice(t, quote.price);
+        const quote = await fetchStockQuote(h.ticker, stocksApiKey);
+        updateCurrentPrice(h.ticker, quote.price);
         decrementStocksRequests();
         done++;
       } catch (e: any) {
@@ -232,14 +245,27 @@ export default function Portfolio() {
       }
       await new Promise((r) => setTimeout(r, 500));
     }
-    if (done === tickers.length) {
+
+    // ── TASE holdings (TASE DataHub) ──
+    for (const h of taseHoldings) {
+      if (!israeliApiKey) continue;
+      setRefreshProgress(`Updating ${h.ticker} (${done + 1}/${total})...`);
+      try {
+        const price = await fetchTaseSecurityPrice(parseInt(h.ticker), israeliApiKey);
+        updateCurrentPrice(h.ticker, price);
+        done++;
+      } catch { /* silent fail per holding */ }
+      await new Promise((r) => setTimeout(r, 300));
+    }
+
+    if (done === total) {
       toast.success(`Prices updated for all ${done} holding${done !== 1 ? 's' : ''}.`);
     } else if (done > 0) {
-      toast.info(`Updated ${done} of ${tickers.length} tickers. Rate limit reached.`);
+      toast.info(`Updated ${done} of ${total} tickers.`);
     } else {
-      toast.error('Price refresh failed. Check your API key in Settings.');
+      toast.error('Price refresh failed. Check your API keys in Settings.');
     }
-    setRefreshProgress(done === tickers.length ? `✅ Updated ${done} tickers` : `Updated ${done} of ${tickers.length}`);
+    setRefreshProgress(done === total ? `✅ Updated ${done} tickers` : `Updated ${done} of ${total}`);
     setTimeout(() => setRefreshProgress(''), 4000);
     setRefreshing(false);
   };
@@ -496,9 +522,26 @@ export default function Portfolio() {
             <button onClick={() => setTradeType('buy')} className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all ${tradeType === 'buy' ? 'bg-[#00d632] text-black' : 'bg-white/5 text-white/50 hover:bg-white/10'}`}>Buy</button>
             <button onClick={() => setTradeType('sell')} className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all ${tradeType === 'sell' ? 'bg-[#ff4757] text-white' : 'bg-white/5 text-white/50 hover:bg-white/10'}`}>Sell</button>
           </div>
+          <label className="flex items-center gap-2 text-sm text-white/60 cursor-pointer select-none w-fit">
+            <input
+              type="checkbox"
+              checked={tradeMkt === 'tase'}
+              onChange={(e) => { setTradeMkt(e.target.checked ? 'tase' : 'global'); setTicker(''); setCompanyName(''); setTickerError(''); }}
+              className="w-4 h-4 rounded accent-[#5865f2]"
+            />
+            🇮🇱 Tel Aviv Stock Exchange (TASE)
+          </label>
           <div className="grid grid-cols-2 gap-3">
-            <Input label="Ticker Symbol" placeholder="AAPL" value={ticker} onChange={(e) => { setTicker(e.target.value.toUpperCase()); setCompanyName(''); setTickerError(''); }} onBlur={handleTickerBlur} error={tickerError} required />
-            <Input label={lookingUpName ? 'Looking up...' : 'Company Name'} placeholder="Apple Inc." value={companyName} onChange={(e) => setCompanyName(e.target.value)} disabled={lookingUpName} />
+            <Input
+              label={tradeMkt === 'tase' ? 'Security ID' : 'Ticker Symbol'}
+              placeholder={tradeMkt === 'tase' ? 'e.g. 1159235' : 'AAPL'}
+              value={ticker}
+              onChange={(e) => { setTicker(tradeMkt === 'tase' ? e.target.value : e.target.value.toUpperCase()); setCompanyName(''); setTickerError(''); }}
+              onBlur={tradeMkt === 'global' ? handleTickerBlur : undefined}
+              error={tickerError}
+              required
+            />
+            <Input label={lookingUpName ? 'Looking up...' : 'Security Name'} placeholder={tradeMkt === 'tase' ? 'iShares MSCI ACWI...' : 'Apple Inc.'} value={companyName} onChange={(e) => setCompanyName(e.target.value)} disabled={lookingUpName} />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <Input label="Shares" type="number" inputMode="decimal" placeholder="10" value={quantity} onChange={(e) => setQuantity(e.target.value)} required />
