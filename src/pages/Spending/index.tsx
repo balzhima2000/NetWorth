@@ -56,6 +56,7 @@ export default function Spending() {
   const addTransaction = useTransactionStore((s) => s.addTransaction);
   const updateTransaction = useTransactionStore((s) => s.updateTransaction);
   const deleteTransaction = useTransactionStore((s) => s.deleteTransaction);
+  const recalculateRatesForCurrency = useTransactionStore((s) => s.recalculateRatesForCurrency);
   const lastUsedPaymentMethod = useTransactionStore((s) => s.lastUsedPaymentMethod);
   const setLastUsedPaymentMethod = useTransactionStore((s) => s.setLastUsedPaymentMethod);
 
@@ -68,6 +69,7 @@ export default function Spending() {
   const incomeCategories = useCategoriesStore((s) => s.incomeCategories);
   const defaultCurrency = useSettingsStore((s) => s.defaultCurrency);
   const exchangeRates = useSettingsStore((s) => s.exchangeRates);
+  const addExchangeRate = useSettingsStore((s) => s.addExchangeRate);
   const fxApiKey = useSettingsStore((s) => s.fxApiKey);
   const decrementFxRequests = useSettingsStore((s) => s.decrementFxRequests);
   const cards = useCardsStore((s) => s.cards).filter((c) => c.isActive);
@@ -291,10 +293,14 @@ export default function Spending() {
   const handleSaveTx = () => {
     if (!txAmount || !txCategory) return;
     const amount = parseFloat(txAmount);
-    // Use the rate entered in the form (per-transaction only; does NOT update global rates)
     let convertedAmount: number;
     if (txCurrency !== defaultCurrency && txRate && parseFloat(txRate) > 0) {
-      convertedAmount = amount * parseFloat(txRate);
+      const rate = parseFloat(txRate);
+      convertedAmount = amount * rate;
+      // Save this rate globally so auto-added recurring transactions (and future ones)
+      // use the correct rate, and retroactively fix all stored convertedAmounts.
+      addExchangeRate({ currency: txCurrency, rateToDefault: rate });
+      recalculateRatesForCurrency(txCurrency, rate);
     } else {
       convertedAmount = getConvertedAmount(amount, txCurrency);
     }
@@ -476,8 +482,8 @@ export default function Spending() {
                       </div>
                       <div className="flex items-center gap-2 flex-shrink-0">
                         <p className={`font-mono font-semibold ${tx.type === 'expense' ? 'text-[#ff4757]' : 'text-[#00d632]'}`}>
-                          {tx.type === 'expense' ? '-' : '+'}{formatCurrency(tx.convertedAmount, defaultCurrency)}
-                          {tx.currency !== defaultCurrency && <span className="text-white/30 text-xs ml-1">({tx.currency})</span>}
+                          {tx.type === 'expense' ? '-' : '+'}{formatCurrency(txToDefault(tx), defaultCurrency)}
+                          {tx.currency !== defaultCurrency && <span className="text-white/30 text-xs ml-1">({formatCurrency(tx.amount, tx.currency)})</span>}
                         </p>
                         {!tx.isAutoAdded && (
                           <>
