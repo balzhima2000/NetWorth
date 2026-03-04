@@ -158,20 +158,37 @@ export default function Spending() {
       return d.getMonth() + 1 === month && d.getFullYear() === year;
     }), [transactions, month, year]);
 
-  // Always convert using the current live exchange rates so that transactions
-  // entered in foreign currencies (without a rate at the time) are still counted correctly.
-  const convertLive = (amount: number, currency: string): number => {
-    if (currency === defaultCurrency) return amount;
-    const rate = exchangeRates.find((r) => r.currency === currency);
-    return rate ? amount * rate.rateToDefault : amount;
+  /**
+   * Convert a transaction to the default currency.
+   * Priority: (1) current live rate from settings, (2) stored convertedAmount
+   * (which may include a per-transaction rate the user entered at save time).
+   * Never falls back to the raw foreign amount, which would silently mis-represent the total.
+   */
+  const txToDefault = (t: Transaction): number => {
+    if (t.currency === defaultCurrency) return t.amount;
+    const rate = exchangeRates.find((r) => r.currency === t.currency);
+    if (rate) return t.amount * rate.rateToDefault;
+    // No current rate — use whatever was stored (may be a per-transaction rate or raw amount)
+    return t.convertedAmount;
   };
 
   const monthSpending = monthTransactions
     .filter((t) => t.type === 'expense')
-    .reduce((sum, t) => sum + convertLive(t.amount, t.currency), 0);
+    .reduce((sum, t) => sum + txToDefault(t), 0);
   const monthIncome = monthTransactions
     .filter((t) => t.type === 'income')
-    .reduce((sum, t) => sum + convertLive(t.amount, t.currency), 0);
+    .reduce((sum, t) => sum + txToDefault(t), 0);
+
+  // Currencies used this month that have no exchange rate configured
+  const missingRateCurrencies = useMemo(() => {
+    const missing = new Set<string>();
+    monthTransactions.forEach((t) => {
+      if (t.currency !== defaultCurrency && !exchangeRates.find((r) => r.currency === t.currency)) {
+        missing.add(t.currency);
+      }
+    });
+    return [...missing];
+  }, [monthTransactions, exchangeRates, defaultCurrency]);
 
   // Upcoming recurring expenses due later this month (not yet auto-added as transactions)
   const { upcomingTotal, upcomingCount } = useMemo(() => {
@@ -385,6 +402,11 @@ export default function Spending() {
               + {formatCurrency(upcomingTotal, defaultCurrency, true)} upcoming ({upcomingCount} recurring)
             </p>
           )}
+          {missingRateCurrencies.length > 0 && (
+            <p className="text-xs text-orange-400/80 mt-1">
+              ⚠️ No rate for {missingRateCurrencies.join(', ')} — add in Settings
+            </p>
+          )}
         </GlassCard>
         <GlassCard padding="md">
           <p className="text-white/50 text-sm mb-1">This Month Income</p>
@@ -495,7 +517,7 @@ export default function Spending() {
             <div className="space-y-5">
               {categories.map((cat) => {
                 const budget = currentMonthBudgets.find(b => b.category === cat.id);
-                const spent = monthTransactions.filter(t => t.type === 'expense' && t.category === cat.id).reduce((sum, t) => sum + t.convertedAmount, 0);
+                const spent = monthTransactions.filter(t => t.type === 'expense' && t.category === cat.id).reduce((sum, t) => sum + txToDefault(t), 0);
                 const progress = budget ? (spent / budget.amount) * 100 : null;
                 const barColor = !progress ? 'blue' : progress >= 100 ? 'red' : progress >= 80 ? 'amber' : 'green';
                 return (
