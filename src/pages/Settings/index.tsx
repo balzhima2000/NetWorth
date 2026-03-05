@@ -142,12 +142,17 @@ export default function Settings() {
       ...exchangeRates.map((r) => r.currency),
       ...txForeignCurrencies,
     ])];
-    if (currenciesToRefresh.length === 0) return;
+    if (currenciesToRefresh.length === 0) {
+      toast.error('No foreign currencies found in transactions or exchange rate list.');
+      return;
+    }
     setRefreshingRates(true);
     let updated = 0;
+    const errors: string[] = [];
     for (const currency of currenciesToRefresh) {
-      if (fxRequestsToday + updated >= 25) {
-        toast.error('API limit reached — some rates not updated');
+      // Daily limit only applies to Alpha Vantage (25 req/day); Massive has no daily cap
+      if (fxProvider === 'alpha-vantage' && fxRequestsToday + updated >= 25) {
+        toast.error('Alpha Vantage daily limit reached — some rates not updated');
         break;
       }
       try {
@@ -156,14 +161,15 @@ export default function Settings() {
           : await fetchExchangeRate(currency, defaultCurrency, fxApiKey);
         addExchangeRate({ currency, rateToDefault: newRate });
         recalculateRatesForCurrency(currency, newRate);
-        decrementFxRequests();
+        // Only track the daily counter for Alpha Vantage
+        if (fxProvider === 'alpha-vantage') decrementFxRequests();
         updated++;
       } catch (e: any) {
-        toast.error(`Failed to refresh ${currency}: ${e.message}`);
-        break;
+        errors.push(`${currency}: ${e.message}`);
       }
     }
     if (updated > 0) toast.success(`Updated ${updated} exchange rate${updated > 1 ? 's' : ''}`);
+    if (errors.length > 0) toast.error(`Failed to refresh — ${errors.join(', ')}`);
     setRefreshingRates(false);
   };
 
