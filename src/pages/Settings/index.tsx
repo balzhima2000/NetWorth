@@ -132,18 +132,24 @@ export default function Settings() {
 
   const handleRefreshAllRates = async () => {
     if (!fxApiKey) return;
-    // Build list: existing rates + any foreign currency used in transactions
+    // Build list: existing rates + foreign currencies used in transactions OR recurring payments
     const txForeignCurrencies = [...new Set(
       transactions
         .filter((t) => t.currency !== defaultCurrency)
         .map((t) => t.currency)
     )];
+    const recurringForeignCurrencies = [...new Set(
+      recurringPayments
+        .filter((rp) => rp.currency && rp.currency !== defaultCurrency)
+        .map((rp) => rp.currency as string)
+    )];
     const currenciesToRefresh = [...new Set([
       ...exchangeRates.map((r) => r.currency),
       ...txForeignCurrencies,
+      ...recurringForeignCurrencies,
     ])];
     if (currenciesToRefresh.length === 0) {
-      toast.error('No foreign currencies found in transactions or exchange rate list.');
+      toast.error('No foreign currencies found in transactions, recurring payments, or exchange rate list.');
       return;
     }
     setRefreshingRates(true);
