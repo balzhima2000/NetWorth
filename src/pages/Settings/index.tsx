@@ -435,7 +435,12 @@ export default function Settings() {
             {fxApiKey ? (
               <>
                 <Input type="password" value={fxApiKey} disabled />
-                <Button variant="ghost" size="sm" onClick={() => { setFxApiKey(''); setNewFxKey(''); setFxKeyStatus('idle'); toast.success('FX key removed. Stored rates kept.'); }}>Remove</Button>
+                <div className="flex gap-2 flex-wrap">
+                  <Button variant="secondary" size="sm" onClick={handleRefreshAllRates} disabled={refreshingRates}>
+                    {refreshingRates ? 'Refreshing...' : '🔄 Refresh Rates'}
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={() => { setFxApiKey(''); setNewFxKey(''); setFxKeyStatus('idle'); toast.success('FX key removed. Stored rates kept.'); }}>Remove</Button>
+                </div>
               </>
             ) : (
               <>
