@@ -85,7 +85,6 @@ export default function Settings() {
   const snapshots = useNetWorthStore((s) => s.snapshots);
 
   const trades = usePortfolioStore((s) => s.trades);
-  const transactions = useTransactionStore((s) => s.transactions);
   const budgets = useBudgetStore((s) => s.budgets);
   const recurringPayments = useRecurringStore((s) => s.recurringPayments);
   const installmentPlans = useRecurringStore((s) => s.installmentPlans);
