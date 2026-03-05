@@ -29,8 +29,10 @@ export async function fetchExchangeRateMassive(
 
   if (convResp.status === 403) {
     // Real-time endpoint requires a paid plan — fall back to previous day's close (free Basic Currencies tier)
+    // Important: do NOT encodeURIComponent the ticker — the colon in "C:USDEUR" must stay
+    // as-is in the path segment (encoding it to %3A breaks the Massive/Polygon router)
     const ticker = `C:${fromCurrency}${toCurrency}`;
-    const aggUrl = `${MASSIVE_BASE_URL}/v2/aggs/ticker/${encodeURIComponent(ticker)}/prev?adjusted=true&apiKey=${apiKey}`;
+    const aggUrl = `${MASSIVE_BASE_URL}/v2/aggs/ticker/${ticker}/prev?adjusted=true&apiKey=${apiKey}`;
     const aggResp = await fetch(aggUrl);
     if (aggResp.ok) {
       const aggData = await aggResp.json();
@@ -46,12 +48,18 @@ export async function fetchExchangeRateMassive(
 }
 
 /**
- * Test a Massive/Polygon API key by attempting a real USD→EUR conversion.
+ * Test whether a Massive/Polygon API key is valid.
+ * Uses /v1/marketstatus/now — available on all Massive plans — to check key authenticity.
+ * Returns true if the key is recognised (200 or 403 plan restriction), false only on 401.
+ * Forex-specific access is NOT tested here; it surfaces naturally when the user clicks Refresh Rates.
  */
 export async function testMassiveKey(apiKey: string): Promise<boolean> {
   try {
-    await fetchExchangeRateMassive('USD', 'EUR', apiKey);
-    return true;
+    const url = `${MASSIVE_BASE_URL}/v1/marketstatus/now?apiKey=${apiKey}`;
+    const resp = await fetch(url);
+    // 401 = key rejected outright (invalid/expired)
+    // 200 = fully valid; 403 = valid key, endpoint outside current plan — key is still real
+    return resp.ok || resp.status === 403;
   } catch {
     return false;
   }
