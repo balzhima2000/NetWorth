@@ -10,8 +10,6 @@ interface TransactionStore {
   deleteTransaction: (id: string) => void;
   setLastUsedPaymentMethod: (method: string) => void;
   getTransactionsByMonth: (month: number, year: number) => Transaction[];
-  /** Retroactively recalculate convertedAmount for all transactions in the given currency */
-  recalculateRatesForCurrency: (currency: string, newRate: number) => void;
 }
 
 export const useTransactionStore = create<TransactionStore>()(
@@ -31,14 +29,6 @@ export const useTransactionStore = create<TransactionStore>()(
           transactions: state.transactions.filter((t) => t.id !== id),
         })),
       setLastUsedPaymentMethod: (method) => set({ lastUsedPaymentMethod: method }),
-      recalculateRatesForCurrency: (currency, newRate) =>
-        set((state) => ({
-          transactions: state.transactions.map((t) =>
-            t.currency === currency
-              ? { ...t, convertedAmount: t.amount * newRate }
-              : t
-          ),
-        })),
       getTransactionsByMonth: (month, year) => {
         return get().transactions.filter((t) => {
           const d = new Date(t.date);

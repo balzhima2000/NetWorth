@@ -60,8 +60,7 @@ export default function Settings() {
   const addExchangeRate = useSettingsStore((s) => s.addExchangeRate);
   const removeExchangeRate = useSettingsStore((s) => s.removeExchangeRate);
   const setHasCompletedSetup = useSettingsStore((s) => s.setHasCompletedSetup);
-  // Transaction store — for retroactive rate recalculation + detecting currencies in use
-  const recalculateRatesForCurrency = useTransactionStore((s) => s.recalculateRatesForCurrency);
+  // Transaction store — for detecting currencies in use
   const transactions = useTransactionStore((s) => s.transactions);
 
   // ── Data Stores ──
@@ -165,7 +164,6 @@ export default function Settings() {
           const rate = allRates.get(currency.toUpperCase());
           if (rate != null) {
             addExchangeRate({ currency, rateToDefault: rate });
-            recalculateRatesForCurrency(currency, rate);
             updated++;
           } else {
             errors.push(`${currency}: not available via free rates provider`);
@@ -186,7 +184,6 @@ export default function Settings() {
             ? await fetchExchangeRateMassive(currency, defaultCurrency, fxApiKey)
             : await fetchExchangeRate(currency, defaultCurrency, fxApiKey);
           addExchangeRate({ currency, rateToDefault: newRate });
-          recalculateRatesForCurrency(currency, newRate);
           // Only track the daily counter for Alpha Vantage
           if (fxProvider === 'alpha-vantage') decrementFxRequests();
           updated++;
@@ -573,13 +570,13 @@ export default function Settings() {
           <div>
             <div className="flex items-center justify-between mb-2">
               <p className="text-sm font-medium text-white/70">Exchange Rates</p>
-              {fxApiKey && (exchangeRates.length > 0 || transactions.some((t) => t.currency !== defaultCurrency)) && (
+              {(fxProvider === 'boi' || fxApiKey) && (exchangeRates.length > 0 || transactions.some((t) => t.currency !== defaultCurrency)) && (
                 <Button variant="ghost" size="sm" onClick={handleRefreshAllRates} disabled={refreshingRates}>
                   {refreshingRates ? 'Refreshing...' : '🔄 Refresh All'}
                 </Button>
               )}
             </div>
-            <p className="text-xs text-white/30 mb-3">1 foreign currency = X {defaultCurrency}. Rates are updated via Refresh All using your FX API key.</p>
+            <p className="text-xs text-white/30 mb-3">1 foreign currency = X {defaultCurrency}. Rates are updated via Refresh All.</p>
 
             {exchangeRates.length > 0 ? (
               <div className="space-y-2">
@@ -591,7 +588,7 @@ export default function Settings() {
                 ))}
               </div>
             ) : (
-              <p className="text-white/30 text-sm">No exchange rates yet — use Refresh All with an FX API key to populate rates.</p>
+              <p className="text-white/30 text-sm">No exchange rates yet — use Refresh All to populate rates.</p>
             )}
           </div>
         </div>
