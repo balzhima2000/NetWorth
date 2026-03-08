@@ -158,9 +158,9 @@ export default function Settings() {
     const errors: string[] = [];
 
     if (fxProvider === 'boi') {
-      // Bank of Israel: fetch all rates in one call, no API key needed
+      // Free Rates (Frankfurter/ECB): fetch all rates in one call, no API key needed
       try {
-        const allRates = await fetchBOIExchangeRates();
+        const allRates = await fetchBOIExchangeRates(defaultCurrency);
         for (const currency of currenciesToRefresh) {
           const rate = allRates.get(currency.toUpperCase());
           if (rate != null) {
@@ -168,11 +168,11 @@ export default function Settings() {
             recalculateRatesForCurrency(currency, rate);
             updated++;
           } else {
-            errors.push(`${currency}: not published by Bank of Israel`);
+            errors.push(`${currency}: not available via free rates provider`);
           }
         }
       } catch (e: any) {
-        errors.push(`Bank of Israel: ${e.message}`);
+        errors.push(`Free Rates: ${e.message}`);
       }
     } else {
       for (const currency of currenciesToRefresh) {
@@ -450,7 +450,7 @@ export default function Settings() {
             <div className="flex items-center justify-between">
               <p className="text-sm font-semibold text-white">💱 Exchange Rates</p>
               <span className="text-xs text-white/40 bg-white/5 px-2 py-0.5 rounded-full">
-                {fxProvider === 'massive' ? 'Massive (Polygon)' : fxProvider === 'boi' ? 'Bank of Israel' : 'Alpha Vantage'}
+                {fxProvider === 'massive' ? 'Massive (Polygon)' : fxProvider === 'boi' ? 'Free Rates' : 'Alpha Vantage'}
               </span>
             </div>
             {/* Provider selector */}
@@ -467,7 +467,7 @@ export default function Settings() {
               <button
                 onClick={() => { setFxProvider('boi'); setFxKeyStatus('idle'); }}
                 className={`text-xs px-2 py-0.5 rounded-full border transition-colors ${fxProvider === 'boi' ? 'bg-[#5865f2]/20 border-[#5865f2]/50 text-white' : 'border-white/10 text-white/40 hover:text-white/70'}`}
-              >Bank of Israel 🆓</button>
+              >Free Rates 🆓</button>
             </div>
             {fxProvider === 'boi' ? (
               /* BOI needs no API key — just show Refresh button */
@@ -509,7 +509,7 @@ export default function Settings() {
             )}
             <div className="text-xs text-white/30 space-y-0.5">
               {fxProvider === 'boi'
-                ? <p className="text-white/40">Official Bank of Israel rates · updated daily · ILS only</p>
+                ? <p className="text-white/40">ECB rates via Frankfurter · updated daily · free</p>
                 : fxApiKey
                   ? <p>Requests used today: <span className="text-white/60">{fxRequestsToday}{fxProvider === 'alpha-vantage' ? '/25' : ''}</span></p>
                   : <p className="text-amber-400/60">Not configured — exchange rates not available</p>}

@@ -1,44 +1,43 @@
 /**
- * Bank of Israel (BOI) exchange rate API service.
- * Free public API — no authentication required.
- * Publishes official daily rates for 14 currencies against ILS.
+ * Free exchange rate service via Frankfurter API (api.frankfurter.app).
+ * Powered by the European Central Bank (ECB). CORS-enabled, no auth required.
+ * Covers ~33 major currencies including ILS, USD, EUR, GBP, JPY, AUD, CAD, CHF, SEK, NOK, DKK, ZAR.
  *
- * Supported currencies: USD, GBP, JPY, EUR, AUD, CAD, DKK, NOK, ZAR, SEK, CHF, JOD, LBP, EGP
- *
- * Note: All rates are TO ILS. This provider only makes sense when the app's
- * default currency is ILS.
+ * Note: The Bank of Israel's own APIs (boi.org.il) lack CORS headers and cannot be
+ * called from a browser. Frankfurter provides equivalent daily rates with CORS support.
  */
 
-const BOI_URL = 'https://www.boi.org.il/PublicApi/GetExchangeRates?asXml=false';
+const FRANKFURTER_BASE = 'https://api.frankfurter.app';
 
 /**
- * Fetch all BOI exchange rates in a single API call.
- * Returns a map of currency code → ILS per 1 unit of that currency.
- * Handles the `unit` field (e.g. JPY unit=100: rate is per 100 JPY, not per 1).
+ * Fetch all exchange rates relative to the given base currency.
+ * Returns a map of currency code → rateToDefault
+ * (how many baseCurrency units equal 1 unit of that currency).
  */
-export async function fetchBOIExchangeRates(): Promise<Map<string, number>> {
-  const res = await fetch(BOI_URL);
-  if (!res.ok) throw new Error(`Bank of Israel API error: HTTP ${res.status}`);
+export async function fetchBOIExchangeRates(baseCurrency: string): Promise<Map<string, number>> {
+  const url = `${FRANKFURTER_BASE}/latest?from=${encodeURIComponent(baseCurrency.toUpperCase())}`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`Frankfurter API error: HTTP ${res.status}`);
   const data = await res.json();
   const map = new Map<string, number>();
-  for (const entry of data.exchangeRates ?? []) {
-    const rate = (entry.currentExchangeRate as number) / (entry.unit as number);
-    map.set(entry.key as string, rate);
+  for (const [currency, rate] of Object.entries(data.rates as Record<string, number>)) {
+    // data.rates[X] = "how many X per 1 baseCurrency"
+    // rateToDefault = "how many baseCurrency per 1 X" = 1 / data.rates[X]
+    map.set(currency, 1 / (rate as number));
   }
   return map;
 }
 
 /**
- * Fetch the ILS rate for a single currency.
- * Makes one BOI API call (fetches all currencies) then returns the requested one.
+ * Fetch the rate for a single currency relative to baseCurrency.
  */
-export async function fetchBOIExchangeRate(currency: string): Promise<number> {
-  const rates = await fetchBOIExchangeRates();
+export async function fetchBOIExchangeRate(currency: string, baseCurrency: string): Promise<number> {
+  const rates = await fetchBOIExchangeRates(baseCurrency);
   const rate = rates.get(currency.toUpperCase());
   if (rate == null) {
     throw new Error(
-      `Bank of Israel does not publish rates for ${currency}. ` +
-      `Supported: USD, EUR, GBP, JPY, AUD, CAD, CHF, SEK, NOK, DKK, JOD, EGP, LBP, ZAR`
+      `Frankfurter does not publish rates for ${currency}. ` +
+      `Supported: USD, EUR, GBP, JPY, AUD, CAD, CHF, SEK, NOK, DKK, ZAR, ILS, and more.`
     );
   }
   return rate;
