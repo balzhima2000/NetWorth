@@ -15,6 +15,8 @@ import { calculateCurrentHoldings } from '../../utils/calculations';
 import { ASSET_CATEGORIES, ALPHA_VANTAGE_MAX_REQUESTS, CURRENCIES } from '../../utils/constants';
 import { fetchStockQuote, searchSymbol, fetchExchangeRate, fetchHistoricalPrice } from '../../services/alphaVantage';
 import { fetchTaseSecurityPrice, fetchTaseHistoricalPrice } from '../../services/taseDataHub';
+import { ExcelImportModal } from './ExcelImportModal';
+import type { ImportRow } from '../../services/excelImport';
 import type { StockTrade, CurrentHolding } from '../../types/index';
 
 type AssetCategory = 'stocks' | 'bonds' | 'crypto' | 'other';
@@ -94,6 +96,8 @@ export default function Portfolio() {
   const [tradeMkt, setTradeMkt] = useState<'global' | 'tase'>('global');
   const [deleteTradeId, setDeleteTradeId] = useState<string | null>(null);
   const [showSwitchConfirm, setShowSwitchConfirm] = useState(false);
+
+  const [showExcelImport, setShowExcelImport] = useState(false);
 
   const [showAllocationModal, setShowAllocationModal] = useState(false);
   const [allocMode, setAllocMode] = useState<'none' | 'category' | 'individual'>(allocationMode);
@@ -316,6 +320,27 @@ export default function Portfolio() {
     toast.success('Allocation targets saved.');
   };
 
+  const handleExcelImport = (rows: ImportRow[]) => {
+    rows.forEach((row) => {
+      addTrade({
+        id: crypto.randomUUID(),
+        ticker: row.ticker,
+        name: row.name,
+        quantity: row.quantity,
+        buyPrice: row.avgCost,
+        buyDate: row.buyDate,
+        sellPrice: null,
+        sellDate: null,
+        assetCategory: row.assetCategory,
+        notes: '',
+        market: row.market,
+      });
+    });
+    toast.success(
+      `Imported ${rows.length} holding${rows.length !== 1 ? 's' : ''} — click Refresh Prices to fetch live quotes`
+    );
+  };
+
   const drawerTrades = drawerTicker
     ? trades.filter((t) => t.ticker === drawerTicker).sort((a, b) => b.buyDate.localeCompare(a.buyDate))
     : [];
@@ -361,6 +386,7 @@ export default function Portfolio() {
             </div>
             <div className="flex flex-wrap gap-2">
               <Button variant="primary" onClick={() => openAddTrade()}>+ Add Trade</Button>
+              <Button variant="secondary" onClick={() => setShowExcelImport(true)}>📥 Import Excel</Button>
               <Button variant="secondary" onClick={handleRefreshPrices} disabled={!canRefreshPrices || refreshing}>
                 {refreshing ? '⏳ Refreshing...' : '🔄 Refresh Prices'}
               </Button>
@@ -671,6 +697,14 @@ export default function Portfolio() {
 
       <ConfirmDialog isOpen={showSwitchConfirm} onClose={() => setShowSwitchConfirm(false)} onConfirm={handleSwitchToDetailed} title="Switch to Detailed Portfolio" message="This will remove your Portfolio placeholder asset and let you enter individual stock trades. Are you sure?" confirmLabel="Switch" confirmVariant="primary" />
       <ConfirmDialog isOpen={!!deleteTradeId} onClose={() => setDeleteTradeId(null)} onConfirm={() => { if (deleteTradeId) { deleteTrade(deleteTradeId); setDeleteTradeId(null); } }} title="Delete Trade" message="Delete this trade? This cannot be undone." confirmLabel="Delete" confirmVariant="danger" />
+
+      {/* Excel import modal */}
+      <ExcelImportModal
+        isOpen={showExcelImport}
+        onClose={() => setShowExcelImport(false)}
+        existingTrades={trades}
+        onImport={handleExcelImport}
+      />
     </div>
   );
 }
