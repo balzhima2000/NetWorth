@@ -5,6 +5,7 @@ import { formatCurrency, getTodayISO } from '../../utils/formatters';
 import { parsePortfolioExcel } from '../../services/excelImport';
 import type { ImportRow } from '../../services/excelImport';
 import type { StockTrade } from '../../types/index';
+import { useSettingsStore } from '../../stores/settingsStore';
 
 type AssetCategory = 'stocks' | 'bonds' | 'crypto' | 'other';
 
@@ -23,6 +24,8 @@ export function ExcelImportModal({
   existingTrades,
   onImport,
 }: ExcelImportModalProps) {
+  const { defaultCurrency, exchangeRates } = useSettingsStore();
+
   const [rows, setRows] = useState<ImportRow[]>([]);
   const [parsing, setParsing] = useState(false);
   const [parseError, setParseError] = useState<string | null>(null);
@@ -38,7 +41,7 @@ export function ExcelImportModal({
     setParsing(true);
     setParseError(null);
     try {
-      const parsed = await parsePortfolioExcel(file, existingTrades);
+      const parsed = await parsePortfolioExcel(file, existingTrades, defaultCurrency, exchangeRates);
       if (parsed.length === 0) throw new Error('No holdings found in file. Make sure the sheet has the expected column headers.');
       setRows(parsed);
     } catch (err: any) {
@@ -64,6 +67,7 @@ export function ExcelImportModal({
   const selectedRows = rows.filter((r) => r.selected);
   const conflictCount = rows.filter((r) => r.hasConflict).length;
   const selectedConflicts = selectedRows.filter((r) => r.hasConflict).length;
+  const noRateCount = rows.filter((r) => r.noRateAvailable).length;
 
   /* ── Actions ── */
   const handleConfirm = () => {
@@ -161,6 +165,11 @@ export function ExcelImportModal({
                   · ⚠️ {conflictCount} ticker{conflictCount > 1 ? 's' : ''} already in portfolio
                 </span>
               )}
+              {noRateCount > 0 && (
+                <span className="ml-2 text-orange-400">
+                  · ⚠️ {noRateCount} holding{noRateCount > 1 ? 's' : ''} missing exchange rate
+                </span>
+              )}
             </div>
             <Button variant="ghost" size="sm" onClick={resetState}>
               Change file
@@ -221,17 +230,31 @@ export function ExcelImportModal({
                         {row.quantity.toLocaleString()}
                       </td>
 
-                      {/* Avg Cost */}
-                      <td className="py-2.5 pr-3 text-right font-mono text-white text-xs">
-                        {fmtNum(row.avgCost, row.currency)}
+                      {/* Avg Cost — stored value (in defaultCurrency) with native-currency subtitle */}
+                      <td className="py-2.5 pr-3 text-right font-mono text-xs">
+                        {row.noRateAvailable ? (
+                          <>
+                            <div className="text-orange-400">{fmtNum(row.rawAvgCost, row.currency)}</div>
+                            <div className="text-orange-400/70 text-[10px]">⚠️ no rate</div>
+                          </>
+                        ) : (
+                          <>
+                            <div className="text-white">{fmtNum(row.avgCost, defaultCurrency)}</div>
+                            {row.conversionRate !== null && (
+                              <div className="text-white/40 text-[10px]">
+                                {fmtNum(row.rawAvgCost, row.currency)}
+                              </div>
+                            )}
+                          </>
+                        )}
                       </td>
 
-                      {/* Last Rate (preview-only) */}
+                      {/* Last Rate (preview-only, in native currency) */}
                       <td className="py-2.5 pr-3 text-right font-mono text-white/60 text-xs">
-                        {fmtNum(row.lastRate, row.currency)}
+                        {fmtNum(row.rawLastRate, row.currency)}
                       </td>
 
-                      {/* Total Value (preview-only) */}
+                      {/* Total Value (preview-only, broker-reported) */}
                       <td className="py-2.5 pr-3 text-right font-mono text-white/60 text-xs">
                         {fmtNum(row.totalValue, row.currency)}
                       </td>
@@ -298,11 +321,11 @@ export function ExcelImportModal({
                         <td />
                         <td colSpan={11} className="pb-2 text-xs text-yellow-400/80 leading-relaxed">
                           ⚠️ <span className="font-mono">{row.ticker}</span> already in portfolio&nbsp;
-                          ({row.existingQty.toLocaleString()} shares&nbsp;@&nbsp;{fmtNum(row.existingBlendedCost, row.currency)}&nbsp;avg).
+                          ({row.existingQty.toLocaleString()} shares&nbsp;@&nbsp;{fmtNum(row.existingBlendedCost, defaultCurrency)}&nbsp;avg).
                           &nbsp;After import:&nbsp;
                           <span className="text-yellow-300 font-medium">
                             {row.projectedQty.toLocaleString()} shares&nbsp;@&nbsp;
-                            {fmtNum(row.projectedBlendedCost, row.currency)}&nbsp;blended avg
+                            {fmtNum(row.projectedBlendedCost, defaultCurrency)}&nbsp;blended avg
                           </span>
                         </td>
                       </tr>
@@ -315,7 +338,8 @@ export function ExcelImportModal({
 
           {/* Info note */}
           <p className="text-white/30 text-xs">
-            💡 Columns shown in grey (Last Rate, Total Value, P&L, Yield, Position&nbsp;%) are for reference only and will not be stored.
+            💡 Avg Cost is stored in {defaultCurrency} (converted from native currency where applicable).
+            Columns shown in grey (Last Rate, Total Value, P&L, Yield, Position&nbsp;%) are for reference only and will not be stored.
             After importing, click <span className="text-white/50 font-medium">🔄 Refresh Prices</span> to fetch live quotes from the API.
           </p>
         </div>
