@@ -36,6 +36,29 @@ The Bank of Israel's own APIs (`boi.org.il`, `edge.boi.org.il`) were tested and 
 
 **Frankfurter rate formula**: `GET /latest?from=<baseCurrency>` → `data.rates[X]` = "how many X per 1 baseCurrency" → `rateToDefault = 1 / data.rates[currency]`
 
+## Portfolio price policy
+
+**Rule: user-entered trade prices are immutable. API refresh only updates the current-price lookup.**
+
+Two separate price concepts exist:
+
+| Field | Location | Set by | Ever overwritten by API? |
+|---|---|---|---|
+| `buyPrice` / `sellPrice` | `StockTrade` (persisted) | User entry only (`handleSaveTrade`) | ❌ Never |
+| `currentPrices[ticker]` | `portfolioStore` (persisted) | "Refresh Prices" only (`handleRefreshPrices`) | ✅ Yes, intentional |
+
+- **Refresh Prices** calls `updateCurrentPrice(ticker, price)` → modifies only `currentPrices` + `lastPriceUpdates`. It never calls `updateTrade` or touches any `StockTrade` field.
+- `CurrentHolding` is **not stored** — it is computed on-demand by `calculateCurrentHoldings(trades, currentPrices, lastPriceUpdates)`. When `currentPrices[ticker]` is absent (no refresh yet), `currentPrice` falls back to `blendedCostBasis` (the weighted average buy price from trades).
+- `setCurrentPrices` was removed as dead code — it was defined in the store but never called anywhere.
+
+### API keys & which holdings they cover
+| API key | Provider | Holdings covered |
+|---|---|---|
+| `stocksApiKey` | Alpha Vantage | `market === 'global'` holdings |
+| `israeliApiKey` | TASE DataHub | `market === 'tase'` holdings |
+
+"Refresh Prices" is enabled if the user has either key with relevant holdings (not gated on `stocksApiKey` alone).
+
 ## Auto-push
 All committed fixes are automatically pushed to the remote (`git push` after every commit).
 
@@ -50,7 +73,7 @@ src/
     settingsStore.ts   — Settings, exchange rates table, API key tracking
     transactionStore.ts — Transactions (no recalculation functions)
     recurringStore.ts  — Recurring payments & installment plans (CRUD only)
-    portfolioStore.ts  — Stock trades
+    portfolioStore.ts  — Stock trades + currentPrices lookup (separate from buyPrice)
   pages/
     Settings/index.tsx — All settings UI including FX provider config & Refresh All
   types/index.ts       — All TypeScript interfaces (Transaction, RecurringPayment, etc.)

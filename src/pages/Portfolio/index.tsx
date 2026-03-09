@@ -69,6 +69,11 @@ export default function Portfolio() {
   const [refreshProgress, setRefreshProgress] = useState('');
   const requestsRemaining = ALPHA_VANTAGE_MAX_REQUESTS - stocksRequestsToday;
 
+  // Can refresh if there are global holdings with a stocks API key + quota, or TASE holdings with an Israeli API key
+  const hasRefreshableGlobal = holdings.some((h) => (h.market ?? 'global') === 'global') && !!stocksApiKey && requestsRemaining > 0;
+  const hasRefreshableTase = holdings.some((h) => h.market === 'tase') && !!israeliApiKey;
+  const canRefreshPrices = hasRefreshableGlobal || hasRefreshableTase;
+
   const [showTradeModal, setShowTradeModal] = useState(false);
   const [editingTrade, setEditingTrade] = useState<StockTrade | null>(null);
   const [drawerTicker, setDrawerTicker] = useState<string | null>(null);
@@ -356,7 +361,7 @@ export default function Portfolio() {
             </div>
             <div className="flex flex-wrap gap-2">
               <Button variant="primary" onClick={() => openAddTrade()}>+ Add Trade</Button>
-              <Button variant="secondary" onClick={handleRefreshPrices} disabled={!stocksApiKey || refreshing || requestsRemaining <= 0}>
+              <Button variant="secondary" onClick={handleRefreshPrices} disabled={!canRefreshPrices || refreshing}>
                 {refreshing ? '⏳ Refreshing...' : '🔄 Refresh Prices'}
               </Button>
               <Button variant="ghost" onClick={() => {
@@ -367,8 +372,8 @@ export default function Portfolio() {
                 ⚖️ Allocation
               </Button>
             </div>
-            {!stocksApiKey && <p className="text-white/30 text-xs">Add a Stocks API key in Settings to enable live price refresh</p>}
-            {stocksApiKey && <p className="text-white/30 text-xs">{requestsRemaining}/{ALPHA_VANTAGE_MAX_REQUESTS} API requests remaining today</p>}
+            {!canRefreshPrices && !refreshing && <p className="text-white/30 text-xs">Add a Stocks or TASE API key in Settings to enable live price refresh</p>}
+            {stocksApiKey && <p className="text-white/30 text-xs">{requestsRemaining}/{ALPHA_VANTAGE_MAX_REQUESTS} global API requests remaining today</p>}
             {refreshProgress && <p className="text-[#00d632] text-xs animate-pulse">{refreshProgress}</p>}
           </div>
 

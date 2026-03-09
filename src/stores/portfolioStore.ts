@@ -10,7 +10,6 @@ interface PortfolioStore {
   updateTrade: (id: string, updates: Partial<StockTrade>) => void;
   deleteTrade: (id: string) => void;
   updateCurrentPrice: (ticker: string, price: number) => void;
-  setCurrentPrices: (prices: Record<string, number>) => void;
 }
 
 export const usePortfolioStore = create<PortfolioStore>()(
@@ -34,18 +33,6 @@ export const usePortfolioStore = create<PortfolioStore>()(
             [ticker]: new Date().toISOString(),
           },
         })),
-      setCurrentPrices: (prices) =>
-        set((state) => {
-          const now = new Date().toISOString();
-          const updates: Record<string, string> = {};
-          Object.keys(prices).forEach((ticker) => {
-            updates[ticker] = now;
-          });
-          return {
-            currentPrices: { ...state.currentPrices, ...prices },
-            lastPriceUpdates: { ...state.lastPriceUpdates, ...updates },
-          };
-        }),
     }),
     { name: 'nw-portfolio' }
   )
