@@ -2,6 +2,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { useCardsStore } from '../../stores/cardsStore';
+import { usePortfolioStore } from '../../stores/portfolioStore';
 import { Button } from '../../components/ui';
 import { GlassCard } from '../../components/ui';
 
@@ -15,6 +16,7 @@ export default function Step7Done({ onComplete }: Step7DoneProps) {
   const portfolioMode = useSettingsStore((s) => s.portfolioMode);
   const fireTarget = useSettingsStore((s) => s.fireTarget);
   const cards = useCardsStore((s) => s.cards);
+  const holdingCount = usePortfolioStore((s) => s.trades.filter((t) => t.sellPrice === null).length);
 
   const handleGoDashboard = () => {
     onComplete();
@@ -41,6 +43,15 @@ export default function Step7Done({ onComplete }: Step7DoneProps) {
           <div>
             <p className="text-white/60 text-sm">Portfolio</p>
             <p className="text-white font-medium capitalize">{portfolioMode}</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-3">
+          <span className="text-2xl">✅</span>
+          <div>
+            <p className="text-white/60 text-sm">Holdings</p>
+            <p className="text-white font-medium">
+              {holdingCount > 0 ? `${holdingCount} holding${holdingCount !== 1 ? 's' : ''} imported` : 'None imported'}
+            </p>
           </div>
         </div>
         <div className="flex items-center gap-3">
