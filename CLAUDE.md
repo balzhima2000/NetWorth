@@ -28,7 +28,7 @@
 
 | Value | Provider | Auth | Notes |
 |---|---|---|---|
-| `'boi'` | **Frankfurter** (`api.frankfurter.app`) | None (free) | ECB-backed, CORS-enabled, ~33 currencies |
+| `'boi'` | **Frankfurter** (`api.frankfurter.app`) | None (free) | ECB-backed, CORS-enabled, ~33 currencies. Service file: `frankfurterApi.ts` |
 | `'alpha-vantage'` | Alpha Vantage | `fxApiKey` | 25 req/day free tier |
 | `'massive'` | Massive/Polygon | `fxApiKey` | No daily cap |
 
@@ -102,7 +102,7 @@ All committed fixes are automatically pushed to the remote (`git push` after eve
 ```
 src/
   services/
-    boiApi.ts               — Frankfurter FX fetching
+    frankfurterApi.ts       — Frankfurter FX fetching (fetchFrankfurterRates, fetchFrankfurterRate)
     alphaVantageApi.ts      — Alpha Vantage FX fetching
     massiveApi.ts           — Massive/Polygon FX fetching
     excelImport.ts          — Broker .xlsx parsing → ImportRow[]

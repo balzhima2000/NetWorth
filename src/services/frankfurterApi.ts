@@ -14,7 +14,7 @@ const FRANKFURTER_BASE = 'https://api.frankfurter.app';
  * Returns a map of currency code → rateToDefault
  * (how many baseCurrency units equal 1 unit of that currency).
  */
-export async function fetchBOIExchangeRates(baseCurrency: string): Promise<Map<string, number>> {
+export async function fetchFrankfurterRates(baseCurrency: string): Promise<Map<string, number>> {
   const url = `${FRANKFURTER_BASE}/latest?from=${encodeURIComponent(baseCurrency.toUpperCase())}`;
   const res = await fetch(url);
   if (!res.ok) throw new Error(`Frankfurter API error: HTTP ${res.status}`);
@@ -31,8 +31,8 @@ export async function fetchBOIExchangeRates(baseCurrency: string): Promise<Map<s
 /**
  * Fetch the rate for a single currency relative to baseCurrency.
  */
-export async function fetchBOIExchangeRate(currency: string, baseCurrency: string): Promise<number> {
-  const rates = await fetchBOIExchangeRates(baseCurrency);
+export async function fetchFrankfurterRate(currency: string, baseCurrency: string): Promise<number> {
+  const rates = await fetchFrankfurterRates(baseCurrency);
   const rate = rates.get(currency.toUpperCase());
   if (rate == null) {
     throw new Error(

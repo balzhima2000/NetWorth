@@ -6,6 +6,7 @@ import { parsePortfolioExcel } from '../../services/excelImport';
 import type { ImportRow } from '../../services/excelImport';
 import type { StockTrade } from '../../types/index';
 import { useSettingsStore } from '../../stores/settingsStore';
+import { fetchFrankfurterRate } from '../../services/frankfurterApi';
 
 type AssetCategory = 'stocks' | 'bonds' | 'crypto' | 'other';
 
@@ -24,10 +25,11 @@ export function ExcelImportModal({
   existingTrades,
   onImport,
 }: ExcelImportModalProps) {
-  const { defaultCurrency, exchangeRates } = useSettingsStore();
+  const { defaultCurrency, exchangeRates, addExchangeRate } = useSettingsStore();
 
   const [rows, setRows] = useState<ImportRow[]>([]);
   const [parsing, setParsing] = useState(false);
+  const [parseStatus, setParseStatus] = useState('');
   const [parseError, setParseError] = useState<string | null>(null);
   const [fileName, setFileName] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -39,11 +41,32 @@ export function ExcelImportModal({
     e.target.value = '';
     setFileName(file.name);
     setParsing(true);
+    setParseStatus(`Parsing ${file.name}…`);
     setParseError(null);
     try {
       const parsed = await parsePortfolioExcel(file, existingTrades, defaultCurrency, exchangeRates);
       if (parsed.length === 0) throw new Error('No holdings found in file. Make sure the sheet has the expected column headers.');
-      setRows(parsed);
+
+      // Auto-fetch any exchange rates that are missing from the store
+      const missingCurrencies = [...new Set(parsed.filter((r) => r.noRateAvailable).map((r) => r.currency))];
+      if (missingCurrencies.length > 0) {
+        setParseStatus('Fetching exchange rates…');
+        const updatedRates = [...exchangeRates];
+        for (const currency of missingCurrencies) {
+          try {
+            const rateToDefault = await fetchFrankfurterRate(currency, defaultCurrency);
+            const newRate = { currency, rateToDefault };
+            addExchangeRate(newRate);
+            updatedRates.push(newRate);
+          } catch {
+            // Leave as noRateAvailable — currency not supported by Frankfurter
+          }
+        }
+        const reparsed = await parsePortfolioExcel(file, existingTrades, defaultCurrency, updatedRates);
+        setRows(reparsed);
+      } else {
+        setRows(parsed);
+      }
     } catch (err: any) {
       setParseError(err.message ?? 'Failed to parse file');
     } finally {
@@ -148,7 +171,7 @@ export function ExcelImportModal({
       {/* ── Parsing spinner ── */}
       {parsing && (
         <div className="flex flex-col items-center justify-center py-16 gap-3">
-          <p className="text-white/50 text-sm">Parsing {fileName}…</p>
+          <p className="text-white/50 text-sm">{parseStatus}</p>
         </div>
       )}
 

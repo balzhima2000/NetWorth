@@ -14,7 +14,7 @@ import { formatCurrency, formatDate } from '../../utils/formatters';
 import { CURRENCIES, CARD_COLORS, MANUAL_ASSET_CATEGORIES, MANUAL_LIABILITY_CATEGORIES } from '../../utils/constants';
 import { testApiKey, fetchExchangeRate } from '../../services/alphaVantage';
 import { testMassiveKey, fetchExchangeRateMassive } from '../../services/massiveApi';
-import { fetchBOIExchangeRates } from '../../services/boiApi';
+import { fetchFrankfurterRates } from '../../services/frankfurterApi';
 import { testTaseKey } from '../../services/taseDataHub';
 import { exportFullBackup, exportTransactionsCSV, parseBackup } from '../../services/exportImport';
 import type { SpendingCategory, Card, ManualEntry } from '../../types/index';
@@ -159,7 +159,7 @@ export default function Settings() {
     if (fxProvider === 'boi') {
       // Free Rates (Frankfurter/ECB): fetch all rates in one call, no API key needed
       try {
-        const allRates = await fetchBOIExchangeRates(defaultCurrency);
+        const allRates = await fetchFrankfurterRates(defaultCurrency);
         for (const currency of currenciesToRefresh) {
           const rate = allRates.get(currency.toUpperCase());
           if (rate != null) {
