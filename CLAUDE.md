@@ -38,18 +38,24 @@ The Bank of Israel's own APIs (`boi.org.il`, `edge.boi.org.il`) were tested and 
 
 ## Portfolio price policy
 
-**Rule: user-entered trade prices are immutable. API refresh only updates the current-price lookup.**
+**Rule: prices are stored in native currency. Conversion to `defaultCurrency` happens at display time only.**
 
 Two separate price concepts exist:
 
-| Field | Location | Set by | Ever overwritten by API? |
-|---|---|---|---|
-| `buyPrice` / `sellPrice` | `StockTrade` (persisted) | User entry only (`handleSaveTrade`) | ❌ Never |
-| `currentPrices[ticker]` | `portfolioStore` (persisted) | "Refresh Prices" only (`handleRefreshPrices`) | ✅ Yes, intentional |
+| Field | Location | Set by | Currency | Ever overwritten by API? |
+|---|---|---|---|---|
+| `buyPrice` / `sellPrice` | `StockTrade` (persisted) | User entry only (`handleSaveTrade`) | Native (e.g. USD, ILS) | ❌ Never |
+| `currentPrices[ticker]` | `portfolioStore` (persisted) | "Refresh Prices" or Excel import | Native currency | ✅ Yes, intentional |
 
-- **Refresh Prices** calls `updateCurrentPrice(ticker, price)` → modifies only `currentPrices` + `lastPriceUpdates`. It never calls `updateTrade` or touches any `StockTrade` field.
-- `CurrentHolding` is **not stored** — it is computed on-demand by `calculateCurrentHoldings(trades, currentPrices, lastPriceUpdates)`. When `currentPrices[ticker]` is absent (no refresh yet), `currentPrice` falls back to `blendedCostBasis` (the weighted average buy price from trades).
-- `setCurrentPrices` was removed as dead code — it was defined in the store but never called anywhere.
+- `StockTrade.currency` (required) — the native price currency, e.g. `'USD'` for global stocks, `'ILS'` for TASE.
+- **portfolioStore v1 migration** — existing trades without `currency` get it inferred: `market === 'tase'` → `'ILS'`, else `'USD'`.
+- **Excel import** seeds `currentPrices[ticker]` from col C (Last Rate) so gain is visible immediately without a manual refresh.
+- **Refresh Prices** calls `updateCurrentPrice(ticker, price)` → modifies only `currentPrices` + `lastPriceUpdates`. Never touches `StockTrade` fields.
+- `CurrentHolding` is **not stored** — computed on-demand by `calculateCurrentHoldings(trades, currentPrices, lastPriceUpdates, exchangeRates)`.
+  - `blendedCostBasis` and `currentPrice` → native currency
+  - `currentValue`, `costBasisTotal`, `unrealizedGain` → `defaultCurrency` (converted via `exchangeRates`)
+  - `unrealizedGainPercent` → % based on native prices (currency-neutral)
+  - When `currentPrices[ticker]` is absent, `currentPrice` falls back to `blendedCostBasis` (0% gain).
 
 ### API keys & which holdings they cover
 | API key | Provider | Holdings covered |
