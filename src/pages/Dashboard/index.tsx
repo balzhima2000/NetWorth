@@ -32,6 +32,7 @@ export default function Dashboard() {
 
   const fireTarget = useSettingsStore((s) => s.fireTarget);
   const defaultCurrency = useSettingsStore((s) => s.defaultCurrency);
+  const exchangeRates = useSettingsStore((s) => s.exchangeRates);
   const userNickname = useSettingsStore((s) => s.userNickname);
   const activityFeedShowTransactions = useSettingsStore((s) => s.activityFeedShowTransactions);
   const activityFeedShowRecurring = useSettingsStore((s) => s.activityFeedShowRecurring);
@@ -41,8 +42,8 @@ export default function Dashboard() {
 
   // Calculate current net worth
   const holdings = useMemo(
-    () => calculateCurrentHoldings(trades, currentPrices, lastPriceUpdates),
-    [trades, currentPrices, lastPriceUpdates]
+    () => calculateCurrentHoldings(trades, currentPrices, lastPriceUpdates, exchangeRates),
+    [trades, currentPrices, lastPriceUpdates, exchangeRates]
   );
   const portfolioValue = holdings.reduce((sum, h) => sum + h.currentValue, 0);
   const assetsTotal = manualEntries.filter((e) => !e.isLiability).reduce((sum, e) => sum + e.value, 0);

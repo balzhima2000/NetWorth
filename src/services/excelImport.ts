@@ -1,28 +1,21 @@
 import * as XLSX from 'xlsx';
 import { getTodayISO } from '../utils/formatters';
-import type { StockTrade, ExchangeRate } from '../types/index';
+import type { StockTrade } from '../types/index';
 
 type AssetCategory = 'stocks' | 'bonds' | 'crypto' | 'other';
 
 export interface ImportRow {
-  // Stored on import (in default currency)
+  // Stored on import (in native currency)
   ticker: string;
   name: string;
   quantity: number;
-  avgCost: number;        // → StockTrade.buyPrice, converted to defaultCurrency
+  buyPrice: number;       // native currency, agorot-normalized
   market: 'global' | 'tase';
-
-  // Original values (in native currency, agorot normalized to ILS) — display only
-  rawAvgCost: number;     // col L, agorot→ILS if TASE
-  rawLastRate: number;    // col C, agorot→ILS if TASE
-
-  // Currency info
-  currency: string;       // col N — native currency (USD, ILS, …)
-  conversionRate: number | null;  // exchange rate applied (null = same as default currency)
-  noRateAvailable: boolean;       // true when currency ≠ defaultCurrency but no rate found in store
+  currency: string;       // native currency (USD, ILS, GBP, …)
 
   // Display-only (not stored) — values as-is from broker
-  totalValue: number;     // col H — broker total value (already in base unit, not agorot)
+  rawLastRate: number;    // col C, agorot-normalized
+  totalValue: number;     // col H — broker total value (already in base unit)
   totalPL: number;        // col F — total P/L (already in base unit)
   totalYield: number;     // col G — % yield
   positionRatio: number;  // col M — portfolio weight %
@@ -34,9 +27,9 @@ export interface ImportRow {
   // Conflict detection
   hasConflict: boolean;
   existingQty: number;
-  existingBlendedCost: number;
+  existingBlendedCost: number;  // in native currency
   projectedQty: number;
-  projectedBlendedCost: number;
+  projectedBlendedCost: number; // in native currency
 
   // Row state
   selected: boolean;
@@ -72,19 +65,12 @@ function toNum(raw: unknown): number {
 /**
  * Parse a broker portfolio .xlsx file into ImportRow objects.
  *
- * Normalisation rules applied:
- *  1. TASE stocks (currency = ILS): Last rate & Average cost are in AGOROT
- *     (1/100 of a shekel). Divide by 100 to get ILS.
- *     Note: Total value and Total p/l are already in ILS — no conversion needed.
- *  2. Foreign-currency stocks (e.g. USD): multiply Average cost by the stored
- *     rateToDefault exchange rate to convert to the user's default currency.
- *     If no rate is found the raw value is kept and `noRateAvailable` is set.
+ * Prices are stored in the stock's native currency — no conversion needed.
+ * Agorot normalisation is applied for TASE stocks (÷100 for Last rate and Average cost).
  */
 export async function parsePortfolioExcel(
   file: File,
   existingTrades: StockTrade[],
-  defaultCurrency: string,
-  exchangeRates: ExchangeRate[],
 ): Promise<ImportRow[]> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -96,7 +82,7 @@ export async function parsePortfolioExcel(
         const ws = wb.Sheets[wb.SheetNames[0]];
         const rawRows = XLSX.utils.sheet_to_json<Record<string, unknown>>(ws, { defval: null });
 
-        // Build existing position map: ticker → { totalQty, totalCost (in default currency) }
+        // Build existing position map: ticker → { totalQty, totalCost (native currency) }
         const posMap: Record<string, { qty: number; cost: number }> = {};
         for (const t of existingTrades) {
           if (t.sellPrice !== null) continue;
@@ -127,49 +113,30 @@ export async function parsePortfolioExcel(
           const totalPL = toNum(row['Total p/l']);
           const totalYield = toNum(row['Total yield']);
 
-          // ── Step 1: Normalise agorot → ILS for TASE stocks ──────────────────
+          // ── Normalise agorot → ILS for TASE stocks ───────────────────────────
           // Israeli brokers quote Last rate and Average cost in agorot (1/100 ₪).
           // Total value and Total p/l are already expressed in ILS.
-          const rawAvgCost = currency === 'ILS' ? rawAvgCostExcel / 100 : rawAvgCostExcel;
+          const buyPrice = currency === 'ILS' ? rawAvgCostExcel / 100 : rawAvgCostExcel;
           const rawLastRate = currency === 'ILS' ? rawLastRateExcel / 100 : rawLastRateExcel;
 
-          // ── Step 2: Convert to default currency ──────────────────────────────
-          let avgCost = rawAvgCost;
-          let conversionRate: number | null = null;
-          let noRateAvailable = false;
-
-          if (currency !== defaultCurrency) {
-            const rate = exchangeRates.find((r) => r.currency === currency);
-            if (rate) {
-              avgCost = rawAvgCost * rate.rateToDefault;
-              conversionRate = rate.rateToDefault;
-            } else {
-              // No stored rate — keep raw value but flag it so the user knows
-              noRateAvailable = true;
-            }
-          }
-
-          // ── Conflict detection (using converted avgCost so blending is apples-to-apples) ──
+          // ── Conflict detection (in native currency) ────────────────────────────
           const existing = posMap[ticker];
           const hasConflict = !!existing;
           const existingQty = existing?.qty ?? 0;
           const existingBlendedCost = existing ? existing.cost / existing.qty : 0;
           const projectedQty = existingQty + quantity;
           const projectedBlendedCost = hasConflict
-            ? (existing.cost + quantity * avgCost) / projectedQty
-            : avgCost;
+            ? (existing.cost + quantity * buyPrice) / projectedQty
+            : buyPrice;
 
           rows.push({
             ticker,
             name,
             quantity,
-            avgCost,           // stored value (in defaultCurrency)
+            buyPrice,
             market,
-            rawAvgCost,        // display value (native currency, normalised)
-            rawLastRate,       // display value (native currency, normalised)
             currency,
-            conversionRate,
-            noRateAvailable,
+            rawLastRate,
             totalValue,
             totalPL,
             totalYield,

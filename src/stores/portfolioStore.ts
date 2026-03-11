@@ -34,6 +34,18 @@ export const usePortfolioStore = create<PortfolioStore>()(
           },
         })),
     }),
-    { name: 'nw-portfolio' }
+    {
+      name: 'nw-portfolio',
+      version: 1,
+      migrate: (persisted: any, version: number) => {
+        if (version < 1) {
+          persisted.trades = (persisted.trades ?? []).map((t: any) => ({
+            ...t,
+            currency: t.currency ?? (t.market === 'tase' ? 'ILS' : 'USD'),
+          }));
+        }
+        return persisted;
+      },
+    }
   )
 );

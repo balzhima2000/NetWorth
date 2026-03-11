@@ -6,13 +6,14 @@ export interface StockTrade {
   ticker: string;
   name: string;
   quantity: number;
-  buyPrice: number;
+  buyPrice: number;         // in native currency (e.g. USD for AMD, ILS for TASE)
   buyDate: string; // ISO date string
   sellPrice: number | null;
   sellDate: string | null;
   notes: string;
   assetCategory: 'stocks' | 'bonds' | 'crypto' | 'other';
   market?: 'global' | 'tase'; // undefined = 'global' (backwards-compatible)
+  currency: string;         // native price currency, e.g. 'USD', 'ILS', 'GBP'
 }
 
 export interface CurrentHolding {
@@ -20,13 +21,14 @@ export interface CurrentHolding {
   name: string;
   assetCategory: 'stocks' | 'bonds' | 'crypto' | 'other';
   market: 'global' | 'tase';
+  currency: string;              // native currency of the stock
   sharesHeld: number;
-  blendedCostBasis: number; // weighted avg buy price
-  currentPrice: number;
-  currentValue: number;
-  costBasisTotal: number;
-  unrealizedGain: number;
-  unrealizedGainPercent: number;
+  blendedCostBasis: number;      // weighted avg buy price in native currency
+  currentPrice: number;          // current price in native currency
+  currentValue: number;          // sharesHeld × currentPrice × rateToDefault (defaultCurrency)
+  costBasisTotal: number;        // sharesHeld × blendedCostBasis × rateToDefault (defaultCurrency)
+  unrealizedGain: number;        // currentValue - costBasisTotal (defaultCurrency)
+  unrealizedGainPercent: number; // (currentPrice - blendedCostBasis) / blendedCostBasis × 100
   portfolioPercent: number;
   lastPriceUpdate: string | null; // ISO datetime
 }

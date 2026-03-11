@@ -13,7 +13,7 @@ import { AllocationPieChart } from '../../components/charts/AllocationPieChart';
 import { formatCurrency, formatDate, formatRelativeTime, getTodayISO } from '../../utils/formatters';
 import { calculateCurrentHoldings } from '../../utils/calculations';
 import { ASSET_CATEGORIES, ALPHA_VANTAGE_MAX_REQUESTS, CURRENCIES } from '../../utils/constants';
-import { fetchStockQuote, searchSymbol, fetchExchangeRate, fetchHistoricalPrice } from '../../services/alphaVantage';
+import { fetchStockQuote, searchSymbol, fetchHistoricalPrice } from '../../services/alphaVantage';
 import { fetchTaseSecurityPrice, fetchTaseHistoricalPrice } from '../../services/taseDataHub';
 import { ExcelImportModal } from './ExcelImportModal';
 import type { ImportRow } from '../../services/excelImport';
@@ -41,17 +41,15 @@ export default function Portfolio() {
   const stocksRequestsToday = useSettingsStore((s) => s.stocksRequestsToday);
   const decrementStocksRequests = useSettingsStore((s) => s.decrementStocksRequests);
   const resetRequestsIfNewDay = useSettingsStore((s) => s.resetRequestsIfNewDay);
-  const fxApiKey = useSettingsStore((s) => s.fxApiKey);
   const exchangeRates = useSettingsStore((s) => s.exchangeRates);
-  const decrementFxRequests = useSettingsStore((s) => s.decrementFxRequests);
   const israeliApiKey = useSettingsStore((s) => s.israeliApiKey);
 
   const manualEntries = useNetWorthStore((s) => s.manualEntries);
   const deleteManualEntry = useNetWorthStore((s) => s.deleteManualEntry);
 
   const holdings = useMemo(
-    () => calculateCurrentHoldings(trades, currentPrices, lastPriceUpdates),
-    [trades, currentPrices, lastPriceUpdates]
+    () => calculateCurrentHoldings(trades, currentPrices, lastPriceUpdates, exchangeRates),
+    [trades, currentPrices, lastPriceUpdates, exchangeRates]
   );
 
   const totalValue = holdings.reduce((sum, h) => sum + h.currentValue, 0);
@@ -88,8 +86,6 @@ export default function Portfolio() {
   const [assetCategory, setAssetCategory] = useState<AssetCategory>('stocks');
   const [tradeNotes, setTradeNotes] = useState('');
   const [tradeCurrency, setTradeCurrency] = useState(defaultCurrency);
-  const [tradeRate, setTradeRate] = useState('');
-  const [fetchingTradeRate, setFetchingTradeRate] = useState(false);
   const [fetchingHistoricalPrice, setFetchingHistoricalPrice] = useState(false);
   const [lookingUpName, setLookingUpName] = useState(false);
   const [tickerError, setTickerError] = useState('');
@@ -132,7 +128,6 @@ export default function Portfolio() {
     setTradeNotes('');
     setTickerError('');
     setTradeCurrency(defaultCurrency);
-    setTradeRate('');
     setTradeMkt('global');
     setShowTradeModal(true);
   };
@@ -148,9 +143,7 @@ export default function Portfolio() {
     setAssetCategory(trade.assetCategory);
     setTradeNotes(trade.notes);
     setTickerError('');
-    // Prices are always stored in default currency — no foreign currency state needed when editing
-    setTradeCurrency(defaultCurrency);
-    setTradeRate('');
+    setTradeCurrency(trade.currency ?? defaultCurrency);
     setTradeMkt(trade.market ?? 'global');
     setShowTradeModal(true);
   };
@@ -175,20 +168,6 @@ export default function Portfolio() {
     }
     setTickerError('');
     return true;
-  };
-
-  const handleFetchTradeRate = async () => {
-    if (!tradeCurrency || !fxApiKey) return;
-    setFetchingTradeRate(true);
-    try {
-      const rate = await fetchExchangeRate(tradeCurrency, defaultCurrency, fxApiKey);
-      setTradeRate(rate.toString());
-      decrementFxRequests();
-    } catch {
-      // silent — user can type manually
-    } finally {
-      setFetchingTradeRate(false);
-    }
   };
 
   const handleFetchHistoricalPrice = async () => {
@@ -218,11 +197,7 @@ export default function Portfolio() {
     if (!validateSell()) return;
     const upperTicker = ticker.toUpperCase();
     const qty = parseFloat(quantity);
-    // Convert to default currency if a foreign currency + rate was provided (per-trade only)
-    const rawPx = parseFloat(price);
-    const px = tradeCurrency !== defaultCurrency && tradeRate && parseFloat(tradeRate) > 0
-      ? rawPx * parseFloat(tradeRate)
-      : rawPx;
+    const px = parseFloat(price); // stored in native currency (tradeCurrency), no conversion
     if (editingTrade) {
       updateTrade(editingTrade.id, {
         ticker: upperTicker, name: companyName || upperTicker, quantity: qty,
@@ -240,6 +215,7 @@ export default function Portfolio() {
         sellPrice: tradeType === 'sell' ? px : null,
         sellDate: tradeType === 'sell' ? tradeDate : null,
         assetCategory, notes: tradeNotes, market: tradeMkt,
+        currency: tradeCurrency,
       });
     }
     setShowTradeModal(false);
@@ -327,17 +303,20 @@ export default function Portfolio() {
         ticker: row.ticker,
         name: row.name,
         quantity: row.quantity,
-        buyPrice: row.avgCost,
+        buyPrice: row.buyPrice,
         buyDate: row.buyDate,
         sellPrice: null,
         sellDate: null,
         assetCategory: row.assetCategory,
         notes: '',
         market: row.market,
+        currency: row.currency,
       });
+      // Seed current price from Excel's Last Rate so gain is visible before a manual refresh
+      updateCurrentPrice(row.ticker, row.rawLastRate);
     });
     toast.success(
-      `Imported ${rows.length} holding${rows.length !== 1 ? 's' : ''} — click Refresh Prices to fetch live quotes`
+      `Imported ${rows.length} holding${rows.length !== 1 ? 's' : ''} — prices seeded from Excel snapshot`
     );
   };
 
@@ -478,7 +457,7 @@ export default function Portfolio() {
                         <div className="flex justify-between">
                           <span className="text-white/50">Price</span>
                           <div className="text-right">
-                            <span className="text-white font-mono">{formatCurrency(h.currentPrice, defaultCurrency)}</span>
+                            <span className="text-white font-mono">{formatCurrency(h.currentPrice, h.currency)}</span>
                             {h.lastPriceUpdate && (
                               <p className="text-white/25 text-xs">{formatRelativeTime(h.lastPriceUpdate)}</p>
                             )}
@@ -555,8 +534,8 @@ export default function Portfolio() {
                       </div>
                     </div>
                     <div className="space-y-1 text-xs text-white/50">
-                      <div className="flex justify-between"><span>{isSell ? 'Sell Price' : 'Buy Price'}</span><span className="text-white font-mono">{formatCurrency(isSell ? trade.sellPrice! : trade.buyPrice, defaultCurrency)}</span></div>
-                      <div className="flex justify-between"><span>Total</span><span className="text-white font-mono">{formatCurrency((isSell ? trade.sellPrice! : trade.buyPrice) * trade.quantity, defaultCurrency)}</span></div>
+                      <div className="flex justify-between"><span>{isSell ? 'Sell Price' : 'Buy Price'}</span><span className="text-white font-mono">{formatCurrency(isSell ? trade.sellPrice! : trade.buyPrice, trade.currency ?? defaultCurrency)}</span></div>
+                      <div className="flex justify-between"><span>Total</span><span className="text-white font-mono">{formatCurrency((isSell ? trade.sellPrice! : trade.buyPrice) * trade.quantity, trade.currency ?? defaultCurrency)}</span></div>
                       <div className="flex justify-between"><span>Date</span><span>{formatDate(isSell ? trade.sellDate! : trade.buyDate)}</span></div>
                       {trade.notes && <p className="text-white/30 italic mt-1">"{trade.notes}"</p>}
                     </div>
@@ -580,7 +559,7 @@ export default function Portfolio() {
             <input
               type="checkbox"
               checked={tradeMkt === 'tase'}
-              onChange={(e) => { setTradeMkt(e.target.checked ? 'tase' : 'global'); setTicker(''); setCompanyName(''); setTickerError(''); }}
+              onChange={(e) => { const mkt = e.target.checked ? 'tase' : 'global'; setTradeMkt(mkt); setTradeCurrency(mkt === 'tase' ? 'ILS' : defaultCurrency); setTicker(''); setCompanyName(''); setTickerError(''); }}
               className="w-4 h-4 rounded accent-[#5865f2]"
             />
             🇮🇱 Tel Aviv Stock Exchange (TASE)
@@ -618,41 +597,12 @@ export default function Portfolio() {
           <Select
             label="Price Currency"
             value={tradeCurrency}
-            onChange={(e) => {
-              const cur = e.target.value;
-              setTradeCurrency(cur);
-              const stored = exchangeRates.find(r => r.currency === cur);
-              setTradeRate(stored ? stored.rateToDefault.toString() : '');
-            }}
+            onChange={(e) => setTradeCurrency(e.target.value)}
             options={CURRENCIES.map(c => ({ value: c.code, label: `${c.code} — ${c.name}` }))}
           />
-          {tradeCurrency !== defaultCurrency && (
-            <div className="flex gap-2 items-end">
-              <Input
-                label={`Rate (1 ${tradeCurrency} = ? ${defaultCurrency})`}
-                type="number"
-                inputMode="decimal"
-                placeholder="0.00"
-                value={tradeRate}
-                onChange={(e) => setTradeRate(e.target.value)}
-              />
-              {fxApiKey && (
-                <Button variant="ghost" size="sm" onClick={handleFetchTradeRate} disabled={fetchingTradeRate} style={{ marginBottom: '2px' }}>
-                  {fetchingTradeRate ? '…' : '⬇ Fetch'}
-                </Button>
-              )}
-            </div>
-          )}
           {quantity && price && parseFloat(quantity) > 0 && parseFloat(price) > 0 && (
             <p className="text-white/40 text-sm">Total: <span className="text-white font-mono">
-              {formatCurrency(
-                parseFloat(quantity) * (
-                  tradeCurrency !== defaultCurrency && tradeRate && parseFloat(tradeRate) > 0
-                    ? parseFloat(price) * parseFloat(tradeRate)
-                    : parseFloat(price)
-                ),
-                defaultCurrency
-              )}
+              {formatCurrency(parseFloat(quantity) * parseFloat(price), tradeCurrency)}
             </span></p>
           )}
           <Input label="Date" type="date" value={tradeDate} onChange={(e) => setTradeDate(e.target.value)} />

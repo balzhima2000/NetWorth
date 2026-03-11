@@ -5,8 +5,6 @@ import { formatCurrency, getTodayISO } from '../../utils/formatters';
 import { parsePortfolioExcel } from '../../services/excelImport';
 import type { ImportRow } from '../../services/excelImport';
 import type { StockTrade } from '../../types/index';
-import { useSettingsStore } from '../../stores/settingsStore';
-import { fetchFrankfurterRate } from '../../services/frankfurterApi';
 
 type AssetCategory = 'stocks' | 'bonds' | 'crypto' | 'other';
 
@@ -25,11 +23,8 @@ export function ExcelImportModal({
   existingTrades,
   onImport,
 }: ExcelImportModalProps) {
-  const { defaultCurrency, exchangeRates, addExchangeRate } = useSettingsStore();
-
   const [rows, setRows] = useState<ImportRow[]>([]);
   const [parsing, setParsing] = useState(false);
-  const [parseStatus, setParseStatus] = useState('');
   const [parseError, setParseError] = useState<string | null>(null);
   const [fileName, setFileName] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -41,32 +36,11 @@ export function ExcelImportModal({
     e.target.value = '';
     setFileName(file.name);
     setParsing(true);
-    setParseStatus(`Parsing ${file.name}…`);
     setParseError(null);
     try {
-      const parsed = await parsePortfolioExcel(file, existingTrades, defaultCurrency, exchangeRates);
+      const parsed = await parsePortfolioExcel(file, existingTrades);
       if (parsed.length === 0) throw new Error('No holdings found in file. Make sure the sheet has the expected column headers.');
-
-      // Auto-fetch any exchange rates that are missing from the store
-      const missingCurrencies = [...new Set(parsed.filter((r) => r.noRateAvailable).map((r) => r.currency))];
-      if (missingCurrencies.length > 0) {
-        setParseStatus('Fetching exchange rates…');
-        const updatedRates = [...exchangeRates];
-        for (const currency of missingCurrencies) {
-          try {
-            const rateToDefault = await fetchFrankfurterRate(currency, defaultCurrency);
-            const newRate = { currency, rateToDefault };
-            addExchangeRate(newRate);
-            updatedRates.push(newRate);
-          } catch {
-            // Leave as noRateAvailable — currency not supported by Frankfurter
-          }
-        }
-        const reparsed = await parsePortfolioExcel(file, existingTrades, defaultCurrency, updatedRates);
-        setRows(reparsed);
-      } else {
-        setRows(parsed);
-      }
+      setRows(parsed);
     } catch (err: any) {
       setParseError(err.message ?? 'Failed to parse file');
     } finally {
@@ -90,7 +64,6 @@ export function ExcelImportModal({
   const selectedRows = rows.filter((r) => r.selected);
   const conflictCount = rows.filter((r) => r.hasConflict).length;
   const selectedConflicts = selectedRows.filter((r) => r.hasConflict).length;
-  const noRateCount = rows.filter((r) => r.noRateAvailable).length;
 
   /* ── Actions ── */
   const handleConfirm = () => {
@@ -171,7 +144,7 @@ export function ExcelImportModal({
       {/* ── Parsing spinner ── */}
       {parsing && (
         <div className="flex flex-col items-center justify-center py-16 gap-3">
-          <p className="text-white/50 text-sm">{parseStatus}</p>
+          <p className="text-white/50 text-sm">Parsing file…</p>
         </div>
       )}
 
@@ -186,11 +159,6 @@ export function ExcelImportModal({
               {conflictCount > 0 && (
                 <span className="ml-2 text-yellow-400">
                   · ⚠️ {conflictCount} ticker{conflictCount > 1 ? 's' : ''} already in portfolio
-                </span>
-              )}
-              {noRateCount > 0 && (
-                <span className="ml-2 text-orange-400">
-                  · ⚠️ {noRateCount} holding{noRateCount > 1 ? 's' : ''} missing exchange rate
                 </span>
               )}
             </div>
@@ -253,23 +221,9 @@ export function ExcelImportModal({
                         {row.quantity.toLocaleString()}
                       </td>
 
-                      {/* Avg Cost — stored value (in defaultCurrency) with native-currency subtitle */}
+                      {/* Avg Cost — native currency */}
                       <td className="py-2.5 pr-3 text-right font-mono text-xs">
-                        {row.noRateAvailable ? (
-                          <>
-                            <div className="text-orange-400">{fmtNum(row.rawAvgCost, row.currency)}</div>
-                            <div className="text-orange-400/70 text-[10px]">⚠️ no rate</div>
-                          </>
-                        ) : (
-                          <>
-                            <div className="text-white">{fmtNum(row.avgCost, defaultCurrency)}</div>
-                            {row.conversionRate !== null && (
-                              <div className="text-white/40 text-[10px]">
-                                {fmtNum(row.rawAvgCost, row.currency)}
-                              </div>
-                            )}
-                          </>
-                        )}
+                        <div className="text-white">{fmtNum(row.buyPrice, row.currency)}</div>
                       </td>
 
                       {/* Last Rate (preview-only, in native currency) */}
@@ -344,11 +298,11 @@ export function ExcelImportModal({
                         <td />
                         <td colSpan={11} className="pb-2 text-xs text-yellow-400/80 leading-relaxed">
                           ⚠️ <span className="font-mono">{row.ticker}</span> already in portfolio&nbsp;
-                          ({row.existingQty.toLocaleString()} shares&nbsp;@&nbsp;{fmtNum(row.existingBlendedCost, defaultCurrency)}&nbsp;avg).
+                          ({row.existingQty.toLocaleString()} shares&nbsp;@&nbsp;{fmtNum(row.existingBlendedCost, row.currency)}&nbsp;avg).
                           &nbsp;After import:&nbsp;
                           <span className="text-yellow-300 font-medium">
                             {row.projectedQty.toLocaleString()} shares&nbsp;@&nbsp;
-                            {fmtNum(row.projectedBlendedCost, defaultCurrency)}&nbsp;blended avg
+                            {fmtNum(row.projectedBlendedCost, row.currency)}&nbsp;blended avg
                           </span>
                         </td>
                       </tr>
@@ -361,9 +315,9 @@ export function ExcelImportModal({
 
           {/* Info note */}
           <p className="text-white/30 text-xs">
-            💡 Avg Cost is stored in {defaultCurrency} (converted from native currency where applicable).
+            💡 Avg Cost is stored in each stock's native currency (USD for global stocks, ₪ for TASE).
             Columns shown in grey (Last Rate, Total Value, P&L, Yield, Position&nbsp;%) are for reference only and will not be stored.
-            After importing, click <span className="text-white/50 font-medium">🔄 Refresh Prices</span> to fetch live quotes from the API.
+            Last Rate is seeded as the current price — click <span className="text-white/50 font-medium">🔄 Refresh Prices</span> to fetch live quotes.
           </p>
         </div>
       )}

@@ -1,6 +1,7 @@
 import type {
   StockTrade,
   CurrentHolding,
+  ExchangeRate,
   FireProjectionPoint,
   SWRTableRow,
   CompoundChartPoint,
@@ -10,13 +11,19 @@ import type {
 // PORTFOLIO CALCULATIONS
 // ============================================================
 /**
- * Calculate current holdings from trades array
- * Groups by ticker, calculates blended cost basis, filters out fully sold positions
+ * Calculate current holdings from trades array.
+ * Groups by ticker, calculates blended cost basis in native currency,
+ * converts to defaultCurrency for totals using stored exchange rates.
+ *
+ * rateToDefault = how many defaultCurrency per 1 unit of native currency.
+ * If a stock's currency is not in exchangeRates (e.g. it IS the defaultCurrency),
+ * the fallback rateToDefault = 1 is used.
  */
 export function calculateCurrentHoldings(
   trades: StockTrade[],
   currentPrices: Record<string, number>,
-  lastPriceUpdates: Record<string, string>
+  lastPriceUpdates: Record<string, string>,
+  exchangeRates: ExchangeRate[]
 ): CurrentHolding[] {
   // Group trades by ticker
   const byTicker: Record<string, StockTrade[]> = {};
@@ -32,7 +39,7 @@ export function calculateCurrentHoldings(
 
     // Calculate net shares held
     let sharesHeld = 0;
-    let totalCostBasis = 0;
+    let totalCostBasis = 0; // in native currency
 
     // Process buys
     const buys = tickerTrades.filter((t) => t.sellPrice === null);
@@ -50,12 +57,26 @@ export function calculateCurrentHoldings(
     // Skip if no shares held
     if (sharesHeld <= 0) continue;
 
-    const blendedCostBasis = sharesHeld > 0 ? totalCostBasis / buys.reduce((a, b) => a + b.quantity, 0) : 0;
-    const currentPrice = currentPrices[ticker] ?? blendedCostBasis; // fallback to cost basis if no price
-    const currentValue = sharesHeld * currentPrice;
-    const costBasisTotal = sharesHeld * blendedCostBasis;
+    // Native currency for this ticker (from first buy; all buys should share the same currency)
+    const currency = buys[0]?.currency ?? 'USD';
+
+    // rateToDefault: how many defaultCurrency per 1 unit of native currency.
+    // Stocks whose currency IS the defaultCurrency won't be in exchangeRates → falls back to 1.
+    const rateToDefault = exchangeRates.find((r) => r.currency === currency)?.rateToDefault ?? 1;
+
+    // Blended cost basis in native currency (weighted avg buy price across all buy lots)
+    const totalBuyQty = buys.reduce((a, b) => a + b.quantity, 0);
+    const blendedCostBasis = totalBuyQty > 0 ? totalCostBasis / totalBuyQty : 0;
+
+    // Current price in native currency; fall back to cost basis when no refresh has happened
+    const currentPrice = currentPrices[ticker] ?? blendedCostBasis;
+
+    // Totals in defaultCurrency (for portfolio summaries)
+    const currentValue = sharesHeld * currentPrice * rateToDefault;
+    const costBasisTotal = sharesHeld * blendedCostBasis * rateToDefault;
     const unrealizedGain = currentValue - costBasisTotal;
-    const unrealizedGainPercent = costBasisTotal > 0 ? (unrealizedGain / costBasisTotal) * 100 : 0;
+    // Gain % is currency-neutral (native/native)
+    const unrealizedGainPercent = blendedCostBasis > 0 ? ((currentPrice - blendedCostBasis) / blendedCostBasis) * 100 : 0;
 
     // Get the most recent trade for name/category
     const latestTrade = tickerTrades.sort(
@@ -67,6 +88,7 @@ export function calculateCurrentHoldings(
       name: latestTrade.name,
       assetCategory: latestTrade.assetCategory,
       market: latestTrade.market ?? 'global',
+      currency,
       sharesHeld,
       blendedCostBasis,
       currentPrice,

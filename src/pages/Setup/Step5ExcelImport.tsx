@@ -4,9 +4,7 @@ import { ASSET_CATEGORIES } from '../../utils/constants';
 import { formatCurrency, getTodayISO } from '../../utils/formatters';
 import { parsePortfolioExcel } from '../../services/excelImport';
 import type { ImportRow } from '../../services/excelImport';
-import { useSettingsStore } from '../../stores/settingsStore';
 import { usePortfolioStore } from '../../stores/portfolioStore';
-import { fetchFrankfurterRate } from '../../services/frankfurterApi';
 
 type AssetCategory = 'stocks' | 'bonds' | 'crypto' | 'other';
 
@@ -18,13 +16,12 @@ interface Step5ExcelImportProps {
 const CATEGORY_OPTIONS = ASSET_CATEGORIES.map((c) => ({ value: c.id, label: c.label }));
 
 export default function Step5ExcelImport({ onNext, onBack }: Step5ExcelImportProps) {
-  const { defaultCurrency, exchangeRates, addExchangeRate } = useSettingsStore();
   const trades = usePortfolioStore((s) => s.trades);
   const addTrade = usePortfolioStore((s) => s.addTrade);
+  const updateCurrentPrice = usePortfolioStore((s) => s.updateCurrentPrice);
 
   const [rows, setRows] = useState<ImportRow[]>([]);
   const [parsing, setParsing] = useState(false);
-  const [parseStatus, setParseStatus] = useState('');
   const [parseError, setParseError] = useState<string | null>(null);
   const [fileName, setFileName] = useState('');
   const [importedCount, setImportedCount] = useState<number | null>(null);
@@ -37,34 +34,13 @@ export default function Step5ExcelImport({ onNext, onBack }: Step5ExcelImportPro
     e.target.value = '';
     setFileName(file.name);
     setParsing(true);
-    setParseStatus(`Parsing ${file.name}…`);
     setParseError(null);
     setImportedCount(null);
     try {
       const openTrades = trades.filter((t) => t.sellPrice === null);
-      const parsed = await parsePortfolioExcel(file, openTrades, defaultCurrency, exchangeRates);
+      const parsed = await parsePortfolioExcel(file, openTrades);
       if (parsed.length === 0) throw new Error('No holdings found in file. Make sure the sheet has the expected column headers.');
-
-      // Auto-fetch any exchange rates that are missing from the store
-      const missingCurrencies = [...new Set(parsed.filter((r) => r.noRateAvailable).map((r) => r.currency))];
-      if (missingCurrencies.length > 0) {
-        setParseStatus('Fetching exchange rates…');
-        const updatedRates = [...exchangeRates];
-        for (const currency of missingCurrencies) {
-          try {
-            const rateToDefault = await fetchFrankfurterRate(currency, defaultCurrency);
-            const newRate = { currency, rateToDefault };
-            addExchangeRate(newRate);
-            updatedRates.push(newRate);
-          } catch {
-            // Leave as noRateAvailable — currency not supported by Frankfurter
-          }
-        }
-        const reparsed = await parsePortfolioExcel(file, openTrades, defaultCurrency, updatedRates);
-        setRows(reparsed);
-      } else {
-        setRows(parsed);
-      }
+      setRows(parsed);
     } catch (err: any) {
       setParseError(err.message ?? 'Failed to parse file');
       setFileName('');
@@ -89,7 +65,6 @@ export default function Step5ExcelImport({ onNext, onBack }: Step5ExcelImportPro
   const selectedRows = rows.filter((r) => r.selected);
   const conflictCount = rows.filter((r) => r.hasConflict).length;
   const selectedConflicts = selectedRows.filter((r) => r.hasConflict).length;
-  const noRateCount = rows.filter((r) => r.noRateAvailable).length;
 
   /* ── Actions ── */
   const handleImport = () => {
@@ -99,14 +74,17 @@ export default function Step5ExcelImport({ onNext, onBack }: Step5ExcelImportPro
         ticker: row.ticker,
         name: row.name,
         quantity: row.quantity,
-        buyPrice: row.avgCost,
+        buyPrice: row.buyPrice,
         buyDate: row.buyDate,
         sellPrice: null,
         sellDate: null,
         assetCategory: row.assetCategory,
         notes: '',
         market: row.market,
+        currency: row.currency,
       });
+      // Seed current price from Excel's Last Rate so gain is visible before a manual refresh
+      updateCurrentPrice(row.ticker, row.rawLastRate);
     });
     setImportedCount(selectedRows.length);
     setRows([]);
@@ -177,7 +155,7 @@ export default function Step5ExcelImport({ onNext, onBack }: Step5ExcelImportPro
       {/* ── Parsing spinner ── */}
       {parsing && (
         <div className="flex flex-col items-center justify-center py-12 gap-3">
-          <p className="text-white/50 text-sm">{parseStatus}</p>
+          <p className="text-white/50 text-sm">Parsing file…</p>
         </div>
       )}
 
@@ -192,11 +170,6 @@ export default function Step5ExcelImport({ onNext, onBack }: Step5ExcelImportPro
               {conflictCount > 0 && (
                 <span className="ml-2 text-yellow-400">
                   · ⚠️ {conflictCount} ticker{conflictCount > 1 ? 's' : ''} already in portfolio
-                </span>
-              )}
-              {noRateCount > 0 && (
-                <span className="ml-2 text-orange-400">
-                  · ⚠️ {noRateCount} missing exchange rate
                 </span>
               )}
             </div>
@@ -262,23 +235,9 @@ export default function Step5ExcelImport({ onNext, onBack }: Step5ExcelImportPro
                         {row.quantity.toLocaleString()}
                       </td>
 
-                      {/* Avg Cost — converted to defaultCurrency with native subtitle */}
+                      {/* Avg Cost — native currency */}
                       <td className="py-2.5 pr-3 text-right font-mono text-xs">
-                        {row.noRateAvailable ? (
-                          <>
-                            <div className="text-orange-400">{fmtNum(row.rawAvgCost, row.currency)}</div>
-                            <div className="text-orange-400/70 text-[10px]">⚠️ no rate</div>
-                          </>
-                        ) : (
-                          <>
-                            <div className="text-white">{fmtNum(row.avgCost, defaultCurrency)}</div>
-                            {row.conversionRate !== null && (
-                              <div className="text-white/40 text-[10px]">
-                                {fmtNum(row.rawAvgCost, row.currency)}
-                              </div>
-                            )}
-                          </>
-                        )}
+                        <div className="text-white">{fmtNum(row.buyPrice, row.currency)}</div>
                       </td>
 
                       {/* Last Rate (preview-only, native currency) */}
@@ -353,11 +312,11 @@ export default function Step5ExcelImport({ onNext, onBack }: Step5ExcelImportPro
                         <td />
                         <td colSpan={11} className="pb-2 text-xs text-yellow-400/80 leading-relaxed">
                           ⚠️ <span className="font-mono">{row.ticker}</span> already in portfolio&nbsp;
-                          ({row.existingQty.toLocaleString()} shares&nbsp;@&nbsp;{fmtNum(row.existingBlendedCost, defaultCurrency)}&nbsp;avg).
+                          ({row.existingQty.toLocaleString()} shares&nbsp;@&nbsp;{fmtNum(row.existingBlendedCost, row.currency)}&nbsp;avg).
                           &nbsp;After import:&nbsp;
                           <span className="text-yellow-300 font-medium">
                             {row.projectedQty.toLocaleString()} shares&nbsp;@&nbsp;
-                            {fmtNum(row.projectedBlendedCost, defaultCurrency)}&nbsp;blended avg
+                            {fmtNum(row.projectedBlendedCost, row.currency)}&nbsp;blended avg
                           </span>
                         </td>
                       </tr>
@@ -372,7 +331,7 @@ export default function Step5ExcelImport({ onNext, onBack }: Step5ExcelImportPro
           <p className="text-white/30 text-xs">
             {selectedRows.length}/{rows.length} selected
             {selectedConflicts > 0 && <span className="text-yellow-400 ml-2">· {selectedConflicts} will merge with existing</span>}
-            &nbsp;· Avg Cost is stored in {defaultCurrency} (converted where applicable). Grey columns are reference-only.
+            &nbsp;· Avg Cost stored in native currency. Grey columns are reference-only.
           </p>
         </div>
       )}
