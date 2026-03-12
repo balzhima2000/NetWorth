@@ -528,11 +528,11 @@ export default function Portfolio() {
                         <span className="text-white font-mono text-sm">{trade.quantity} shares</span>
                       </div>
                       <div className="flex gap-1">
-                        <button onClick={() => { openEditTrade(trade); setDrawerTicker(null); }} className="p-1.5 rounded-lg text-white/30 hover:text-white/70 hover:bg-white/10 transition-colors">
-                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                        <button onClick={() => { openEditTrade(trade); setDrawerTicker(null); }} className="w-9 h-9 flex items-center justify-center rounded-lg text-white/30 hover:text-white/70 hover:bg-white/10 active:bg-white/15 active:scale-[0.92] transition-all duration-150">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                         </button>
-                        <button onClick={() => { setDeleteTradeId(trade.id); }} className="p-1.5 rounded-lg text-white/30 hover:text-[#ff4757] hover:bg-[#ff4757]/10 transition-colors">
-                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                        <button onClick={() => { setDeleteTradeId(trade.id); }} className="w-9 h-9 flex items-center justify-center rounded-lg text-white/30 hover:text-[#ff4757] hover:bg-[#ff4757]/10 active:bg-[#ff4757]/20 active:scale-[0.92] transition-all duration-150">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                         </button>
                       </div>
                     </div>
@@ -555,8 +555,8 @@ export default function Portfolio() {
         footer={<><Button variant="ghost" onClick={() => setShowTradeModal(false)}>Cancel</Button><Button variant="primary" onClick={handleSaveTrade} disabled={!ticker || !quantity || !price}>{editingTrade ? 'Save Changes' : tradeType === 'buy' ? 'Add Buy' : 'Add Sell'}</Button></>}>
         <div className="space-y-4">
           <div className="flex gap-2">
-            <button onClick={() => setTradeType('buy')} className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all ${tradeType === 'buy' ? 'bg-[#00d632] text-black' : 'bg-white/5 text-white/50 hover:bg-white/10'}`}>Buy</button>
-            <button onClick={() => setTradeType('sell')} className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all ${tradeType === 'sell' ? 'bg-[#ff4757] text-white' : 'bg-white/5 text-white/50 hover:bg-white/10'}`}>Sell</button>
+            <button onClick={() => setTradeType('buy')} className={`flex-1 py-3 rounded-xl text-sm font-semibold transition-all active:scale-[0.97] ${tradeType === 'buy' ? 'bg-[#00d632] text-black' : 'bg-white/5 text-white/50 hover:bg-white/10'}`}>Buy</button>
+            <button onClick={() => setTradeType('sell')} className={`flex-1 py-3 rounded-xl text-sm font-semibold transition-all active:scale-[0.97] ${tradeType === 'sell' ? 'bg-[#ff4757] text-white' : 'bg-white/5 text-white/50 hover:bg-white/10'}`}>Sell</button>
           </div>
           <label className="flex items-center gap-2 text-sm text-white/60 cursor-pointer select-none w-fit">
             <input
@@ -567,7 +567,7 @@ export default function Portfolio() {
             />
             🇮🇱 Tel Aviv Stock Exchange (TASE)
           </label>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Input
               label={tradeMkt === 'tase' ? 'Security ID' : 'Ticker Symbol'}
               placeholder={tradeMkt === 'tase' ? 'e.g. 1159235' : 'AAPL'}
@@ -579,7 +579,7 @@ export default function Portfolio() {
             />
             <Input label={lookingUpName ? 'Looking up...' : 'Security Name'} placeholder={tradeMkt === 'tase' ? 'iShares MSCI ACWI...' : 'Apple Inc.'} value={companyName} onChange={(e) => setCompanyName(e.target.value)} disabled={lookingUpName} />
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Input label="Shares" type="number" inputMode="decimal" placeholder="10" value={quantity} onChange={(e) => setQuantity(e.target.value)} required />
             <div className="flex gap-2 items-end">
               <Input label={tradeType === 'sell' ? 'Sell Price' : 'Buy Price'} type="number" inputMode="decimal" placeholder="150.00" value={price} onChange={(e) => setPrice(e.target.value)} required />

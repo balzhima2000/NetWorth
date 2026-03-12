@@ -39,10 +39,10 @@ export function Input({
         <input
           id={inputId}
           className={`
-            w-full bg-white/[0.06] border rounded-xl px-3 py-2.5 text-sm text-white
+            w-full bg-white/[0.06] border rounded-xl px-3 py-3 text-sm text-white min-h-[44px]
             placeholder:text-white/30
-            focus:outline-none focus:ring-2 focus:ring-[#5865f2]/50 focus:border-[#5865f2]/60
-            transition-all duration-200
+            focus:outline-none focus:ring-2 focus:ring-[#5865f2]/60 focus:border-[#5865f2]/70
+            transition-all duration-150
             disabled:opacity-40 disabled:cursor-not-allowed
             ${error ? 'border-[#ff4757]/60 focus:ring-[#ff4757]/30' : 'border-white/10 hover:border-white/20'}
             ${leftAddon ? 'pl-9' : ''}
@@ -95,9 +95,9 @@ export function Select({
       <select
         id={selectId}
         className={`
-          w-full bg-white/[0.06] border rounded-xl px-3 py-2.5 text-sm text-white
-          focus:outline-none focus:ring-2 focus:ring-[#5865f2]/50 focus:border-[#5865f2]/60
-          transition-all duration-200
+          w-full bg-white/[0.06] border rounded-xl px-3 py-3 text-sm text-white min-h-[44px]
+          focus:outline-none focus:ring-2 focus:ring-[#5865f2]/60 focus:border-[#5865f2]/70
+          transition-all duration-150
           disabled:opacity-40 disabled:cursor-not-allowed
           ${error ? 'border-[#ff4757]/60' : 'border-white/10 hover:border-white/20'}
           ${className}

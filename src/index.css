@@ -235,3 +235,56 @@ a {
 .nav-label-active {
   animation: reveal-up 260ms var(--snap) both;
 }
+
+/* ── Modal / Drawer bottom-sheet pattern ─────────────────── */
+
+/* Mobile: slides up from bottom (sheet) */
+@keyframes modal-sheet-up {
+  from { transform: translateY(48px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+/* Desktop: subtle zoom-in from center */
+@keyframes modal-zoom-in {
+  from { transform: scale(0.96) translateY(6px); opacity: 0; }
+  to   { transform: scale(1)    translateY(0);   opacity: 1; }
+}
+
+@media (max-width: 639px) {
+  .modal-enter {
+    animation: modal-sheet-up 360ms var(--snap) both;
+  }
+}
+@media (min-width: 640px) {
+  .modal-enter {
+    animation: modal-zoom-in 220ms ease both;
+  }
+}
+
+/* Drawer: slide up from bottom on mobile, slide from right on desktop */
+@keyframes drawer-sheet-up {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+
+/* Modal footer: stack buttons full-width on mobile */
+@media (max-width: 639px) {
+  .modal-footer-row > * {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* ── Respect reduced-motion preferences ──────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .modal-enter,
+  .page-enter,
+  .stagger-children > *,
+  .fab-action-1,
+  .fab-action-2,
+  .fab-action-3,
+  .nav-label-active {
+    animation: none !important;
+    transition-duration: 0.01ms !important;
+  }
+}

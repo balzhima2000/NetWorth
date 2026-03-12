@@ -41,48 +41,62 @@ export function Modal({ isOpen, onClose, title, children, size = 'md', footer }:
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    /*
+     * Mobile: items-end → modal anchors to bottom (bottom sheet)
+     * Desktop: items-center sm:p-4 → modal floats in the middle
+     */
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4">
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
         onClick={onClose}
       />
-      {/* Modal */}
+      {/* Modal panel */}
       <div
         className={`
           relative w-full ${sizeMap[size]}
-          glass rounded-2xl shadow-2xl
+          glass shadow-2xl
           flex flex-col
-          max-h-[85vh] sm:max-h-[90vh]
-          mx-4 sm:mx-auto
-          animate-in fade-in zoom-in-95 duration-200
+          max-h-[92vh] sm:max-h-[90vh]
+          sm:mx-auto
+          rounded-t-[28px] sm:rounded-2xl
+          modal-enter
         `}
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Mobile drag handle — visual affordance for the bottom sheet */}
+        <div className="sm:hidden flex justify-center pt-3 pb-1 flex-shrink-0" aria-hidden>
+          <div className="w-10 h-1 rounded-full bg-white/20" />
+        </div>
+
         {/* Header */}
         {title && (
-          <div className="flex items-center justify-between p-4 sm:p-5 border-b border-white/10 flex-shrink-0">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-white/10 flex-shrink-0">
             <h2 className="text-base sm:text-lg font-semibold text-white">{title}</h2>
-            <Button
-              variant="ghost"
-              size="sm"
+            {/* Close button: 40×40px tap target */}
+            <button
               onClick={onClose}
-              className="!p-1.5"
               aria-label="Close"
+              className="w-10 h-10 -mr-2 flex items-center justify-center rounded-xl text-white/40 hover:text-white hover:bg-white/10 active:bg-white/15 transition-all duration-150"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
-            </Button>
+            </button>
           </div>
         )}
+
         {/* Body */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-5">
+        <div className="flex-1 overflow-y-auto px-5 py-4">
           {children}
         </div>
-        {/* Footer */}
+
+        {/* Footer — full-width buttons on mobile, right-aligned on desktop */}
         {footer && (
-          <div className="flex items-center justify-end gap-3 p-4 sm:p-5 border-t border-white/10 flex-shrink-0">
+          <div
+            className="modal-footer-row flex flex-col-reverse sm:flex-row sm:items-center sm:justify-end gap-2 sm:gap-3 px-5 py-4 border-t border-white/10 flex-shrink-0"
+            style={{ paddingBottom: 'max(1rem, calc(env(safe-area-inset-bottom) + 1rem))' }}
+          >
             {footer}
           </div>
         )}
