@@ -47,6 +47,7 @@ export function Button({
         transition-all duration-150 select-none
         active:scale-[0.96]
         disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100
+        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0a0a0f]
         ${variantStyles[variant]}
         ${sizeStyles[size]}
         ${fullWidth ? 'w-full' : ''}

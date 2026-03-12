@@ -363,19 +363,21 @@ export default function Portfolio() {
                 </p>
               </div>
             </div>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap items-center gap-3 mt-1">
               <Button variant="primary" onClick={() => openAddTrade()}>+ Add Trade</Button>
-              <Button variant="secondary" onClick={() => setShowExcelImport(true)}>📥 Import Excel</Button>
-              <Button variant="secondary" onClick={handleRefreshPrices} disabled={!canRefreshPrices || refreshing}>
-                {refreshing ? '⏳ Refreshing...' : '🔄 Refresh Prices'}
-              </Button>
-              <Button variant="ghost" onClick={() => {
-                setAllocMode(allocationMode);
-                setAllocTargets(Object.fromEntries(Object.entries(allocationTargets).map(([k, v]) => [k, String(v)])));
-                setShowAllocationModal(true);
-              }}>
-                ⚖️ Allocation
-              </Button>
+              <div className="flex flex-wrap gap-2 sm:ml-auto">
+                <Button size="sm" variant="secondary" onClick={() => setShowExcelImport(true)}>📥 Import Excel</Button>
+                <Button size="sm" variant="secondary" onClick={handleRefreshPrices} disabled={!canRefreshPrices || refreshing}>
+                  {refreshing ? '⏳ Refreshing...' : '🔄 Refresh Prices'}
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => {
+                  setAllocMode(allocationMode);
+                  setAllocTargets(Object.fromEntries(Object.entries(allocationTargets).map(([k, v]) => [k, String(v)])));
+                  setShowAllocationModal(true);
+                }}>
+                  ⚖️ Allocation
+                </Button>
+              </div>
             </div>
             {!canRefreshPrices && !refreshing && <p className="text-white/30 text-xs">Add a Stocks or TASE API key in Settings to enable live price refresh</p>}
             {stocksApiKey && <p className="text-white/30 text-xs">{requestsRemaining}/{ALPHA_VANTAGE_MAX_REQUESTS} global API requests remaining today</p>}
@@ -419,9 +421,13 @@ export default function Portfolio() {
       {/* Holdings Grid */}
       {portfolioMode === 'detailed' && (
         <div>
-          <h2 className="text-xl font-semibold text-white mb-3">
-            Current Holdings <span className="text-white/40 text-base font-normal">— click a card to view trade history</span>
-          </h2>
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-xl font-bold text-white">Current Holdings</h2>
+              <p className="text-white/35 text-xs mt-0.5">Click a card to view trade history</p>
+            </div>
+            <span className="text-white/30 text-sm tabular-nums">{holdings.length} position{holdings.length !== 1 ? 's' : ''}</span>
+          </div>
           {holdings.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {holdings.map((h) => {

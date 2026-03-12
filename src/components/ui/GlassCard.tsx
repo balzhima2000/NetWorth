@@ -6,6 +6,9 @@ interface GlassCardProps {
   onClick?: () => void;
   hover?: boolean;
   padding?: 'none' | 'sm' | 'md' | 'lg';
+  role?: string;
+  tabIndex?: number;
+  'aria-label'?: string;
 }
 
 // Responsive padding — slightly tighter on mobile, full spacing on sm+
@@ -22,16 +25,32 @@ export function GlassCard({
   onClick,
   hover = false,
   padding = 'md',
+  role,
+  tabIndex,
+  'aria-label': ariaLabel,
 }: GlassCardProps) {
+  const isInteractive = !!(hover || onClick);
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (onClick && (e.key === 'Enter' || e.key === ' ')) {
+      e.preventDefault();
+      onClick();
+    }
+  };
+
   return (
     <div
       className={`
         glass rounded-2xl
         ${paddingMap[padding]}
-        ${hover || onClick ? 'hover:bg-white/[0.07] active:bg-white/[0.09] active:scale-[0.99] transition-all duration-150 cursor-pointer' : ''}
+        ${isInteractive ? 'hover:bg-white/[0.08] active:bg-white/[0.09] active:scale-[0.99] transition-all duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]/40 focus-visible:ring-inset' : ''}
         ${className}
       `}
       onClick={onClick}
+      onKeyDown={onClick ? handleKeyDown : undefined}
+      role={role ?? (onClick ? 'button' : undefined)}
+      tabIndex={tabIndex ?? (onClick ? 0 : undefined)}
+      aria-label={ariaLabel}
     >
       {children}
     </div>
