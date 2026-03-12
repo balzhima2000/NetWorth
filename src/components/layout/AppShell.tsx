@@ -9,9 +9,9 @@ import { QuickAddFAB } from '../mobile/QuickAddFAB';
 const pageTitles: Record<string, string> = {
   '/dashboard': 'Dashboard',
   '/portfolio': 'Portfolio',
-  '/spending': 'Spending',
-  '/fire': 'FIRE Calculators',
-  '/settings': 'Settings',
+  '/spending':  'Spending',
+  '/fire':      'FIRE Calculators',
+  '/settings':  'Settings',
 };
 
 export function AppShell() {
@@ -21,25 +21,38 @@ export function AppShell() {
 
   return (
     <div className="flex h-dvh bg-[#0a0a0f]">
+      {/* Desktop sidebar */}
       <div className="hidden lg:flex flex-shrink-0">
         <Sidebar collapsed={sidebarCollapsed} />
       </div>
 
       <div className="flex flex-col flex-1 min-w-0 min-h-0">
+        {/* Desktop top bar */}
         <div className="hidden lg:block">
           <TopBar
             title={title}
             onToggleSidebar={() => setSidebarCollapsed((c) => !c)}
           />
         </div>
+
         <BackupReminderBanner />
+
         <main className="flex-1 overflow-y-auto gradient-bg">
-          <div className="max-w-7xl mx-auto p-4 sm:p-6">
+          {/*
+            key={location.pathname} remounts the wrapper on every navigation,
+            re-triggering the page-enter CSS animation.
+            pb-28 on mobile gives clearance for the floating nav + FAB.
+          */}
+          <div
+            key={location.pathname}
+            className="page-enter max-w-7xl mx-auto p-4 pb-28 sm:p-6 lg:pb-6"
+          >
             <Outlet />
           </div>
         </main>
 
-        <div className="lg:hidden flex-shrink-0">
+        {/* Mobile floating nav — fixed, so no space is consumed in flex column */}
+        <div className="lg:hidden">
           <MobileNav />
         </div>
         <div className="lg:hidden">

@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { usePortfolioStore } from '../stores/portfolioStore';
 import { useSettingsStore } from '../stores/settingsStore';
 import { calculateCurrentHoldings } from '../utils/calculations';
+import { useAutoFetchExchangeRates } from './useAutoFetchExchangeRates';
 import type { CurrentHolding } from '../types/index';
 
 export function useCurrentHoldings(): {
@@ -15,6 +16,8 @@ export function useCurrentHoldings(): {
   const currentPrices = usePortfolioStore((s) => s.currentPrices);
   const lastPriceUpdates = usePortfolioStore((s) => s.lastPriceUpdates);
   const exchangeRates = useSettingsStore((s) => s.exchangeRates);
+
+  useAutoFetchExchangeRates(trades);
 
   return useMemo(() => {
     const holdings = calculateCurrentHoldings(trades, currentPrices, lastPriceUpdates, exchangeRates);

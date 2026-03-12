@@ -119,3 +119,119 @@ a {
   color: inherit;
   text-decoration: none;
 }
+
+/* ── Mobile animation system ─────────────────────────────── */
+
+:root {
+  /* Spring: overshoots slightly for a native-feel bounce */
+  --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  /* Snap: fast settle, no overshoot */
+  --snap: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Page entrance — every route change triggers this */
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Card stagger reveal — children get animation-delay via nth-child */
+@keyframes reveal-up {
+  from {
+    opacity: 0;
+    transform: translateY(22px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* FAB action items spring in from below */
+@keyframes fab-action-in {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.88);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* FAB backdrop fade */
+@keyframes backdrop-in {
+  from { opacity: 0; backdrop-filter: blur(0px); }
+  to   { opacity: 1; backdrop-filter: blur(8px); }
+}
+
+/* Number shimmer on count-up completion */
+@keyframes value-land {
+  0%   { opacity: 1; }
+  40%  { opacity: 0.55; }
+  100% { opacity: 1; }
+}
+
+.page-enter {
+  animation: page-enter 380ms var(--snap) both;
+}
+
+/* Staggered children */
+.stagger-children > *:nth-child(1) { animation: reveal-up 420ms var(--spring) 0ms   both; }
+.stagger-children > *:nth-child(2) { animation: reveal-up 420ms var(--spring) 70ms  both; }
+.stagger-children > *:nth-child(3) { animation: reveal-up 420ms var(--spring) 140ms both; }
+.stagger-children > *:nth-child(4) { animation: reveal-up 420ms var(--spring) 210ms both; }
+.stagger-children > *:nth-child(5) { animation: reveal-up 420ms var(--spring) 280ms both; }
+
+/* FAB action stagger (reversed — top item is slowest) */
+.fab-action-1 { animation: fab-action-in 340ms var(--spring) 0ms   both; }
+.fab-action-2 { animation: fab-action-in 340ms var(--spring) 55ms  both; }
+.fab-action-3 { animation: fab-action-in 340ms var(--spring) 110ms both; }
+
+/* ── Floating bottom nav ─────────────────────────────────── */
+.mobile-nav-pill {
+  background: rgba(10, 10, 20, 0.88);
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  box-shadow:
+    0 16px 40px rgba(0, 0, 0, 0.5),
+    0 1px 0 rgba(255, 255, 255, 0.06) inset;
+}
+
+/* Sliding highlight blob — sits behind the active tab icon */
+.nav-indicator {
+  position: absolute;
+  top: 5px;
+  left: 0;
+  /* Exactly 1/5 of the pill width */
+  width: 20%;
+  height: calc(100% - 10px);
+  background: rgba(88, 101, 242, 0.16);
+  border: 1px solid rgba(88, 101, 242, 0.28);
+  border-radius: 14px;
+  pointer-events: none;
+  /* Spring-physics slide between tabs */
+  transition: transform 400ms var(--spring);
+}
+
+/* Active nav icon springs upward */
+.nav-icon-active {
+  transition: transform 350ms var(--spring), opacity 200ms ease;
+  transform: translateY(-3px) scale(1.18);
+}
+.nav-icon-idle {
+  transition: transform 300ms ease, opacity 200ms ease;
+  transform: translateY(0) scale(1);
+}
+
+/* Active label slides in below icon */
+.nav-label-active {
+  animation: reveal-up 260ms var(--snap) both;
+}

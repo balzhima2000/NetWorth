@@ -15,6 +15,7 @@ import { calculateCurrentHoldings } from '../../utils/calculations';
 import { ASSET_CATEGORIES, ALPHA_VANTAGE_MAX_REQUESTS, CURRENCIES } from '../../utils/constants';
 import { fetchStockQuote, searchSymbol, fetchHistoricalPrice } from '../../services/alphaVantage';
 import { fetchTaseSecurityPrice, fetchTaseHistoricalPrice } from '../../services/taseDataHub';
+import { useAutoFetchExchangeRates } from '../../hooks/useAutoFetchExchangeRates';
 import { ExcelImportModal } from './ExcelImportModal';
 import type { ImportRow } from '../../services/excelImport';
 import type { StockTrade, CurrentHolding } from '../../types/index';
@@ -29,6 +30,7 @@ export default function Portfolio() {
   const updateTrade = usePortfolioStore((s) => s.updateTrade);
   const deleteTrade = usePortfolioStore((s) => s.deleteTrade);
   const updateCurrentPrice = usePortfolioStore((s) => s.updateCurrentPrice);
+  const priceSources = usePortfolioStore((s) => s.priceSources);
 
   const allocationMode = useAllocationStore((s) => s.mode);
   const allocationTargets = useAllocationStore((s) => s.targets);
@@ -51,6 +53,8 @@ export default function Portfolio() {
     () => calculateCurrentHoldings(trades, currentPrices, lastPriceUpdates, exchangeRates),
     [trades, currentPrices, lastPriceUpdates, exchangeRates]
   );
+
+  useAutoFetchExchangeRates(trades);
 
   const totalValue = holdings.reduce((sum, h) => sum + h.currentValue, 0);
   const totalInvested = holdings.reduce((sum, h) => sum + h.costBasisTotal, 0);
@@ -85,7 +89,7 @@ export default function Portfolio() {
   const [tradeDate, setTradeDate] = useState(getTodayISO());
   const [assetCategory, setAssetCategory] = useState<AssetCategory>('stocks');
   const [tradeNotes, setTradeNotes] = useState('');
-  const [tradeCurrency, setTradeCurrency] = useState(defaultCurrency);
+  const [tradeCurrency, setTradeCurrency] = useState('USD');
   const [fetchingHistoricalPrice, setFetchingHistoricalPrice] = useState(false);
   const [lookingUpName, setLookingUpName] = useState(false);
   const [tickerError, setTickerError] = useState('');
@@ -127,7 +131,7 @@ export default function Portfolio() {
     setAssetCategory('stocks');
     setTradeNotes('');
     setTickerError('');
-    setTradeCurrency(defaultCurrency);
+    setTradeCurrency('USD');
     setTradeMkt('global');
     setShowTradeModal(true);
   };
@@ -313,7 +317,7 @@ export default function Portfolio() {
         currency: row.currency,
       });
       // Seed current price from Excel's Last Rate so gain is visible before a manual refresh
-      updateCurrentPrice(row.ticker, row.rawLastRate);
+      updateCurrentPrice(row.ticker, row.rawLastRate, 'excel');
     });
     toast.success(
       `Imported ${rows.length} holding${rows.length !== 1 ? 's' : ''} — prices seeded from Excel snapshot`
@@ -345,11 +349,7 @@ export default function Portfolio() {
                 {formatCurrency(totalValue, defaultCurrency, true)}
               </h2>
             </div>
-            <div className="grid grid-cols-3 gap-4">
-              <div>
-                <p className="text-white/40 text-xs mb-0.5">Total Invested</p>
-                <p className="text-lg font-semibold text-white font-mono">{formatCurrency(totalInvested, defaultCurrency, true)}</p>
-              </div>
+            <div className="grid grid-cols-2 gap-4">
               <div>
                 <p className="text-white/40 text-xs mb-0.5">Unrealized Gain</p>
                 <p className={`text-lg font-semibold font-mono ${totalGain >= 0 ? 'text-[#00d632]' : 'text-[#ff4757]'}`}>
@@ -438,6 +438,9 @@ export default function Portfolio() {
                         <div>
                           <h3 className="text-xl font-bold text-white">{h.ticker}</h3>
                           <p className="text-xs text-white/40 truncate max-w-[140px]">{h.name}</p>
+                          {priceSources[h.ticker] === 'excel' && (
+                            <p className="text-xs text-amber-400/70 mt-0.5">📊 Current Values are from Excel Import</p>
+                          )}
                         </div>
                         <div className="flex flex-col items-end gap-1">
                           <AssetCategoryBadge category={h.assetCategory} />
@@ -468,8 +471,8 @@ export default function Portfolio() {
                           <span className="text-white font-mono font-semibold">{formatCurrency(h.currentValue, defaultCurrency)}</span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-white/50">Cost Basis</span>
-                          <span className="text-white/50 font-mono">{formatCurrency(h.costBasisTotal, defaultCurrency)}</span>
+                          <span className="text-white/50">Avg Cost</span>
+                          <span className="text-white/50 font-mono">{formatCurrency(h.blendedCostBasis, h.currency)}/share</span>
                         </div>
                       </div>
 
@@ -559,7 +562,7 @@ export default function Portfolio() {
             <input
               type="checkbox"
               checked={tradeMkt === 'tase'}
-              onChange={(e) => { const mkt = e.target.checked ? 'tase' : 'global'; setTradeMkt(mkt); setTradeCurrency(mkt === 'tase' ? 'ILS' : defaultCurrency); setTicker(''); setCompanyName(''); setTickerError(''); }}
+              onChange={(e) => { const mkt = e.target.checked ? 'tase' : 'global'; setTradeMkt(mkt); setTradeCurrency(mkt === 'tase' ? 'ILS' : 'USD'); setTicker(''); setCompanyName(''); setTickerError(''); }}
               className="w-4 h-4 rounded accent-[#5865f2]"
             />
             🇮🇱 Tel Aviv Stock Exchange (TASE)

@@ -132,7 +132,7 @@ export default function Settings() {
 
   const handleRefreshAllRates = async () => {
     if (fxProvider !== 'boi' && !fxApiKey) return;
-    // Build list: existing rates + foreign currencies used in transactions OR recurring payments
+    // Build list: existing rates + foreign currencies used in transactions, recurring payments, or open portfolio holdings
     const txForeignCurrencies = [...new Set(
       transactions
         .filter((t) => t.currency !== defaultCurrency)
@@ -143,13 +143,20 @@ export default function Settings() {
         .filter((rp) => rp.currency && rp.currency !== defaultCurrency)
         .map((rp) => rp.currency as string)
     )];
+    const portfolioForeignCurrencies = [...new Set(
+      trades
+        .filter((t) => t.sellPrice === null)
+        .map((t) => (t.currency || (t.market === 'tase' ? 'ILS' : 'USD')).toUpperCase())
+        .filter((c) => c !== defaultCurrency)
+    )];
     const currenciesToRefresh = [...new Set([
       ...exchangeRates.map((r) => r.currency),
       ...txForeignCurrencies,
       ...recurringForeignCurrencies,
+      ...portfolioForeignCurrencies,
     ])];
     if (currenciesToRefresh.length === 0) {
-      toast.error('No foreign currencies found in transactions, recurring payments, or exchange rate list.');
+      toast.error('No foreign currencies found in transactions, recurring payments, holdings, or exchange rate list.');
       return;
     }
     setRefreshingRates(true);

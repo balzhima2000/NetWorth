@@ -3,10 +3,36 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useQuickAddStore } from '../../stores/quickAddStore';
 
 const actions = [
-  { key: 'expense' as const, emoji: '💸', label: 'Add Expense', route: '/spending' },
-  { key: 'income' as const, emoji: '💰', label: 'Add Income', route: '/spending' },
-  { key: 'trade' as const, emoji: '📈', label: 'Log Trade', route: '/portfolio' },
+  {
+    key: 'expense' as const,
+    emoji: '💸',
+    label: 'Expense',
+    sublabel: 'Log spending',
+    route: '/spending',
+    accent: '#ff4757',
+  },
+  {
+    key: 'income' as const,
+    emoji: '💰',
+    label: 'Income',
+    sublabel: 'Add income',
+    route: '/spending',
+    accent: '#00d632',
+  },
+  {
+    key: 'trade' as const,
+    emoji: '📈',
+    label: 'Trade',
+    sublabel: 'Log a position',
+    route: '/portfolio',
+    accent: '#5865f2',
+  },
 ];
+
+// FAB sits 96px above the viewport bottom (clears 80px floating nav + 16px gap)
+const FAB_BOTTOM = 'calc(env(safe-area-inset-bottom) + 96px)';
+// Actions stack starts just above the FAB
+const ACTIONS_BOTTOM = 'calc(env(safe-area-inset-bottom) + 164px)';
 
 export function QuickAddFAB() {
   const [open, setOpen] = useState(false);
@@ -17,53 +43,98 @@ export function QuickAddFAB() {
   const handleAction = (key: 'expense' | 'income' | 'trade', route: string) => {
     setOpen(false);
     setTarget(key);
-    if (location.pathname !== route) {
-      navigate(route);
-    }
+    if (location.pathname !== route) navigate(route);
   };
 
   return (
     <>
-      {/* Backdrop */}
+      {/* ── Blurred backdrop ── */}
       {open && (
         <div
-          className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm"
+          className="fixed inset-0 z-40"
+          style={{
+            background: 'rgba(0, 0, 0, 0.55)',
+            backdropFilter: 'blur(10px)',
+            WebkitBackdropFilter: 'blur(10px)',
+            animation: 'backdrop-in 220ms ease both',
+          }}
           onClick={() => setOpen(false)}
         />
       )}
 
-      {/* Action cards */}
+      {/* ── Action cards — spring stagger from bottom ── */}
       {open && (
-        <div className="fixed bottom-[calc(9.75rem+env(safe-area-inset-bottom))] right-4 z-50 flex flex-col gap-3 items-end">
-          {actions.map((action) => (
+        <div
+          className="fixed right-4 z-50 flex flex-col gap-2.5 items-end"
+          style={{ bottom: ACTIONS_BOTTOM }}
+        >
+          {/* Reversed so bottom card animates first (feels more natural) */}
+          {[...actions].reverse().map((action, i) => (
             <button
               key={action.key}
               onClick={() => handleAction(action.key, action.route)}
-              className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-[#1a1a2e] border border-white/10 shadow-xl active:scale-95 transition-transform"
+              // stagger classes defined in index.css
+              className={`fab-action-${i + 1} flex items-center gap-3 pl-3 pr-5 py-2.5 rounded-2xl active:scale-95`}
+              style={{
+                background: 'rgba(14, 14, 26, 0.96)',
+                border: `1px solid ${action.accent}28`,
+                backdropFilter: 'blur(20px)',
+                WebkitBackdropFilter: 'blur(20px)',
+                boxShadow: `0 8px 28px rgba(0,0,0,0.45), 0 0 0 1px ${action.accent}14`,
+                transition: 'transform 150ms ease, box-shadow 150ms ease',
+              }}
             >
-              <span className="text-2xl">{action.emoji}</span>
-              <span className="text-sm font-semibold text-white whitespace-nowrap">{action.label}</span>
+              {/* Colored icon bubble */}
+              <span
+                className="w-9 h-9 rounded-xl flex items-center justify-center text-lg flex-shrink-0"
+                style={{ background: `${action.accent}1a` }}
+              >
+                {action.emoji}
+              </span>
+              <div className="text-left">
+                <p className="text-sm font-semibold text-white leading-tight">{action.label}</p>
+                <p className="text-[11px] text-white/40 mt-0.5">{action.sublabel}</p>
+              </div>
             </button>
           ))}
         </div>
       )}
 
-      {/* FAB button */}
+      {/* ── FAB button ── */}
       <button
         onClick={() => setOpen((o) => !o)}
         aria-label="Quick add"
-        className={`
-          fixed right-4 z-50
-          bottom-[calc(5.5rem+env(safe-area-inset-bottom))]
-          w-14 h-14 rounded-full shadow-lg
-          bg-[#5865f2] hover:bg-[#4752c4] active:scale-95
-          flex items-center justify-center
-          transition-all duration-200
-          ${open ? 'rotate-45' : 'rotate-0'}
-        `}
+        className="fixed z-50 w-14 h-14 rounded-full flex items-center justify-center"
+        style={{
+          right: '16px',
+          bottom: FAB_BOTTOM,
+          background: 'linear-gradient(145deg, #6c73f5, #5865f2)',
+          boxShadow: open
+            ? '0 4px 16px rgba(88, 101, 242, 0.35)'
+            : '0 8px 28px rgba(88, 101, 242, 0.55)',
+          transition: 'box-shadow 250ms ease, transform 200ms ease',
+        }}
+        // active state via CSS — inline active:scale-90 doesn't work on style prop
+        onPointerDown={(e) => (e.currentTarget.style.transform = 'scale(0.91)')}
+        onPointerUp={(e) => (e.currentTarget.style.transform = '')}
+        onPointerLeave={(e) => (e.currentTarget.style.transform = '')}
       >
-        <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
+        <svg
+          className="w-7 h-7 text-white"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+          style={{
+            transition: 'transform 380ms cubic-bezier(0.34, 1.56, 0.64, 1)',
+            transform: open ? 'rotate(45deg)' : 'rotate(0deg)',
+          }}
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2.5}
+            d="M12 4v16m8-8H4"
+          />
         </svg>
       </button>
     </>

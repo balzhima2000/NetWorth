@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useRef } from 'react';
 import { usePortfolioStore } from '../../stores/portfolioStore';
 import { useNetWorthStore } from '../../stores/networthStore';
 import { useTransactionStore } from '../../stores/transactionStore';
@@ -128,49 +128,108 @@ export default function Dashboard() {
 
   const isMobile = useIsMobile();
 
+  // ── Count-up animation for the hero number ──────────────────
+  const [displayNetWorth, setDisplayNetWorth] = useState(0);
+  const hasAnimated = useRef(false);
+
+  useEffect(() => {
+    if (!isMobile) return;
+    if (hasAnimated.current) {
+      // After initial animation, track real value instantly
+      setDisplayNetWorth(netWorth);
+      return;
+    }
+    hasAnimated.current = true;
+    const target = netWorth;
+    const duration = 900;
+    const startTime = performance.now();
+
+    const tick = (now: number) => {
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      // Ease-out cubic
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setDisplayNetWorth(Math.round(target * eased));
+      if (progress < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }, [netWorth, isMobile]);
+
   // ── Mobile view ──────────────────────────────────────────────
   if (isMobile) {
+    const isPositive = netWorthChange ? netWorthChange.amount >= 0 : true;
+    const changeColor = isPositive ? '#00d632' : '#ff4757';
+
     return (
-      <div className="space-y-4 pb-24">
-        {/* Greeting header */}
-        <div>
-          <h2 className="text-xl font-semibold text-white">{greeting}{userNickname ? `, ${userNickname}` : ''} {greetingEmoji}</h2>
+      <div className="space-y-3 stagger-children">
+        {/* ── Greeting ── */}
+        <div className="pt-1">
+          <p className="text-white/40 text-xs font-medium uppercase tracking-widest mb-0.5">
+            {greeting} {greetingEmoji}
+          </p>
+          <h2 className="text-lg font-semibold text-white leading-tight">
+            {userNickname ? userNickname : 'Your Dashboard'}
+          </h2>
         </div>
 
-        {/* Net Worth card */}
+        {/* ── Net Worth hero card ── */}
         <GlassCard padding="lg">
-          <p className="text-white/50 text-xs mb-2">Net Worth</p>
-          <h1 className="text-3xl font-bold text-white font-mono">
-            {formatCurrency(netWorth, defaultCurrency, true)}
+          {/* Label + change badge row */}
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-white/45 text-xs font-medium uppercase tracking-widest">Net Worth</p>
+            {netWorthChange && (
+              <span
+                className="text-xs font-semibold font-mono px-2.5 py-1 rounded-full"
+                style={{
+                  background: `${changeColor}18`,
+                  color: changeColor,
+                  border: `1px solid ${changeColor}30`,
+                }}
+              >
+                {isPositive ? '+' : ''}{netWorthChange.percent.toFixed(2)}%
+              </span>
+            )}
+          </div>
+
+          {/* Animated number */}
+          <h1
+            className="text-4xl font-bold text-white font-mono leading-none"
+            style={{ letterSpacing: '-0.5px' }}
+          >
+            {formatCurrency(displayNetWorth, defaultCurrency, true)}
           </h1>
+
           {netWorthChange && (
-            <div className="flex items-center gap-2 mt-1.5">
-              <span className={`text-sm font-mono ${netWorthChange.amount >= 0 ? 'text-[#00d632]' : 'text-[#ff4757]'}`}>
-                {netWorthChange.amount >= 0 ? '+' : ''}{formatCurrency(netWorthChange.amount, defaultCurrency, true)}
-              </span>
-              <span className={`text-xs font-mono ${netWorthChange.amount >= 0 ? 'text-[#00d632]' : 'text-[#ff4757]'}`}>
-                ({netWorthChange.percent >= 0 ? '+' : ''}{netWorthChange.percent.toFixed(2)}%)
-              </span>
-            </div>
+            <p className="text-sm font-mono mt-1.5" style={{ color: changeColor }}>
+              {isPositive ? '+' : ''}{formatCurrency(netWorthChange.amount, defaultCurrency, true)}
+              <span className="text-white/30 ml-1.5 text-xs">vs period start</span>
+            </p>
           )}
-          {/* Mini stats row */}
-          <div className="flex gap-3 mt-4 pt-4 border-t border-white/8">
-            <div className="flex-1">
-              <p className="text-white/40 text-xs">This Month</p>
-              <p className="text-white font-mono font-semibold text-sm mt-0.5">
+
+          {/* ── Stats strip ── */}
+          <div
+            className="grid mt-4 pt-4 gap-3"
+            style={{
+              borderTop: '1px solid rgba(255,255,255,0.07)',
+              gridTemplateColumns: liabilitiesTotal > 0 ? 'repeat(3, 1fr)' : 'repeat(2, 1fr)',
+            }}
+          >
+            <div>
+              <p className="text-white/35 text-[10px] font-medium uppercase tracking-wider">This Month</p>
+              <p className="text-white font-mono font-semibold text-sm mt-1">
                 -{formatCurrency(monthSpending, defaultCurrency, true)}
               </p>
             </div>
-            <div className="flex-1">
-              <p className="text-white/40 text-xs">Assets</p>
-              <p className="text-[#00d632] font-mono font-semibold text-sm mt-0.5">
+            <div>
+              <p className="text-white/35 text-[10px] font-medium uppercase tracking-wider">Assets</p>
+              <p className="font-mono font-semibold text-sm mt-1" style={{ color: '#00d632' }}>
                 {formatCurrency(totalAssets, defaultCurrency, true)}
               </p>
             </div>
             {liabilitiesTotal > 0 && (
-              <div className="flex-1">
-                <p className="text-white/40 text-xs">Liabilities</p>
-                <p className="text-[#ff4757] font-mono font-semibold text-sm mt-0.5">
+              <div>
+                <p className="text-white/35 text-[10px] font-medium uppercase tracking-wider">Debt</p>
+                <p className="font-mono font-semibold text-sm mt-1" style={{ color: '#ff4757' }}>
                   {formatCurrency(liabilitiesTotal, defaultCurrency, true)}
                 </p>
               </div>
@@ -178,28 +237,86 @@ export default function Dashboard() {
           </div>
         </GlassCard>
 
-        {/* Recent Activity */}
+        {/* ── FIRE progress (only if target set) ── */}
+        {fireProgress !== null && (
+          <GlassCard padding="md">
+            <div className="flex items-center justify-between mb-2.5">
+              <p className="text-white/70 text-sm font-semibold">🔥 FIRE Progress</p>
+              <span className="text-xs font-mono text-white/40">
+                {fireProgress.toFixed(1)}%
+              </span>
+            </div>
+            <div className="h-2 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.08)' }}>
+              <div
+                className="h-full rounded-full"
+                style={{
+                  width: `${fireProgress}%`,
+                  background: 'linear-gradient(90deg, #5865f2, #00d632)',
+                  transition: 'width 800ms cubic-bezier(0.34, 1.56, 0.64, 1)',
+                }}
+              />
+            </div>
+            {fireRemaining !== null && fireRemaining > 0 && (
+              <p className="text-white/35 text-xs mt-2">
+                {formatCurrency(fireRemaining, defaultCurrency, true)} to go
+              </p>
+            )}
+          </GlassCard>
+        )}
+
+        {/* ── Recent Activity ── */}
         <GlassCard padding="md">
-          <h2 className="text-base font-semibold text-white mb-3">Recent Activity</h2>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-sm font-semibold text-white">Recent Activity</h2>
+            {activityItems.length > 0 && (
+              <span className="text-xs text-white/30">{activityItems.length} items</span>
+            )}
+          </div>
+
           {activityItems.length > 0 ? (
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               {activityItems.map((item) => (
-                <div key={`${item.type}-${item.id}`} className="flex items-center justify-between p-2.5 bg-white/5 rounded-xl">
-                  <div className="flex items-center gap-3">
-                    <span className="text-lg">{item.emoji}</span>
-                    <div>
-                      <p className="text-white text-sm font-medium">{item.label}</p>
-                      <p className="text-white/30 text-xs">{formatDate(item.date, 'short')}</p>
+                <div
+                  key={`${item.type}-${item.id}`}
+                  className="flex items-center justify-between px-3 py-2.5 rounded-xl active:scale-[0.98]"
+                  style={{
+                    background: 'rgba(255,255,255,0.04)',
+                    transition: 'transform 150ms ease, background 150ms ease',
+                  }}
+                >
+                  <div className="flex items-center gap-2.5">
+                    {/* Icon circle */}
+                    <span
+                      className="w-8 h-8 rounded-xl flex items-center justify-center text-base flex-shrink-0"
+                      style={{ background: 'rgba(255,255,255,0.06)' }}
+                    >
+                      {item.emoji}
+                    </span>
+                    <div className="min-w-0">
+                      <p className="text-white text-sm font-medium truncate leading-tight">
+                        {item.label}
+                      </p>
+                      <p className="text-white/30 text-[11px] mt-0.5">
+                        {formatDate(item.date, 'short')}
+                      </p>
                     </div>
                   </div>
-                  <p className={`font-mono text-sm font-semibold ${item.amountType === 'expense' ? 'text-[#ff4757]' : 'text-[#00d632]'}`}>
-                    {item.amountType === 'expense' ? '-' : '+'}{formatCurrency(item.amount, defaultCurrency)}
+                  <p
+                    className="font-mono text-sm font-semibold ml-3 flex-shrink-0"
+                    style={{ color: item.amountType === 'expense' ? '#ff4757' : '#00d632' }}
+                  >
+                    {item.amountType === 'expense' ? '-' : '+'}
+                    {formatCurrency(item.amount, defaultCurrency)}
                   </p>
                 </div>
               ))}
             </div>
           ) : (
-            <p className="text-white/30 text-sm text-center py-6">No recent activity — use the + button to add your first entry</p>
+            <div className="text-center py-8">
+              <p className="text-2xl mb-2">📭</p>
+              <p className="text-white/30 text-sm">No recent activity</p>
+              <p className="text-white/20 text-xs mt-0.5">Tap + to add your first entry</p>
+            </div>
           )}
         </GlassCard>
       </div>

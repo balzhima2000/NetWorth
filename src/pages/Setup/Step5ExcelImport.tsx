@@ -84,7 +84,7 @@ export default function Step5ExcelImport({ onNext, onBack }: Step5ExcelImportPro
         currency: row.currency,
       });
       // Seed current price from Excel's Last Rate so gain is visible before a manual refresh
-      updateCurrentPrice(row.ticker, row.rawLastRate);
+      updateCurrentPrice(row.ticker, row.rawLastRate, 'excel');
     });
     setImportedCount(selectedRows.length);
     setRows([]);
