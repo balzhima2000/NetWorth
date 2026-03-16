@@ -25,7 +25,7 @@ export function MobileNav() {
     /* Fixed floating pill — sits 10px above the safe area */
     <div
       className="fixed bottom-0 left-0 right-0 z-30 px-3"
-      style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 10px)' }}
+      style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 10px)', transform: 'translateZ(0)', WebkitTransform: 'translateZ(0)' }}
     >
       <nav
         className="mobile-nav-pill relative flex items-center rounded-[20px]"
