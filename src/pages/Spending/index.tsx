@@ -771,6 +771,16 @@ export default function Spending() {
                   max={totalBudget}
                   colorAuto
                 />
+                {remainingBudget !== null && (
+                  <div className="flex items-center justify-between pt-1">
+                    <span className={`text-xs font-medium ${remainingBudget >= 0 ? 'text-white/40' : 'text-[#EF4444]/70'}`}>
+                      {remainingBudget >= 0 ? 'Budget left' : 'Over budget'}
+                    </span>
+                    <span className={`text-xs font-mono font-semibold ${remainingBudget >= 0 ? 'text-white/75' : 'text-[#EF4444]'}`}>
+                      {remainingBudget < 0 ? '-' : ''}{formatCurrency(Math.abs(remainingBudget), defaultCurrency, true)}
+                    </span>
+                  </div>
+                )}
               </div>
             )}
 
@@ -786,31 +796,25 @@ export default function Spending() {
             )}
           </GlassCard>
 
-          {/* Net card */}
+          {/* Income card */}
           <GlassCard padding="md">
-            <p className="text-white/45 text-xs font-medium tracking-wide uppercase mb-2">Net This Month</p>
-            <p className={`text-3xl font-bold font-mono mb-3 ${netThisMonth >= 0 ? 'text-[#22C55E]' : 'text-[#EF4444]'}`}>
-              {netThisMonth >= 0 ? '+' : ''}{formatCurrency(netThisMonth, defaultCurrency)}
+            <p className="text-white/45 text-xs font-medium tracking-wide uppercase mb-2">Income</p>
+            <p className="text-3xl font-bold font-mono mb-3 text-[#22C55E]">
+              {formatCurrency(monthIncome, defaultCurrency)}
             </p>
 
             <div className="flex items-center gap-4 mt-auto pt-3 border-t border-white/5">
               <div>
-                <p className="text-white/35 text-xs">Income</p>
-                <p className="text-[#22C55E]/80 text-sm font-mono font-medium">{formatCurrency(monthIncome, defaultCurrency, true)}</p>
+                <p className="text-white/35 text-xs">Net this month</p>
+                <p className={`text-sm font-mono font-semibold ${netThisMonth >= 0 ? 'text-[#22C55E]/80' : 'text-[#EF4444]/80'}`}>
+                  {netThisMonth >= 0 ? '+' : ''}{formatCurrency(netThisMonth, defaultCurrency, true)}
+                </p>
               </div>
               {savingsRate !== null && (
                 <div>
                   <p className="text-white/35 text-xs">Savings rate</p>
-                  <p className={`text-sm font-mono font-medium ${savingsRate >= 20 ? 'text-[#22C55E]/80' : savingsRate >= 0 ? 'text-white/60' : 'text-[#EF4444]/80'}`}>
+                  <p className={`text-sm font-mono font-semibold ${savingsRate >= 20 ? 'text-[#22C55E]/80' : savingsRate >= 0 ? 'text-white/70' : 'text-[#EF4444]/80'}`}>
                     {Math.round(savingsRate)}%
-                  </p>
-                </div>
-              )}
-              {remainingBudget !== null && (
-                <div>
-                  <p className="text-white/35 text-xs">{remainingBudget >= 0 ? 'Budget left' : 'Over budget'}</p>
-                  <p className={`text-sm font-mono font-medium ${remainingBudget >= 0 ? 'text-white/60' : 'text-[#EF4444]/80'}`}>
-                    {formatCurrency(Math.abs(remainingBudget), defaultCurrency, true)}
                   </p>
                 </div>
               )}
