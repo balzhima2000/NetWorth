@@ -45,7 +45,7 @@ export default function Settings() {
     if (!syncEmail.trim()) return;
     setSyncEmailLoading(true);
     setSyncEmailError(null);
-    const { error } = await sendMagicLink(syncEmail.trim());
+    const { error } = await sendMagicLink(syncEmail.trim(), `${window.location.origin}${window.location.pathname}`);
     setSyncEmailLoading(false);
     if (error) {
       setSyncEmailError(error);

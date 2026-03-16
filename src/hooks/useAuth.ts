@@ -5,7 +5,7 @@ import type { User } from '../lib/supabase';
 export interface AuthState {
   user: User | null;
   isLoading: boolean;
-  sendMagicLink: (email: string) => Promise<{ error: string | null }>;
+  sendMagicLink: (email: string, redirectTo?: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
 }
 
@@ -30,11 +30,11 @@ export function useAuth(): AuthState {
     return () => subscription.unsubscribe();
   }, []);
 
-  const sendMagicLink = async (email: string): Promise<{ error: string | null }> => {
+  const sendMagicLink = async (email: string, redirectTo?: string): Promise<{ error: string | null }> => {
     if (!supabaseConfigured) return { error: 'Sync not configured' };
     const { error } = await supabase.auth.signInWithOtp({
       email,
-      options: { shouldCreateUser: true },
+      options: { shouldCreateUser: true, emailRedirectTo: redirectTo },
     });
     return { error: error?.message ?? null };
   };
