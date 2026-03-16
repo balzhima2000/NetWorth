@@ -1,12 +1,11 @@
 /**
  * Coinlayer API — crypto current & historical prices.
- * Free tier: 100 requests/month, USD only, HTTP only.
+ * Free tier: 100 requests/month, USD only.
  * Sign up at https://coinlayer.com to get a free API key.
  * Docs: https://coinlayer.com/documentation
  */
 
-// NOTE: Free tier requires HTTP (not HTTPS). HTTPS requires a paid plan.
-const BASE = 'http://api.coinlayer.com';
+const BASE = 'https://api.coinlayer.com';
 
 export interface CoinlayerLiveResponse {
   success: boolean;
