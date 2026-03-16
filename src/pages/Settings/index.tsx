@@ -34,24 +34,35 @@ const EMOJI_OPTIONS = [
 
 export default function Settings() {
   const toast = useToast();
-  const { user, sendMagicLink, signOut } = useAuth();
+  const { user, sendMagicLink, verifyOtp, signOut } = useAuth();
   const { syncStatus, lastSyncedAt, forcePull, forcePush } = useSyncManager();
   const [syncEmail, setSyncEmail] = useState('');
   const [syncEmailSent, setSyncEmailSent] = useState(false);
   const [syncEmailError, setSyncEmailError] = useState<string | null>(null);
   const [syncEmailLoading, setSyncEmailLoading] = useState(false);
+  const [syncOtp, setSyncOtp] = useState('');
+  const [syncOtpError, setSyncOtpError] = useState<string | null>(null);
 
-  const handleSendMagicLink = async () => {
+  const handleSendCode = async () => {
     if (!syncEmail.trim()) return;
     setSyncEmailLoading(true);
     setSyncEmailError(null);
-    const { error } = await sendMagicLink(syncEmail.trim(), `${window.location.origin}${window.location.pathname}`);
+    const { error } = await sendMagicLink(syncEmail.trim());
     setSyncEmailLoading(false);
     if (error) {
       setSyncEmailError(error);
     } else {
       setSyncEmailSent(true);
     }
+  };
+
+  const handleVerifyOtp = async () => {
+    if (!syncOtp.trim()) return;
+    setSyncEmailLoading(true);
+    setSyncOtpError(null);
+    const { error } = await verifyOtp(syncEmail.trim(), syncOtp.trim());
+    setSyncEmailLoading(false);
+    if (error) setSyncOtpError(error);
   };
 
   // Page title
@@ -468,15 +479,30 @@ export default function Settings() {
             </div>
           </div>
         ) : syncEmailSent ? (
-          /* Magic link sent */
+          /* OTP code entry */
           <div className="space-y-3">
             <p className="text-white/60 text-sm">
-              Magic link sent to <span className="text-white font-medium">{syncEmail}</span>.
-              Click it to sign in — this page will update automatically.
+              A 6-digit code was sent to <span className="text-white font-medium">{syncEmail}</span>. Enter it below.
             </p>
+            <div className="flex gap-2 flex-wrap items-start">
+              <div className="flex-1 min-w-[120px]">
+                <Input
+                  type="text"
+                  inputMode="numeric"
+                  placeholder="123456"
+                  value={syncOtp}
+                  onChange={(e) => setSyncOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  onKeyDown={(e) => { if (e.key === 'Enter') void handleVerifyOtp(); }}
+                />
+                {syncOtpError && <p className="text-[#EF4444] text-xs mt-1">{syncOtpError}</p>}
+              </div>
+              <Button variant="secondary" size="md" onClick={() => void handleVerifyOtp()} disabled={syncOtp.length < 6 || syncEmailLoading}>
+                {syncEmailLoading ? 'Verifying…' : 'Sign In'}
+              </Button>
+            </div>
             <button
               className="text-white/30 text-xs hover:text-white/60 transition-colors"
-              onClick={() => { setSyncEmailSent(false); setSyncEmailError(null); }}
+              onClick={() => { setSyncEmailSent(false); setSyncOtp(''); setSyncOtpError(null); setSyncEmailError(null); }}
             >
               Try a different email
             </button>
@@ -494,17 +520,17 @@ export default function Settings() {
                   placeholder="your@email.com"
                   value={syncEmail}
                   onChange={(e) => setSyncEmail(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === 'Enter') void handleSendMagicLink(); }}
+                  onKeyDown={(e) => { if (e.key === 'Enter') void handleSendCode(); }}
                 />
                 {syncEmailError && <p className="text-[#EF4444] text-xs mt-1">{syncEmailError}</p>}
               </div>
               <Button
                 variant="secondary"
                 size="md"
-                onClick={() => void handleSendMagicLink()}
+                onClick={() => void handleSendCode()}
                 disabled={!syncEmail.trim() || syncEmailLoading}
               >
-                {syncEmailLoading ? 'Sending…' : 'Send Magic Link'}
+                {syncEmailLoading ? 'Sending…' : 'Send Code'}
               </Button>
             </div>
           </div>

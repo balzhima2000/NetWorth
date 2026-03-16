@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { Button, Input } from '../../components/ui';
 
@@ -7,21 +7,14 @@ interface Step8SyncProps {
   onBack: () => void;
 }
 
-type Screen = 'prompt' | 'sent';
+type Screen = 'prompt' | 'code';
 
 export default function Step8Sync({ onNext, onBack }: Step8SyncProps) {
   const [email, setEmail] = useState('');
   const [screen, setScreen] = useState<Screen>('prompt');
+  const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  // Auto-advance when the magic link is clicked and auth resolves
-  useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user) onNext();
-    });
-    return () => subscription.unsubscribe();
-  }, [onNext]);
 
   const handleSend = async () => {
     if (!email.trim()) return;
@@ -37,38 +30,64 @@ export default function Step8Sync({ onNext, onBack }: Step8SyncProps) {
     if (authError) {
       setError(authError.message);
     } else {
-      setScreen('sent');
+      setScreen('code');
     }
   };
 
-  if (screen === 'sent') {
+  const handleVerify = async () => {
+    if (!code.trim()) return;
+    setLoading(true);
+    setError(null);
+    const { error: authError } = await supabase.auth.verifyOtp({
+      email: email.trim(),
+      token: code.trim(),
+      type: 'email',
+    });
+    setLoading(false);
+    if (authError) {
+      setError(authError.message);
+    } else {
+      onNext();
+    }
+  };
+
+  if (screen === 'code') {
     return (
       <div className="text-center space-y-8 max-w-md mx-auto">
         <div>
           <div className="text-5xl mb-4">📬</div>
-          <h1 className="text-3xl font-bold text-white mb-2">Check your email</h1>
+          <h1 className="text-3xl font-bold text-white mb-2">Enter your code</h1>
           <p className="text-white/50">
-            We sent a magic link to <span className="text-white font-medium">{email}</span>.
+            We sent a 6-digit code to <span className="text-white font-medium">{email}</span>.
             <br />
-            Click it to sign in — this tab will advance automatically.
+            Enter it below to sign in.
           </p>
+        </div>
+
+        <div className="space-y-3 max-w-xs mx-auto">
+          <Input
+            type="text"
+            inputMode="numeric"
+            placeholder="123456"
+            value={code}
+            onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+            onKeyDown={(e) => { if (e.key === 'Enter') void handleVerify(); }}
+            className="text-center text-2xl tracking-widest font-mono"
+          />
+          {error && <p className="text-[#EF4444] text-sm">{error}</p>}
+          <Button variant="primary" size="lg" fullWidth onClick={() => void handleVerify()} disabled={code.length < 6 || loading}>
+            {loading ? 'Verifying…' : 'Sign In'}
+          </Button>
         </div>
 
         <p className="text-white/30 text-sm">
           Didn't get it? Check spam or{' '}
-          <button
-            className="text-white/50 underline hover:text-white transition-colors"
-            onClick={() => { setScreen('prompt'); setError(null); }}
-          >
+          <button className="text-white/50 underline hover:text-white transition-colors" onClick={() => { setScreen('prompt'); setCode(''); setError(null); }}>
             try again
-          </button>
-          .
+          </button>.
         </p>
 
-        <button
-          className="text-white/30 text-sm hover:text-white/60 transition-colors"
-          onClick={onNext}
-        >
+        <button className="text-white/30 text-sm hover:text-white/60 transition-colors" onClick={onNext}>
           Continue without syncing →
         </button>
       </div>
@@ -102,7 +121,7 @@ export default function Step8Sync({ onNext, onBack }: Step8SyncProps) {
           onClick={() => void handleSend()}
           disabled={!email.trim() || loading}
         >
-          {loading ? 'Sending…' : 'Send Magic Link'}
+          {loading ? 'Sending…' : 'Send Code'}
         </Button>
       </div>
 

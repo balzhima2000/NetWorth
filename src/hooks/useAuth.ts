@@ -6,6 +6,7 @@ export interface AuthState {
   user: User | null;
   isLoading: boolean;
   sendMagicLink: (email: string, redirectTo?: string) => Promise<{ error: string | null }>;
+  verifyOtp: (email: string, token: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
 }
 
@@ -39,10 +40,16 @@ export function useAuth(): AuthState {
     return { error: error?.message ?? null };
   };
 
+  const verifyOtp = async (email: string, token: string): Promise<{ error: string | null }> => {
+    if (!supabaseConfigured) return { error: 'Sync not configured' };
+    const { error } = await supabase.auth.verifyOtp({ email, token, type: 'email' });
+    return { error: error?.message ?? null };
+  };
+
   const signOut = async () => {
     if (!supabaseConfigured) return;
     await supabase.auth.signOut();
   };
 
-  return { user, isLoading, sendMagicLink, signOut };
+  return { user, isLoading, sendMagicLink, verifyOtp, signOut };
 }
