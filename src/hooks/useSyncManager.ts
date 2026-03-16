@@ -4,8 +4,6 @@ import {
   computeChecksum,
   getSyncMeta,
   updateStoreMeta,
-  mergeArraysById,
-  APPEND_STORE_KEYS,
   ALL_STORE_KEYS,
 } from '../utils/syncHelpers';
 import { useTransactionStore } from '../stores/transactionStore';
@@ -108,47 +106,6 @@ function applyPayloadToStore(storeKey: string, payload: Record<string, unknown>)
   }
 }
 
-// ── Merge append-only store payload ───────────────────────────────────────
-
-function mergeAppendPayload(
-  storeKey: string,
-  localPayload: Record<string, unknown>,
-  remotePayload: Record<string, unknown>,
-): Record<string, unknown> {
-  if (storeKey === 'nw-transactions') {
-    return {
-      ...remotePayload,
-      transactions: mergeArraysById(
-        (localPayload.transactions ?? []) as Record<string, unknown>[],
-        (remotePayload.transactions ?? []) as Record<string, unknown>[],
-      ),
-    };
-  }
-  if (storeKey === 'nw-portfolio') {
-    return {
-      ...remotePayload,
-      trades: mergeArraysById(
-        (localPayload.trades ?? []) as Record<string, unknown>[],
-        (remotePayload.trades ?? []) as Record<string, unknown>[],
-      ),
-    };
-  }
-  if (storeKey === 'nw-networth') {
-    return {
-      ...remotePayload,
-      manualEntries: mergeArraysById(
-        (localPayload.manualEntries ?? []) as Record<string, unknown>[],
-        (remotePayload.manualEntries ?? []) as Record<string, unknown>[],
-      ),
-      snapshots: mergeArraysById(
-        (localPayload.snapshots ?? []) as Record<string, unknown>[],
-        (remotePayload.snapshots ?? []) as Record<string, unknown>[],
-      ),
-    };
-  }
-  return remotePayload;
-}
-
 // ── Main hook ─────────────────────────────────────────────────────────────
 
 export function useSyncManager(): SyncManagerState {
@@ -207,19 +164,8 @@ export function useSyncManager(): SyncManagerState {
       return;
     }
 
-    let finalPayload = remotePayload;
-
-    if (APPEND_STORE_KEYS.has(storeKey)) {
-      const localPayload = readStorePayload(storeKey);
-      if (localPayload) {
-        finalPayload = mergeAppendPayload(storeKey, localPayload, remotePayload);
-      }
-    }
-
-    applyPayloadToStore(storeKey, finalPayload);
-
-    const finalChecksum = await computeChecksum(finalPayload);
-    updateStoreMeta(storeKey, { checksum: finalChecksum, pulledAt: new Date().toISOString() });
+    applyPayloadToStore(storeKey, remotePayload);
+    updateStoreMeta(storeKey, { checksum: remoteChecksum, pulledAt: new Date().toISOString() });
   }, []);
 
   // ── Pull all stores ──────────────────────────────────────────────────────
@@ -330,17 +276,8 @@ export function useSyncManager(): SyncManagerState {
             if (!row) return;
             const meta = getSyncMeta()[row.store_key];
             if (meta?.checksum === row.checksum) return; // already have this version
-            if (APPEND_STORE_KEYS.has(row.store_key)) {
-              const local = readStorePayload(row.store_key);
-              const merged = local ? mergeAppendPayload(row.store_key, local, row.payload) : row.payload;
-              applyPayloadToStore(row.store_key, merged);
-              computeChecksum(merged).then((cs) =>
-                updateStoreMeta(row.store_key, { checksum: cs, pulledAt: new Date().toISOString() })
-              );
-            } else {
-              applyPayloadToStore(row.store_key, row.payload);
-              updateStoreMeta(row.store_key, { checksum: row.checksum, pulledAt: new Date().toISOString() });
-            }
+            applyPayloadToStore(row.store_key, row.payload);
+            updateStoreMeta(row.store_key, { checksum: row.checksum, pulledAt: new Date().toISOString() });
             setLastSyncedAt(new Date());
           },
         )
