@@ -396,7 +396,20 @@ export default function Portfolio() {
   return (
     <div className="space-y-5">
 
-      {/* ── Top Summary ─────────────────────────────────────────────────── */}
+      {/* ── Portfolio Tabs — always at top in detailed mode ── */}
+      {portfolioMode === 'detailed' && (
+        <Tabs
+          tabs={[
+            { id: 'holdings', label: '📊 Holdings' },
+            { id: 'planner', label: '✏️ Planner' },
+          ]}
+          activeTab={activeTab}
+          onChange={(t) => setActiveTab(t as 'holdings' | 'planner')}
+        />
+      )}
+
+      {/* ── Top Summary — hidden in Planner for full immersion ── */}
+      {(portfolioMode !== 'detailed' || activeTab === 'holdings') && (
       <GlassCard padding="lg">
         <div className="flex flex-col lg:flex-row gap-6 lg:gap-10">
 
@@ -472,17 +485,6 @@ export default function Portfolio() {
           )}
         </div>
       </GlassCard>
-
-      {/* ── Portfolio Tabs ───────────────────────────────────────────────── */}
-      {portfolioMode === 'detailed' && (
-        <Tabs
-          tabs={[
-            { id: 'holdings', label: '📊 Holdings' },
-            { id: 'planner', label: '🗺 Planner' },
-          ]}
-          activeTab={activeTab}
-          onChange={(t) => setActiveTab(t as 'holdings' | 'planner')}
-        />
       )}
 
       {/* ── Planner Tab ──────────────────────────────────────────────────── */}

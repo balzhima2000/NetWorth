@@ -1209,7 +1209,6 @@ export default function PlannerPage({ holdings, totalValue, defaultCurrency }: P
     return (
       <div className="space-y-4">
         <GlassCard padding="lg" className="text-center">
-          <p className="text-4xl mb-3">🗺</p>
           <h3 className="text-white font-semibold text-lg mb-2">Portfolio Planner</h3>
           <p className="text-white/45 text-sm max-w-md mx-auto mb-1">
             The Planner is a separate interpretation layer on top of your holdings.

@@ -46,43 +46,63 @@ function MetricCell({
   );
 }
 
+type InsightSeverity = 'alert' | 'warning' | 'info' | 'positive';
+
 interface InsightItem {
   id: string;
   icon: string;
   label: string;
   value: string;
-  valueColor?: string;
   href: string;
+  severity: InsightSeverity;
 }
 
-function InsightChip({
+const SEVERITY_STYLES: Record<InsightSeverity, {
+  border: string;
+  bg: string;
+  badgeBg: string;
+  badgeText: string;
+}> = {
+  alert:    { border: '#EF4444', bg: 'rgba(239,68,68,0.08)',  badgeBg: 'rgba(239,68,68,0.18)',  badgeText: '#F87171' },
+  warning:  { border: '#F59E0B', bg: 'rgba(245,158,11,0.08)', badgeBg: 'rgba(245,158,11,0.18)', badgeText: '#FCD34D' },
+  info:     { border: '#3B82F6', bg: 'rgba(59,130,246,0.07)', badgeBg: 'rgba(59,130,246,0.18)', badgeText: '#60A5FA' },
+  positive: { border: '#10B981', bg: 'rgba(16,185,129,0.07)', badgeBg: 'rgba(16,185,129,0.18)', badgeText: '#34D399' },
+};
+
+function InsightAlert({
   item,
   onClick,
 }: {
   item: InsightItem;
   onClick: () => void;
 }) {
+  const s = SEVERITY_STYLES[item.severity];
   return (
     <button
       onClick={onClick}
-      className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl flex-shrink-0 transition-all hover:bg-white/[0.08] active:scale-[0.97] text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#10B981]/40"
+      className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all hover:brightness-110 active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20"
       style={{
-        background: 'rgba(255,255,255,0.045)',
-        border: '1px solid rgba(255,255,255,0.08)',
+        background: s.bg,
+        borderLeft: `3px solid ${s.border}`,
       }}
     >
-      <span className="text-sm leading-none flex-shrink-0">{item.icon}</span>
-      <div className="min-w-0">
-        <p className="text-[10px] text-white/38 uppercase tracking-wider leading-none whitespace-nowrap">
-          {item.label}
-        </p>
-        <p
-          className="text-xs font-semibold mt-1 font-mono leading-none whitespace-nowrap"
-          style={{ color: item.valueColor ?? 'rgba(255,255,255,0.82)' }}
-        >
-          {item.value}
-        </p>
-      </div>
+      <span className="text-base leading-none flex-shrink-0 w-5 text-center">{item.icon}</span>
+      <span className="flex-1 text-sm text-white/80 font-medium leading-snug">{item.label}</span>
+      <span
+        className="text-[11px] font-semibold font-mono px-2.5 py-1 rounded-full flex-shrink-0 leading-none"
+        style={{ background: s.badgeBg, color: s.badgeText }}
+      >
+        {item.value}
+      </span>
+      <svg
+        className="flex-shrink-0 opacity-30"
+        width="12"
+        height="12"
+        viewBox="0 0 12 12"
+        fill="none"
+      >
+        <path d="M4.5 2.5L8 6l-3.5 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+      </svg>
     </button>
   );
 }
@@ -93,58 +113,116 @@ interface WealthSegment {
   color: string;
 }
 
-function WealthCompositionBar({
+function WealthCompositionDonut({
   segments,
   total,
   liabilities,
   currency,
+  size = 'md',
 }: {
   segments: WealthSegment[];
   total: number;
   liabilities: number;
   currency: string;
+  size?: 'sm' | 'md';
 }) {
   if (total <= 0) return null;
   const active = segments.filter((s) => s.value > 1);
-  if (active.length < 2 && liabilities === 0) return null;
+  if (active.length === 0) return null;
+
+  const dim = size === 'sm' ? 120 : 148;
+  const r = size === 'sm' ? 42 : 52;
+  const sw = size === 'sm' ? 13 : 16;
+  const cx = dim / 2, cy = dim / 2;
+  const circumference = 2 * Math.PI * r;
+  const GAP_ARC = active.length > 1 ? (3 / 360) * circumference : 0;
+
+  let cumulativeDeg = -90;
 
   return (
-    <div>
-      {/* Segmented bar */}
-      <div className="flex gap-0.5 h-1.5 rounded-full overflow-hidden">
-        {active.map((s) => (
-          <div
-            key={s.label}
-            className="h-full transition-all duration-700"
-            style={{
-              width: `${(s.value / total) * 100}%`,
-              background: s.color,
-              borderRadius: 4,
-            }}
+    <div className={`flex ${size === 'sm' ? 'flex-col items-start gap-3' : 'items-center gap-8'}`}>
+      {/* Donut SVG */}
+      <div className="relative flex-shrink-0" style={{ width: dim, height: dim }}>
+        <svg viewBox={`0 0 ${dim} ${dim}`} width={dim} height={dim}>
+          {/* Track */}
+          <circle
+            cx={cx} cy={cy} r={r}
+            fill="none"
+            stroke="rgba(255,255,255,0.06)"
+            strokeWidth={sw}
           />
-        ))}
+          {/* Segments */}
+          {active.map((s) => {
+            const pct = s.value / total;
+            const arc = Math.max(pct * circumference - GAP_ARC, 0);
+            const startDeg = cumulativeDeg;
+            cumulativeDeg += pct * 360;
+            return (
+              <circle
+                key={s.label}
+                cx={cx} cy={cy} r={r}
+                fill="none"
+                stroke={s.color}
+                strokeWidth={sw}
+                strokeDasharray={`${arc} ${circumference}`}
+                strokeLinecap="butt"
+                transform={`rotate(${startDeg} ${cx} ${cy})`}
+                style={{ transition: 'stroke-dasharray 700ms ease' }}
+              />
+            );
+          })}
+        </svg>
+        {/* Center label overlay */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+          <p
+            className="font-bold font-mono leading-none tabular-nums"
+            style={{
+              fontSize: size === 'sm' ? 11 : 13,
+              color: 'rgba(255,255,255,0.82)',
+            }}
+          >
+            {formatCurrency(total, currency, true)}
+          </p>
+          <p
+            className="uppercase tracking-widest leading-none mt-1"
+            style={{ fontSize: 7, color: 'rgba(255,255,255,0.28)' }}
+          >
+            assets
+          </p>
+        </div>
       </div>
+
       {/* Legend */}
-      <div className="flex flex-wrap gap-x-4 gap-y-1.5 mt-2.5">
+      <div className={`${size === 'sm' ? 'flex flex-wrap gap-x-4 gap-y-2' : 'flex-1 grid grid-cols-2 gap-x-8 gap-y-3'}`}>
         {active.map((s) => (
-          <div key={s.label} className="flex items-center gap-1.5">
+          <div key={s.label} className="flex items-center gap-2.5 min-w-0">
             <div
-              className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+              className="w-2 h-2 rounded-full flex-shrink-0"
               style={{ background: s.color }}
             />
-            <p className="text-[11px] text-white/45">{s.label}</p>
-            <p className="text-[11px] font-mono text-white/65">
-              {((s.value / total) * 100).toFixed(0)}%
-            </p>
+            <div className="min-w-0">
+              <p className="text-[11px] text-white/40 leading-none truncate">{s.label}</p>
+              <p className="text-xs font-mono text-white/70 mt-0.5 leading-none">
+                {formatCurrency(s.value, currency, true)}
+              </p>
+              <p className="text-[10px] text-white/25 mt-0.5 leading-none">
+                {((s.value / total) * 100).toFixed(0)}%
+              </p>
+            </div>
           </div>
         ))}
         {liabilities > 0 && (
-          <div className="flex items-center gap-1.5 ml-auto">
-            <div className="w-1.5 h-1.5 rounded-full flex-shrink-0 bg-red-500/50" />
-            <p className="text-[11px] text-white/45">Debt</p>
-            <p className="text-[11px] font-mono" style={{ color: 'rgba(239,68,68,0.7)' }}>
-              {formatCurrency(liabilities, currency, true)}
-            </p>
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-2 h-2 rounded-full flex-shrink-0 bg-red-500/60" />
+            <div className="min-w-0">
+              <p className="text-[11px] text-white/40 leading-none">Debt</p>
+              <p
+                className="text-xs font-mono mt-0.5 leading-none"
+                style={{ color: 'rgba(239,68,68,0.75)' }}
+              >
+                −{formatCurrency(liabilities, currency, true)}
+              </p>
+            </div>
           </div>
         )}
       </div>
@@ -307,11 +385,13 @@ export default function Dashboard() {
     if (budgetsOverLimit.length > 0) {
       items.push({
         id: 'budgets',
-        icon: '🔔',
-        label: budgetsOverLimit.length === 1 ? '1 budget over' : `${budgetsOverLimit.length} budgets over`,
-        value: 'Needs attention',
-        valueColor: '#EF4444',
+        icon: '🚨',
+        label: budgetsOverLimit.length === 1
+          ? `1 budget exceeded — review your spending`
+          : `${budgetsOverLimit.length} budgets exceeded — review your spending`,
+        value: 'Over limit',
         href: '/spending',
+        severity: 'alert',
       });
     }
 
@@ -319,10 +399,10 @@ export default function Dashboard() {
       items.push({
         id: 'due',
         icon: '📅',
-        label: 'Due in 7 days',
+        label: `${dueSoon.length} recurring payment${dueSoon.length > 1 ? 's' : ''} due within 7 days`,
         value: formatCurrency(dueSoonTotal, defaultCurrency, true),
-        valueColor: '#F59E0B',
         href: '/spending',
+        severity: 'warning',
       });
     }
 
@@ -331,10 +411,12 @@ export default function Dashboard() {
       items.push({
         id: 'spending-trend',
         icon: up ? '📈' : '📉',
-        label: 'vs last month',
-        value: `${up ? '+' : ''}${spendingVsLastMonth.toFixed(0)}% spending`,
-        valueColor: up ? '#EF4444' : '#22C55E',
+        label: up
+          ? `Spending up ${spendingVsLastMonth.toFixed(0)}% vs last month`
+          : `Spending down ${Math.abs(spendingVsLastMonth).toFixed(0)}% vs last month`,
+        value: `${up ? '+' : ''}${spendingVsLastMonth.toFixed(0)}%`,
         href: '/spending',
+        severity: up ? 'warning' : 'positive',
       });
     }
 
@@ -342,22 +424,10 @@ export default function Dashboard() {
       items.push({
         id: 'fire',
         icon: '🔥',
-        label: 'FIRE progress',
+        label: 'FIRE progress — keep it up',
         value: `${fireProgress.toFixed(1)}%`,
-        valueColor: '#10B981',
         href: '/fire',
-      });
-    }
-
-    if (portfolioValue > 0 && totalAssets > 0) {
-      const pct = ((portfolioValue / totalAssets) * 100).toFixed(0);
-      items.push({
-        id: 'portfolio-weight',
-        icon: '💼',
-        label: 'Portfolio weight',
-        value: `${pct}% of assets`,
-        valueColor: '#3B82F6',
-        href: '/portfolio',
+        severity: 'positive',
       });
     }
 
@@ -368,8 +438,6 @@ export default function Dashboard() {
     dueSoonTotal,
     spendingVsLastMonth,
     fireProgress,
-    portfolioValue,
-    totalAssets,
     defaultCurrency,
   ]);
 
@@ -401,6 +469,18 @@ export default function Dashboard() {
     ];
   }, [assetsManual, portfolioValue]);
 
+  // ── Top spending categories this month ────────────────────────
+  const topSpendingCategories = useMemo(() => {
+    const catMap = new Map<string, number>();
+    monthExpenses.forEach((t) => {
+      catMap.set(t.category, (catMap.get(t.category) ?? 0) + t.convertedAmount);
+    });
+    return [...catMap.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([cat, amount]) => ({ cat, amount }));
+  }, [monthExpenses]);
+
   // ── Improved activity feed ─────────────────────────────────────
   const dueSoonActivity = useMemo(
     () =>
@@ -417,7 +497,7 @@ export default function Dashboard() {
       activityFeedShowTransactions
         ? [...transactions]
             .sort((a, b) => b.date.localeCompare(a.date))
-            .slice(0, 8)
+            .slice(0, 12)
         : [],
     [transactions, activityFeedShowTransactions]
   );
@@ -506,9 +586,9 @@ export default function Dashboard() {
   );
 
   const insightsStrip = insightItems.length > 0 ? (
-    <div className="flex gap-2 overflow-x-auto pb-0.5 scrollbar-hide -mx-0.5 px-0.5">
+    <div className="space-y-2">
       {insightItems.map((item) => (
-        <InsightChip
+        <InsightAlert
           key={item.id}
           item={item}
           onClick={() => navigate(item.href)}
@@ -620,63 +700,6 @@ export default function Dashboard() {
           <div>{insightsStrip}</div>
         )}
 
-        {/* FIRE progress */}
-        {fireProgress !== null && fireTarget !== null && (
-          <GlassCard padding="md">
-            <div className="flex items-start justify-between mb-3">
-              <div>
-                <p className="text-white/70 text-sm font-semibold">🔥 FIRE Progress</p>
-                <p className="text-white/30 text-xs mt-0.5">
-                  Target: {formatCurrency(fireTarget, defaultCurrency, true)}
-                </p>
-              </div>
-              <div className="text-right">
-                <p
-                  className="text-lg font-bold font-mono leading-none"
-                  style={{ color: fireProgress >= 100 ? '#22C55E' : '#10B981' }}
-                >
-                  {fireProgress.toFixed(1)}%
-                </p>
-                {fireRemaining !== null && fireRemaining > 0 && (
-                  <p className="text-xs text-white/30 mt-0.5">
-                    {formatCurrency(fireRemaining, defaultCurrency, true)} left
-                  </p>
-                )}
-              </div>
-            </div>
-            <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.08)' }}>
-              <div
-                className="h-full rounded-full"
-                style={{
-                  width: `${fireProgress}%`,
-                  background: fireProgress >= 100
-                    ? 'linear-gradient(90deg,#10B981,#22C55E)'
-                    : 'linear-gradient(90deg,#10B981,#34D399)',
-                  transition: 'width 800ms cubic-bezier(0.34,1.56,0.64,1)',
-                }}
-              />
-            </div>
-            {fireProgress >= 100 && (
-              <p className="text-xs text-[#22C55E] mt-2">🎉 You've reached your FIRE target!</p>
-            )}
-          </GlassCard>
-        )}
-
-        {/* Wealth composition */}
-        {totalAssets > 0 && (
-          <GlassCard padding="md">
-            <p className="text-white/45 text-xs font-medium uppercase tracking-wider mb-3">
-              Wealth Composition
-            </p>
-            <WealthCompositionBar
-              segments={wealthSegments}
-              total={totalAssets}
-              liabilities={liabilitiesTotal}
-              currency={defaultCurrency}
-            />
-          </GlassCard>
-        )}
-
         {/* Spending summary */}
         {(monthSpending > 0 || monthIncome > 0) && (
           <GlassCard padding="md">
@@ -708,52 +731,22 @@ export default function Dashboard() {
                 />
               )}
             </div>
-          </GlassCard>
-        )}
-
-        {/* Top holdings (compact) */}
-        {holdings.length > 0 && (
-          <GlassCard padding="md">
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-white/45 text-xs font-medium uppercase tracking-wider">
-                Top Holdings
-              </p>
-              <button
-                onClick={() => navigate('/portfolio')}
-                className="text-[#10B981] text-xs hover:text-[#10B981]/70 transition-colors"
+            {/* Top categories mini */}
+            {topSpendingCategories.length > 0 && (
+              <div
+                className="mt-3 pt-3 space-y-2"
+                style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}
               >
-                View all →
-              </button>
-            </div>
-            <div className="space-y-1.5">
-              {holdings.slice(0, 3).map((h) => (
-                <div
-                  key={h.ticker}
-                  className="flex items-center justify-between px-3 py-2 rounded-xl"
-                  style={{ background: 'rgba(255,255,255,0.04)' }}
-                >
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <div className="w-7 h-7 rounded-lg bg-[#10B981]/15 flex items-center justify-center flex-shrink-0">
-                      <span className="text-[#10B981] text-[9px] font-bold leading-none">
-                        {h.ticker.slice(0, 3)}
-                      </span>
-                    </div>
-                    <p className="text-white font-medium text-sm truncate">{h.ticker}</p>
-                  </div>
-                  <div className="text-right flex-shrink-0 ml-2">
-                    <p className="text-white font-mono text-sm">
-                      {formatCurrency(h.currentValue, defaultCurrency, true)}
-                    </p>
-                    <p
-                      className="text-[11px] font-mono"
-                      style={{ color: h.unrealizedGain >= 0 ? '#22C55E' : '#EF4444' }}
-                    >
-                      {h.unrealizedGain >= 0 ? '+' : ''}{h.unrealizedGainPercent.toFixed(2)}%
+                {topSpendingCategories.slice(0, 3).map(({ cat, amount }) => (
+                  <div key={cat} className="flex items-center justify-between">
+                    <p className="text-[11px] text-white/45 capitalize">{cat}</p>
+                    <p className="text-[11px] font-mono text-white/60">
+                      {formatCurrency(amount, defaultCurrency)}
                     </p>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </GlassCard>
         )}
 
@@ -761,6 +754,28 @@ export default function Dashboard() {
         <GlassCard padding="md">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-sm font-semibold text-white">Recent Activity</h2>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setActivityFeedSettings({ showTransactions: !activityFeedShowTransactions })}
+                className={`text-xs px-2 py-1 rounded-lg transition-colors ${
+                  activityFeedShowTransactions
+                    ? 'bg-[#10B981]/20 text-[#10B981]'
+                    : 'bg-white/5 text-white/30'
+                }`}
+              >
+                💳
+              </button>
+              <button
+                onClick={() => setActivityFeedSettings({ showRecurring: !activityFeedShowRecurring })}
+                className={`text-xs px-2 py-1 rounded-lg transition-colors ${
+                  activityFeedShowRecurring
+                    ? 'bg-[#10B981]/20 text-[#10B981]'
+                    : 'bg-white/5 text-white/30'
+                }`}
+              >
+                🔄
+              </button>
+            </div>
           </div>
 
           {dueSoonActivity.length === 0 && recentTransactions.length === 0 ? (
@@ -809,7 +824,7 @@ export default function Dashboard() {
                       <p className="text-[10px] text-white/30 uppercase tracking-wider px-1">Recent</p>
                     </div>
                   )}
-                  {recentTransactions.slice(0, 6).map((tx) => (
+                  {recentTransactions.map((tx) => (
                     <div
                       key={tx.id}
                       className="flex items-center justify-between px-3 py-2.5 rounded-xl"
@@ -841,6 +856,110 @@ export default function Dashboard() {
             </div>
           )}
         </GlassCard>
+
+        {/* Top holdings (compact) */}
+        {holdings.length > 0 && (
+          <GlassCard padding="md">
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-white/45 text-xs font-medium uppercase tracking-wider">
+                Top Holdings
+              </p>
+              <button
+                onClick={() => navigate('/portfolio')}
+                className="text-[#10B981] text-xs hover:text-[#10B981]/70 transition-colors"
+              >
+                View all →
+              </button>
+            </div>
+            <div className="space-y-1.5">
+              {holdings.slice(0, 3).map((h) => (
+                <div
+                  key={h.ticker}
+                  className="flex items-center justify-between px-3 py-2 rounded-xl"
+                  style={{ background: 'rgba(255,255,255,0.04)' }}
+                >
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-7 h-7 rounded-lg bg-[#10B981]/15 flex items-center justify-center flex-shrink-0">
+                      <span className="text-[#10B981] text-[9px] font-bold leading-none">
+                        {h.ticker.slice(0, 3)}
+                      </span>
+                    </div>
+                    <p className="text-white font-medium text-sm truncate">{h.ticker}</p>
+                  </div>
+                  <div className="text-right flex-shrink-0 ml-2">
+                    <p className="text-white font-mono text-sm">
+                      {formatCurrency(h.currentValue, defaultCurrency, true)}
+                    </p>
+                    <p
+                      className="text-[11px] font-mono"
+                      style={{ color: h.unrealizedGain >= 0 ? '#22C55E' : '#EF4444' }}
+                    >
+                      {h.unrealizedGain >= 0 ? '+' : ''}{h.unrealizedGainPercent.toFixed(2)}%
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </GlassCard>
+        )}
+
+        {/* FIRE progress */}
+        {fireProgress !== null && fireTarget !== null && (
+          <GlassCard padding="md">
+            <div className="flex items-start justify-between mb-3">
+              <div>
+                <p className="text-white/70 text-sm font-semibold">🔥 FIRE Progress</p>
+                <p className="text-white/30 text-xs mt-0.5">
+                  Target: {formatCurrency(fireTarget, defaultCurrency, true)}
+                </p>
+              </div>
+              <div className="text-right">
+                <p
+                  className="text-lg font-bold font-mono leading-none"
+                  style={{ color: fireProgress >= 100 ? '#22C55E' : '#10B981' }}
+                >
+                  {fireProgress.toFixed(1)}%
+                </p>
+                {fireRemaining !== null && fireRemaining > 0 && (
+                  <p className="text-xs text-white/30 mt-0.5">
+                    {formatCurrency(fireRemaining, defaultCurrency, true)} left
+                  </p>
+                )}
+              </div>
+            </div>
+            <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.08)' }}>
+              <div
+                className="h-full rounded-full"
+                style={{
+                  width: `${fireProgress}%`,
+                  background: fireProgress >= 100
+                    ? 'linear-gradient(90deg,#10B981,#22C55E)'
+                    : 'linear-gradient(90deg,#10B981,#34D399)',
+                  transition: 'width 800ms cubic-bezier(0.34,1.56,0.64,1)',
+                }}
+              />
+            </div>
+            {fireProgress >= 100 && (
+              <p className="text-xs text-[#22C55E] mt-2">🎉 You've reached your FIRE target!</p>
+            )}
+          </GlassCard>
+        )}
+
+        {/* Wealth composition — bottom, donut */}
+        {totalAssets > 0 && wealthSegments.filter(s => s.value > 1).length > 0 && (
+          <GlassCard padding="md">
+            <p className="text-white/45 text-xs font-medium uppercase tracking-wider mb-4">
+              Wealth Composition
+            </p>
+            <WealthCompositionDonut
+              segments={wealthSegments}
+              total={totalAssets}
+              liabilities={liabilitiesTotal}
+              currency={defaultCurrency}
+              size="sm"
+            />
+          </GlassCard>
+        )}
 
         {/* Welcome empty state */}
         {holdings.length === 0 && totalAssets === 0 && transactions.length === 0 && (
@@ -985,51 +1104,15 @@ export default function Dashboard() {
       {/* 2-column layout */}
       <div className="grid grid-cols-1 xl:grid-cols-[1fr_360px] gap-5 items-start">
 
-        {/* ── LEFT COLUMN ── */}
+        {/* ── LEFT COLUMN — spending focus ── */}
         <div className="space-y-5">
-
-          {/* Wealth composition */}
-          {totalAssets > 0 && (
-            <GlassCard padding="md">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-sm font-semibold text-white">Wealth Composition</h2>
-                <p className="text-xs text-white/30">
-                  {formatCurrency(totalAssets, defaultCurrency, true)} total assets
-                </p>
-              </div>
-              <WealthCompositionBar
-                segments={wealthSegments}
-                total={totalAssets}
-                liabilities={liabilitiesTotal}
-                currency={defaultCurrency}
-              />
-              {/* Asset breakdown list */}
-              {wealthSegments.filter(s => s.value > 1).length > 0 && (
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-3 mt-4 pt-4"
-                  style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-                  {wealthSegments.filter(s => s.value > 1).map((s) => (
-                    <div key={s.label} className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: s.color }} />
-                        <p className="text-xs text-white/50">{s.label}</p>
-                      </div>
-                      <p className="text-xs font-mono text-white/70">
-                        {formatCurrency(s.value, defaultCurrency, true)}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </GlassCard>
-          )}
 
           {/* Spending summary */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-
             <GlassCard padding="md">
               <div className="flex items-center justify-between mb-3">
                 <p className="text-white/40 text-xs font-medium uppercase tracking-wider">
-                  Month Spending
+                  Monthly Spending
                 </p>
                 {spendingVsLastMonth !== null && (
                   <span
@@ -1045,10 +1128,7 @@ export default function Dashboard() {
                   </span>
                 )}
               </div>
-              <h3
-                className="text-2xl font-bold font-mono"
-                style={{ color: 'rgba(255,255,255,0.9)' }}
-              >
+              <h3 className="text-2xl font-bold font-mono" style={{ color: 'rgba(255,255,255,0.9)' }}>
                 {formatCurrency(monthSpending, defaultCurrency, true)}
               </h3>
               <p className="text-xs text-white/30 mt-1">
@@ -1116,8 +1196,169 @@ export default function Dashboard() {
                 </button>
               </GlassCard>
             )}
-
           </div>
+
+          {/* Top spending categories */}
+          {topSpendingCategories.length > 0 && (
+            <GlassCard padding="md">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-sm font-semibold text-white">Top Categories</h2>
+                <button
+                  onClick={() => navigate('/spending')}
+                  className="text-[#10B981] text-xs hover:text-[#10B981]/70 transition-colors"
+                >
+                  All spending →
+                </button>
+              </div>
+              <div className="space-y-3">
+                {topSpendingCategories.map(({ cat, amount }) => (
+                  <div key={cat}>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <p className="text-xs text-white/60 font-medium capitalize">{cat}</p>
+                      <p className="text-xs font-mono text-white/75">
+                        {formatCurrency(amount, defaultCurrency)}
+                      </p>
+                    </div>
+                    <div className="h-0.5 rounded-full" style={{ background: 'rgba(255,255,255,0.07)' }}>
+                      <div
+                        className="h-full rounded-full transition-all duration-500"
+                        style={{
+                          width: `${(amount / topSpendingCategories[0].amount) * 100}%`,
+                          background: 'linear-gradient(90deg, #10B981, #34D399)',
+                          opacity: 0.6,
+                        }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </GlassCard>
+          )}
+
+          {/* Recent Activity — expanded in main content column */}
+          <GlassCard padding="md">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-sm font-semibold text-white">Recent Activity</h2>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setActivityFeedSettings({ showTransactions: !activityFeedShowTransactions })}
+                  className={`text-xs px-2 py-1 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#10B981]/50 ${
+                    activityFeedShowTransactions
+                      ? 'bg-[#10B981]/20 text-[#10B981]'
+                      : 'bg-white/5 text-white/30 hover:text-white/50'
+                  }`}
+                >
+                  💳
+                </button>
+                <button
+                  onClick={() => setActivityFeedSettings({ showRecurring: !activityFeedShowRecurring })}
+                  className={`text-xs px-2 py-1 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#10B981]/50 ${
+                    activityFeedShowRecurring
+                      ? 'bg-[#10B981]/20 text-[#10B981]'
+                      : 'bg-white/5 text-white/30 hover:text-white/50'
+                  }`}
+                >
+                  🔄
+                </button>
+              </div>
+            </div>
+
+            {dueSoonActivity.length === 0 && recentTransactions.length === 0 ? (
+              <EmptyState
+                icon={!activityFeedShowTransactions && !activityFeedShowRecurring ? '👁️' : '📋'}
+                title={
+                  !activityFeedShowTransactions && !activityFeedShowRecurring
+                    ? 'All feeds hidden'
+                    : 'No recent activity'
+                }
+                description={
+                  !activityFeedShowTransactions && !activityFeedShowRecurring
+                    ? 'Use the toggles to show transactions or recurring payments.'
+                    : 'Add your first transaction in Spending.'
+                }
+                action={
+                  activityFeedShowTransactions || activityFeedShowRecurring ? (
+                    <Button variant="secondary" size="sm" onClick={() => navigate('/spending')}>
+                      Go to Spending
+                    </Button>
+                  ) : undefined
+                }
+                className="py-6"
+              />
+            ) : (
+              <div className="space-y-0.5">
+                {/* Due soon */}
+                {dueSoonActivity.length > 0 && (
+                  <>
+                    <p className="text-[10px] text-white/30 uppercase tracking-wider px-1 pb-1.5">
+                      Due soon
+                    </p>
+                    {dueSoonActivity.map((p) => (
+                      <div
+                        key={p.id}
+                        className="flex items-center justify-between px-2.5 py-2.5 rounded-xl"
+                        style={{ background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.10)' }}
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <span
+                            className="w-7 h-7 rounded-lg flex items-center justify-center text-sm flex-shrink-0"
+                            style={{ background: 'rgba(245,158,11,0.12)' }}
+                          >
+                            🔄
+                          </span>
+                          <div className="min-w-0">
+                            <p className="text-white text-sm font-medium truncate leading-tight">{p.name}</p>
+                            <p className="text-white/30 text-[11px] mt-0.5">{formatDate(p.nextDueDate, 'short')}</p>
+                          </div>
+                        </div>
+                        <p className="font-mono text-sm font-semibold ml-2 flex-shrink-0" style={{ color: '#F59E0B' }}>
+                          {formatCurrency(p.amount, p.currency ?? defaultCurrency)}
+                        </p>
+                      </div>
+                    ))}
+                  </>
+                )}
+
+                {/* Recent transactions */}
+                {recentTransactions.length > 0 && (
+                  <>
+                    {dueSoonActivity.length > 0 && (
+                      <div className="pt-2 pb-1">
+                        <p className="text-[10px] text-white/30 uppercase tracking-wider px-1">Recent</p>
+                      </div>
+                    )}
+                    {recentTransactions.map((tx) => (
+                      <div
+                        key={tx.id}
+                        className="flex items-center justify-between px-2.5 py-2.5 rounded-xl hover:bg-white/[0.07] transition-colors"
+                        style={{ background: 'rgba(255,255,255,0.035)' }}
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <span
+                            className="w-7 h-7 rounded-lg flex items-center justify-center text-sm flex-shrink-0"
+                            style={{ background: 'rgba(255,255,255,0.06)' }}
+                          >
+                            💳
+                          </span>
+                          <div className="min-w-0">
+                            <p className="text-white text-sm font-medium truncate leading-tight">{tx.category}</p>
+                            <p className="text-white/30 text-[11px] mt-0.5">{formatDate(tx.date, 'short')}</p>
+                          </div>
+                        </div>
+                        <p
+                          className="font-mono text-sm font-semibold ml-2 flex-shrink-0"
+                          style={{ color: tx.type === 'expense' ? '#EF4444' : '#22C55E' }}
+                        >
+                          {tx.type === 'expense' ? '-' : '+'}
+                          {formatCurrency(tx.convertedAmount, defaultCurrency)}
+                        </p>
+                      </div>
+                    ))}
+                  </>
+                )}
+              </div>
+            )}
+          </GlassCard>
 
         </div>
 
@@ -1204,9 +1445,7 @@ export default function Dashboard() {
                         <div className="min-w-0">
                           <p className="text-white font-medium text-xs leading-tight">{h.ticker}</p>
                           <p className="text-white/30 text-[10px]">
-                            {h.sharesHeld % 1 === 0
-                              ? h.sharesHeld.toFixed(0)
-                              : h.sharesHeld.toFixed(2)}{' '}
+                            {h.sharesHeld % 1 === 0 ? h.sharesHeld.toFixed(0) : h.sharesHeld.toFixed(2)}{' '}
                             {h.sharesHeld === 1 ? 'share' : 'shares'}
                           </p>
                         </div>
@@ -1229,155 +1468,26 @@ export default function Dashboard() {
             </GlassCard>
           )}
 
-          {/* Activity feed */}
-          <GlassCard padding="md">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-sm font-semibold text-white">Recent Activity</h2>
-              <div className="flex items-center gap-1">
-                <button
-                  onClick={() =>
-                    setActivityFeedSettings({ showTransactions: !activityFeedShowTransactions })
-                  }
-                  className={`text-xs px-2 py-1 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#10B981]/50 ${
-                    activityFeedShowTransactions
-                      ? 'bg-[#10B981]/20 text-[#10B981]'
-                      : 'bg-white/5 text-white/30 hover:text-white/50'
-                  }`}
-                >
-                  💳
-                </button>
-                <button
-                  onClick={() =>
-                    setActivityFeedSettings({ showRecurring: !activityFeedShowRecurring })
-                  }
-                  className={`text-xs px-2 py-1 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#10B981]/50 ${
-                    activityFeedShowRecurring
-                      ? 'bg-[#10B981]/20 text-[#10B981]'
-                      : 'bg-white/5 text-white/30 hover:text-white/50'
-                  }`}
-                >
-                  🔄
-                </button>
-              </div>
-            </div>
-
-            {dueSoonActivity.length === 0 && recentTransactions.length === 0 ? (
-              <EmptyState
-                icon={
-                  !activityFeedShowTransactions && !activityFeedShowRecurring ? '👁️' : '📋'
-                }
-                title={
-                  !activityFeedShowTransactions && !activityFeedShowRecurring
-                    ? 'All feeds hidden'
-                    : 'No recent activity'
-                }
-                description={
-                  !activityFeedShowTransactions && !activityFeedShowRecurring
-                    ? 'Use the toggles to show transactions or recurring payments.'
-                    : 'Add your first transaction in Spending.'
-                }
-                action={
-                  activityFeedShowTransactions || activityFeedShowRecurring ? (
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => navigate('/spending')}
-                    >
-                      Go to Spending
-                    </Button>
-                  ) : undefined
-                }
-                className="py-6"
-              />
-            ) : (
-              <div className="space-y-0.5">
-
-                {/* Due soon section */}
-                {dueSoonActivity.length > 0 && (
-                  <>
-                    <p className="text-[10px] text-white/30 uppercase tracking-wider px-1 pb-1.5">
-                      Due soon
-                    </p>
-                    {dueSoonActivity.map((p) => (
-                      <div
-                        key={p.id}
-                        className="flex items-center justify-between px-2.5 py-2 rounded-xl"
-                        style={{ background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.10)' }}
-                      >
-                        <div className="flex items-center gap-2 min-w-0">
-                          <span
-                            className="w-6 h-6 rounded-lg flex items-center justify-center text-sm flex-shrink-0"
-                            style={{ background: 'rgba(245,158,11,0.12)' }}
-                          >
-                            🔄
-                          </span>
-                          <div className="min-w-0">
-                            <p className="text-white text-xs font-medium truncate leading-tight">{p.name}</p>
-                            <p className="text-white/30 text-[10px] mt-0.5">
-                              {formatDate(p.nextDueDate, 'short')}
-                            </p>
-                          </div>
-                        </div>
-                        <p
-                          className="font-mono text-xs font-semibold ml-2 flex-shrink-0"
-                          style={{ color: '#F59E0B' }}
-                        >
-                          {formatCurrency(p.amount, p.currency ?? defaultCurrency)}
-                        </p>
-                      </div>
-                    ))}
-                  </>
-                )}
-
-                {/* Recent transactions section */}
-                {recentTransactions.length > 0 && (
-                  <>
-                    {dueSoonActivity.length > 0 && (
-                      <div className="pt-2 pb-1">
-                        <p className="text-[10px] text-white/30 uppercase tracking-wider px-1">
-                          Recent
-                        </p>
-                      </div>
-                    )}
-                    {recentTransactions.map((tx) => (
-                      <div
-                        key={tx.id}
-                        className="flex items-center justify-between px-2.5 py-2 rounded-xl hover:bg-white/[0.07] transition-colors"
-                        style={{ background: 'rgba(255,255,255,0.035)' }}
-                      >
-                        <div className="flex items-center gap-2 min-w-0">
-                          <span
-                            className="w-6 h-6 rounded-lg flex items-center justify-center text-sm flex-shrink-0"
-                            style={{ background: 'rgba(255,255,255,0.06)' }}
-                          >
-                            💳
-                          </span>
-                          <div className="min-w-0">
-                            <p className="text-white text-xs font-medium truncate leading-tight">
-                              {tx.category}
-                            </p>
-                            <p className="text-white/30 text-[10px] mt-0.5">
-                              {formatDate(tx.date, 'short')}
-                            </p>
-                          </div>
-                        </div>
-                        <p
-                          className="font-mono text-xs font-semibold ml-2 flex-shrink-0"
-                          style={{ color: tx.type === 'expense' ? '#EF4444' : '#22C55E' }}
-                        >
-                          {tx.type === 'expense' ? '-' : '+'}
-                          {formatCurrency(tx.convertedAmount, defaultCurrency)}
-                        </p>
-                      </div>
-                    ))}
-                  </>
-                )}
-              </div>
-            )}
-          </GlassCard>
-
         </div>
       </div>
+
+      {/* Wealth Composition — full-width at bottom */}
+      {totalAssets > 0 && wealthSegments.filter(s => s.value > 1).length > 0 && (
+        <GlassCard padding="md">
+          <div className="flex items-center justify-between mb-5">
+            <h2 className="text-sm font-semibold text-white">Wealth Composition</h2>
+            <p className="text-xs text-white/30">
+              {formatCurrency(totalAssets, defaultCurrency, true)} total assets
+            </p>
+          </div>
+          <WealthCompositionDonut
+            segments={wealthSegments}
+            total={totalAssets}
+            liabilities={liabilitiesTotal}
+            currency={defaultCurrency}
+          />
+        </GlassCard>
+      )}
 
       {/* Welcome empty state */}
       {!hasAnyData && (
