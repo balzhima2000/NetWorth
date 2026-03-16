@@ -410,7 +410,6 @@ export default function Spending() {
 
   // Sorted recurring payments
   const sortedRecurring = useMemo(() => {
-    const todayStr = getTodayISO();
     return [...recurringPayments].sort((a, b) => {
       // Active before paused, then by next due date
       if (a.isActive !== b.isActive) return a.isActive ? -1 : 1;
