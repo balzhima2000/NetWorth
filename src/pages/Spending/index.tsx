@@ -100,16 +100,17 @@ function MetricTile({ label, value, sub, subColor = 'text-white/40', valueColor 
 
 interface BudgetStatusBadgeProps { status: BudgetStatus; pct: number }
 function BudgetStatusBadge({ status, pct }: BudgetStatusBadgeProps) {
-  const map: Record<BudgetStatus, { label: string; cls: string }> = {
-    exceeded: { label: 'Over budget', cls: 'bg-[#EF4444]/12 text-[#EF4444]' },
-    warning:  { label: `${Math.round(pct)}% used`,  cls: 'bg-[#F59E0B]/12 text-[#F59E0B]' },
-    caution:  { label: `${Math.round(pct)}% used`,  cls: 'bg-[#EAB308]/12 text-[#EAB308]' },
-    healthy:  { label: `${Math.round(pct)}% used`,  cls: 'bg-[#22C55E]/10 text-[#22C55E]/80' },
-    none:     { label: 'No budget', cls: 'bg-white/5 text-white/30' },
+  if (status === 'healthy' || status === 'none') return null;
+  const map: Record<BudgetStatus, { label: string; color: string }> = {
+    exceeded: { label: 'Over budget', color: '#EF4444' },
+    warning:  { label: `${Math.round(pct)}%`,  color: '#F59E0B' },
+    caution:  { label: `${Math.round(pct)}%`,  color: '#EAB308' },
+    healthy:  { label: '', color: '' },
+    none:     { label: '', color: '' },
   };
-  const { label, cls } = map[status];
+  const { label, color } = map[status];
   return (
-    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${cls}`}>{label}</span>
+    <span className="text-xs font-mono font-medium" style={{ color }}>{label}</span>
   );
 }
 
@@ -127,72 +128,66 @@ interface BudgetCardProps {
   onDelete: () => void;
 }
 function BudgetCard({ cat, budget, spent, status, pct, defaultCurrency, onEdit, onDelete }: BudgetCardProps) {
-  const overAmount  = budget ? spent - budget.amount : 0;
-  const remaining   = budget ? budget.amount - spent : 0;
-  const fillWidth   = budget ? Math.min(pct, 100) : 0;
+  const fillWidth = budget ? Math.min(pct, 100) : 0;
+  const overAmount = budget ? spent - budget.amount : 0;
+  const remaining = budget ? budget.amount - spent : 0;
 
-  const colors: Record<BudgetStatus, { accent: string; track: string; fill: string; metaColor: string }> = {
-    exceeded: { accent: 'rgba(239,68,68,0.40)',  track: 'rgba(239,68,68,0.10)',  fill: '#EF4444',             metaColor: '#EF4444' },
-    warning:  { accent: 'rgba(245,158,11,0.38)', track: 'rgba(245,158,11,0.10)', fill: '#F59E0B',             metaColor: '#F59E0B' },
-    caution:  { accent: 'rgba(234,179,8,0.32)',  track: 'rgba(234,179,8,0.09)',  fill: '#EAB308',             metaColor: '#EAB308' },
-    healthy:  { accent: 'transparent',            track: 'rgba(255,255,255,0.07)', fill: '#10B981',            metaColor: 'rgba(34,197,94,0.75)' },
-    none:     { accent: 'transparent',            track: 'rgba(255,255,255,0.04)', fill: 'rgba(255,255,255,0.18)', metaColor: 'rgba(255,255,255,0.28)' },
-  };
-  const c = colors[status];
+  // Status-aware colors — restrained, native to the app
+  const statusColor =
+    status === 'exceeded' ? 'rgba(239,68,68,0.70)' :
+    status === 'warning'  ? 'rgba(245,158,11,0.65)' :
+    status === 'caution'  ? 'rgba(234,179,8,0.55)'  :
+    'rgba(255,255,255,0.22)';
 
-  let metaText: string;
-  if (!budget) {
-    metaText = spent > 0 ? `${formatCurrency(spent, defaultCurrency, true)} spent · no limit set` : 'No budget set';
-  } else if (status === 'exceeded') {
-    metaText = `Over by ${formatCurrency(overAmount, defaultCurrency, true)}`;
-  } else {
-    metaText = `${formatCurrency(remaining, defaultCurrency, true)} remaining`;
-  }
+  const barColor =
+    status === 'exceeded' ? '#EF4444' :
+    status === 'warning'  ? '#F59E0B' :
+    status === 'caution'  ? '#EAB308' :
+    '#10B981';
+
+  const barOpacity = status === 'healthy' ? 0.45 : 0.75;
+
+  const subText =
+    !budget ? (spent > 0 ? `${formatCurrency(spent, defaultCurrency, true)} spent, no limit` : 'No budget set') :
+    status === 'exceeded' ? `Over by ${formatCurrency(overAmount, defaultCurrency, true)}` :
+    `${formatCurrency(remaining, defaultCurrency, true)} left`;
 
   return (
-    <div
-      className="glass rounded-2xl overflow-hidden"
-      style={{ borderLeft: `3px solid ${c.accent}` }}
-    >
-      <div className="p-4">
-        {/* Header row */}
-        <div className="flex items-start justify-between gap-3 mb-3">
-          <div className="flex items-center gap-3 min-w-0">
-            <div
-              className="w-10 h-10 rounded-xl flex items-center justify-center text-lg flex-shrink-0"
-              style={{ background: `${cat.color}1a` }}
-            >
-              {cat.emoji}
-            </div>
-            <div className="min-w-0">
-              <p className="text-white/85 text-sm font-medium leading-tight truncate">{cat.name}</p>
-              <p className="text-xs mt-0.5 leading-tight" style={{ color: c.metaColor }}>
-                {metaText}
-              </p>
+    <div className="glass rounded-xl">
+      <div className="px-4 py-3">
+        <div className="flex items-center gap-3">
+          {/* Icon */}
+          <span className="text-sm flex-shrink-0 opacity-60">{cat.emoji}</span>
+
+          {/* Name + sub */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-baseline gap-2 flex-wrap">
+              <p className="text-white/75 text-sm font-medium leading-tight">{cat.name}</p>
+              <p className="text-xs leading-tight" style={{ color: statusColor }}>{subText}</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-1.5 flex-shrink-0">
-            {budget && <BudgetStatusBadge status={status} pct={pct} />}
+          {/* Amounts + action */}
+          <div className="flex items-center gap-3 flex-shrink-0">
+            {budget && (
+              <p className="text-sm font-mono text-white/50 tabular-nums">
+                {formatCurrency(spent, defaultCurrency, true)}
+                <span className="text-white/20"> / {formatCurrency(budget.amount, defaultCurrency, true)}</span>
+              </p>
+            )}
             <button
               onClick={onEdit}
-              className="text-xs px-2.5 py-1.5 rounded-lg font-medium transition-all"
-              style={{
-                background: 'rgba(255,255,255,0.06)',
-                color: 'rgba(255,255,255,0.60)',
-              }}
-              onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.11)'; (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.85)'; }}
-              onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.06)'; (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.60)'; }}
+              className="text-xs text-white/28 hover:text-white/60 transition-colors"
             >
-              {budget ? 'Edit' : 'Set budget'}
+              {budget ? 'Edit' : 'Set'}
             </button>
             {budget && (
               <button
                 onClick={onDelete}
-                className="p-1.5 rounded-lg text-white/20 hover:text-[#EF4444]/70 hover:bg-[#EF4444]/8 transition-colors"
-                title="Remove budget"
+                className="text-white/15 hover:text-white/35 transition-colors"
+                aria-label="Remove budget"
               >
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
@@ -200,34 +195,15 @@ function BudgetCard({ cat, budget, spent, status, pct, defaultCurrency, onEdit, 
           </div>
         </div>
 
-        {/* Progress section */}
-        {budget ? (
-          <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="text-xs font-mono text-white/40">
-                {formatCurrency(spent, defaultCurrency, true)}
-                <span className="text-white/20"> / {formatCurrency(budget.amount, defaultCurrency, true)}</span>
-              </span>
-              <span className="text-xs font-mono font-medium" style={{ color: c.metaColor }}>
-                {Math.round(pct)}%
-              </span>
-            </div>
-            <div className="h-2 rounded-full overflow-hidden" style={{ background: c.track }}>
-              <div
-                className="h-full rounded-full transition-all duration-700 ease-out"
-                style={{ width: `${fillWidth}%`, background: c.fill }}
-              />
-            </div>
-          </div>
-        ) : (
-          /* Dashed empty track for unset budgets */
-          <div
-            className="h-2 rounded-full"
-            style={{
-              background: 'repeating-linear-gradient(90deg, rgba(255,255,255,0.06) 0px, rgba(255,255,255,0.06) 5px, transparent 5px, transparent 9px)',
-            }}
-          />
-        )}
+        {/* Progress track */}
+        <div className="mt-2.5 h-0.5 rounded-full bg-white/[0.05]">
+          {budget && (
+            <div
+              className="h-full rounded-full transition-all duration-700 ease-out"
+              style={{ width: `${fillWidth}%`, background: barColor, opacity: barOpacity }}
+            />
+          )}
+        </div>
       </div>
     </div>
   );
@@ -798,20 +774,16 @@ export default function Spending() {
               </div>
             )}
 
-            <div className="flex items-center gap-4 mt-3 pt-3 border-t border-white/5">
-              <div>
-                <p className="text-white/35 text-xs">Daily avg</p>
-                <p className="text-white/70 text-sm font-mono font-medium">{formatCurrency(dailyAvg, defaultCurrency, true)}</p>
-              </div>
-              {upcomingCount > 0 && (
+            {upcomingCount > 0 && (
+              <div className="flex items-center gap-4 mt-3 pt-3 border-t border-white/5">
                 <div>
                   <p className="text-white/35 text-xs">Upcoming this month</p>
                   <p className="text-amber-400/80 text-sm font-mono font-medium">
                     +{formatCurrency(upcomingTotal, defaultCurrency, true)} ({upcomingCount})
                   </p>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
           </GlassCard>
 
           {/* Net card */}
@@ -847,12 +819,7 @@ export default function Spending() {
         </div>
 
         {/* Secondary row: small tiles */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <MetricTile
-            label="Expense count"
-            value={String(monthTransactions.filter(t => t.type === 'expense').length)}
-            sub={`${monthTransactions.filter(t => t.type === 'income').length} income entries`}
-          />
+        <div className="grid grid-cols-2 gap-3">
           <MetricTile
             label="Daily average"
             value={formatCurrency(dailyAvg, defaultCurrency, true)}
@@ -861,22 +828,17 @@ export default function Spending() {
           {largestCatEntry ? (() => {
             const catInfo = getCategoryInfo(largestCatEntry[0]);
             return (
-              <MetricTile
-                label="Top category"
-                value={`${catInfo.emoji} ${catInfo.name}`}
-                sub={formatCurrency(largestCatEntry[1], defaultCurrency, true)}
-                valueColor="text-white text-base"
-              />
+              <GlassCard padding="md">
+                <p className="text-white/45 text-xs font-medium tracking-wide uppercase mb-1.5">Top category</p>
+                <div className="flex items-baseline justify-between gap-2">
+                  <p className="text-white text-base font-medium truncate">{catInfo.emoji} {catInfo.name}</p>
+                  <p className="text-white font-bold font-mono text-xl flex-shrink-0">{formatCurrency(largestCatEntry[1], defaultCurrency, true)}</p>
+                </div>
+              </GlassCard>
             );
           })() : (
             <MetricTile label="Top category" value="—" sub="No expenses yet" />
           )}
-          <MetricTile
-            label="Upcoming 7 days"
-            value={upcomingRecurring.count7 > 0 ? formatCurrency(upcomingRecurring.total7, defaultCurrency, true) : '—'}
-            sub={upcomingRecurring.count7 > 0 ? `${upcomingRecurring.count7} payment${upcomingRecurring.count7 > 1 ? 's' : ''}` : 'No upcoming'}
-            valueColor={upcomingRecurring.count7 > 0 ? 'text-amber-400/90' : 'text-white/30'}
-          />
         </div>
       </div>
 
@@ -971,7 +933,6 @@ export default function Spending() {
                   ✕ Clear
                 </Button>
               )}
-              <span className="text-white/25 text-xs">{filteredTx.length}</span>
             </div>
           </div>
 
@@ -1143,21 +1104,13 @@ export default function Spending() {
         <div className="space-y-6">
 
           {/* Upcoming summary */}
-          {(upcomingRecurring.count7 > 0 || upcomingRecurring.count30 > 0) && (
-            <div className="grid grid-cols-2 gap-3">
-              <MetricTile
-                label="Due in 7 days"
-                value={upcomingRecurring.count7 > 0 ? formatCurrency(upcomingRecurring.total7, defaultCurrency, true) : '—'}
-                sub={upcomingRecurring.count7 > 0 ? `${upcomingRecurring.count7} payment${upcomingRecurring.count7 > 1 ? 's' : ''}` : 'Nothing due'}
-                valueColor={upcomingRecurring.count7 > 0 ? 'text-amber-400/90 text-lg' : 'text-white/30 text-lg'}
-              />
-              <MetricTile
-                label="Due in 30 days"
-                value={upcomingRecurring.count30 > 0 ? formatCurrency(upcomingRecurring.total30, defaultCurrency, true) : '—'}
-                sub={upcomingRecurring.count30 > 0 ? `${upcomingRecurring.count30} payment${upcomingRecurring.count30 > 1 ? 's' : ''}` : 'Nothing due'}
-                valueColor={upcomingRecurring.count30 > 0 ? 'text-white/70 text-lg' : 'text-white/30 text-lg'}
-              />
-            </div>
+          {upcomingRecurring.count30 > 0 && (
+            <MetricTile
+              label="Due in next 30 days"
+              value={formatCurrency(upcomingRecurring.total30, defaultCurrency, true)}
+              sub={`${upcomingRecurring.count30} payment${upcomingRecurring.count30 > 1 ? 's' : ''} upcoming`}
+              valueColor="text-white/70"
+            />
           )}
 
           {/* Recurring Payments */}

@@ -7,7 +7,7 @@ import { useSettingsStore } from '../../stores/settingsStore';
 import { useNetWorthStore } from '../../stores/networthStore';
 import {
   GlassCard, Button, AssetCategoryBadge, Modal, ConfirmDialog,
-  Input, Select, Drawer, EmptyState,
+  Input, Select, Drawer, EmptyState, Tabs,
 } from '../../components/ui';
 import { AllocationPieChart } from '../../components/charts/AllocationPieChart';
 import { formatCurrency, formatDate, formatRelativeTime, getTodayISO } from '../../utils/formatters';
@@ -19,6 +19,7 @@ import { searchCoin } from '../../services/coinGecko';
 import { fetchCoinlayerLivePrices, fetchCoinlayerHistoricalPrice } from '../../services/coinlayer';
 import { useAutoFetchExchangeRates } from '../../hooks/useAutoFetchExchangeRates';
 import { ExcelImportModal } from './ExcelImportModal';
+import PlannerPage from './PlannerPage';
 import type { ImportRow } from '../../services/excelImport';
 import type { StockTrade, CurrentHolding } from '../../types/index';
 
@@ -102,6 +103,8 @@ export default function Portfolio() {
   const [tradeMkt, setTradeMkt] = useState<'global' | 'tase'>('global');
   const [deleteTradeId, setDeleteTradeId] = useState<string | null>(null);
   const [showSwitchConfirm, setShowSwitchConfirm] = useState(false);
+  const [sortBy, setSortBy] = useState<'value' | 'gain' | 'return'>('value');
+  const [activeTab, setActiveTab] = useState<'holdings' | 'planner'>('holdings');
 
   const [showExcelImport, setShowExcelImport] = useState(false);
 
@@ -373,6 +376,14 @@ export default function Portfolio() {
     ? trades.filter((t) => t.ticker === drawerTicker).sort((a, b) => b.buyDate.localeCompare(a.buyDate))
     : [];
 
+  const sortedHoldings = useMemo(() => {
+    return [...holdings].sort((a, b) => {
+      if (sortBy === 'gain') return b.unrealizedGain - a.unrealizedGain;
+      if (sortBy === 'return') return b.unrealizedGainPercent - a.unrealizedGainPercent;
+      return b.currentValue - a.currentValue;
+    });
+  }, [holdings, sortBy]);
+
   const getDriftInfo = (h: CurrentHolding) => {
     if (allocationMode === 'none') return null;
     const key = allocationMode === 'category' ? h.assetCategory : h.ticker;
@@ -383,72 +394,107 @@ export default function Portfolio() {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Summary Header */}
+    <div className="space-y-5">
+
+      {/* ── Top Summary ─────────────────────────────────────────────────── */}
       <GlassCard padding="lg">
-        <div className="flex flex-col md:flex-row gap-6 md:items-start">
-          <div className="flex-1 space-y-4">
+        <div className="flex flex-col lg:flex-row gap-6 lg:gap-10">
+
+          {/* Left: financial summary + actions */}
+          <div className="flex-1 flex flex-col gap-4">
+
+            {/* Portfolio value */}
             <div>
-              <p className="text-white/50 text-sm mb-1">Portfolio Value</p>
-              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white font-mono">
+              <p className="text-white/35 text-xs font-medium tracking-wide uppercase mb-1.5">Portfolio Value</p>
+              <h2 className="text-3xl sm:text-4xl font-bold text-white font-mono leading-none">
                 {formatCurrency(totalValue, defaultCurrency, true)}
               </h2>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+
+            {/* Gain + Return */}
+            <div className="flex items-start gap-6">
               <div>
-                <p className="text-white/40 text-xs mb-0.5">Unrealized Gain</p>
-                <p className={`text-lg font-semibold font-mono ${totalGain >= 0 ? 'text-[#22C55E]' : 'text-[#EF4444]'}`}>
+                <p className="text-white/30 text-xs mb-0.5">Unrealized Gain</p>
+                <p className={`text-xl font-semibold font-mono ${totalGain >= 0 ? 'text-[#22C55E]' : 'text-[#EF4444]'}`}>
                   {totalGain >= 0 ? '+' : ''}{formatCurrency(totalGain, defaultCurrency, true)}
                 </p>
               </div>
+              <div className="w-px bg-white/8 self-stretch" />
               <div>
-                <p className="text-white/40 text-xs mb-0.5">Return</p>
-                <p className={`text-lg font-semibold font-mono ${totalGainPct >= 0 ? 'text-[#22C55E]' : 'text-[#EF4444]'}`}>
+                <p className="text-white/30 text-xs mb-0.5">Return</p>
+                <p className={`text-xl font-semibold font-mono ${totalGainPct >= 0 ? 'text-[#22C55E]' : 'text-[#EF4444]'}`}>
                   {totalGainPct >= 0 ? '+' : ''}{totalGainPct.toFixed(2)}%
                 </p>
               </div>
             </div>
-            <div className="flex flex-wrap items-center gap-3 mt-1">
-              <Button variant="primary" onClick={() => openAddTrade()}>+ Add Trade</Button>
-              <div className="flex flex-wrap gap-2 sm:ml-auto">
-                <Button size="sm" variant="secondary" onClick={() => setShowExcelImport(true)}>📥 Import Excel</Button>
-                <Button size="sm" variant="secondary" onClick={handleRefreshPrices} disabled={!canRefreshPrices || refreshing}>
-                  {refreshing ? '⏳ Refreshing...' : '🔄 Refresh Prices'}
-                </Button>
-                <Button size="sm" variant="ghost" onClick={() => {
-                  setAllocMode(allocationMode);
-                  setAllocTargets(Object.fromEntries(Object.entries(allocationTargets).map(([k, v]) => [k, String(v)])));
-                  setShowAllocationModal(true);
-                }}>
-                  ⚖️ Allocation
-                </Button>
-              </div>
+
+            {/* Actions */}
+            <div className="flex flex-wrap items-center gap-2 pt-1">
+              <Button variant="primary" size="sm" onClick={() => openAddTrade()}>+ Add Trade</Button>
+              <div className="w-px h-4 bg-white/10" />
+              <Button size="sm" variant="secondary" onClick={() => setShowExcelImport(true)}>📥 Import Excel</Button>
+              <Button size="sm" variant="secondary" onClick={handleRefreshPrices} disabled={!canRefreshPrices || refreshing}>
+                {refreshing ? '⏳ Refreshing…' : '🔄 Refresh Prices'}
+              </Button>
+              <Button size="sm" variant="ghost" onClick={() => {
+                setAllocMode(allocationMode);
+                setAllocTargets(Object.fromEntries(Object.entries(allocationTargets).map(([k, v]) => [k, String(v)])));
+                setShowAllocationModal(true);
+              }}>⚖️ Allocation</Button>
             </div>
-            {!canRefreshPrices && !refreshing && <p className="text-white/30 text-xs">Add a Stocks or TASE API key in Settings to enable live price refresh</p>}
-            {stocksApiKey && <p className="text-white/30 text-xs">{requestsRemaining}/{ALPHA_VANTAGE_MAX_REQUESTS} global API requests remaining today</p>}
+
+            {/* Subtle status */}
+            {stocksApiKey && requestsRemaining < ALPHA_VANTAGE_MAX_REQUESTS && (
+              <p className="text-white/22 text-xs">{requestsRemaining}/{ALPHA_VANTAGE_MAX_REQUESTS} requests remaining today</p>
+            )}
             {refreshProgress && <p className="text-[#22C55E] text-xs animate-pulse">{refreshProgress}</p>}
           </div>
 
+          {/* Right: allocation chart */}
           {pieData.length > 0 && (
-            <div className="flex flex-col items-center gap-3">
-              <AllocationPieChart data={pieData} currency={defaultCurrency} size={160} />
-              <div className="flex flex-wrap justify-center gap-x-3 gap-y-1">
+            <div className="flex flex-row lg:flex-col items-center lg:items-end gap-4 lg:gap-3 lg:min-w-[160px]">
+              <AllocationPieChart data={pieData} currency={defaultCurrency} size={130} />
+              <div className="flex flex-col gap-1.5 lg:items-end">
                 {pieData.map((d) => {
                   const cat = ASSET_CATEGORIES.find((c) => c.id === d.name);
+                  const pct = ((d.value / totalValue) * 100).toFixed(0);
                   return (
-                    <div key={d.name} className="flex items-center gap-1.5 text-xs text-white/50">
-                      <div className="w-2 h-2 rounded-full" style={{ background: cat?.color }} />
-                      <span>{cat?.label ?? d.name} {((d.value / totalValue) * 100).toFixed(0)}%</span>
+                    <div key={d.name} className="flex items-center gap-2 text-xs">
+                      <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: cat?.color }} />
+                      <span className="text-white/40">{cat?.label ?? d.name}</span>
+                      <span className="text-white/55 font-mono tabular-nums ml-auto">{pct}%</span>
                     </div>
                   );
                 })}
+                <p className="text-white/20 text-xs mt-0.5">{holdings.length} position{holdings.length !== 1 ? 's' : ''}</p>
               </div>
             </div>
           )}
         </div>
       </GlassCard>
 
-      {/* Simple Mode Overlay */}
+      {/* ── Portfolio Tabs ───────────────────────────────────────────────── */}
+      {portfolioMode === 'detailed' && (
+        <Tabs
+          tabs={[
+            { id: 'holdings', label: '📊 Holdings' },
+            { id: 'planner', label: '🗺 Planner' },
+          ]}
+          activeTab={activeTab}
+          onChange={(t) => setActiveTab(t as 'holdings' | 'planner')}
+        />
+      )}
+
+      {/* ── Planner Tab ──────────────────────────────────────────────────── */}
+      {portfolioMode === 'detailed' && activeTab === 'planner' && (
+        <PlannerPage
+          holdings={holdings}
+          totalValue={totalValue}
+          defaultCurrency={defaultCurrency}
+        />
+      )}
+
+      {/* ── Simple Mode Overlay ──────────────────────────────────────────── */}
       {portfolioMode === 'simple' && (
         <div className="relative">
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm rounded-2xl flex items-center justify-center z-10">
@@ -463,85 +509,100 @@ export default function Portfolio() {
         </div>
       )}
 
-      {/* Holdings Grid */}
-      {portfolioMode === 'detailed' && (
-        <div>
-          <div className="flex items-center justify-between mb-4">
+      {/* ── Holdings ────────────────────────────────────────────────────── */}
+      {portfolioMode === 'detailed' && activeTab === 'holdings' && (
+        <div className="space-y-3">
+
+          {/* Section header + sort toolbar */}
+          <div className="flex items-end justify-between">
             <div>
-              <h2 className="text-xl font-bold text-white">Current Holdings</h2>
-              <p className="text-white/35 text-xs mt-0.5">Click a card to view trade history</p>
+              <h2 className="text-lg font-semibold text-white">Holdings</h2>
+              <p className="text-white/30 text-xs mt-0.5">Tap a card to view trade history</p>
             </div>
-            <span className="text-white/30 text-sm tabular-nums">{holdings.length} position{holdings.length !== 1 ? 's' : ''}</span>
+            {holdings.length > 1 && (
+              <div className="flex items-center gap-0.5 bg-white/[0.04] rounded-lg p-1">
+                {([['value', 'Value'], ['gain', 'Gain'], ['return', 'Return']] as const).map(([opt, label]) => (
+                  <button
+                    key={opt}
+                    onClick={() => setSortBy(opt)}
+                    className={`text-xs px-2.5 py-1 rounded-md transition-all ${sortBy === opt ? 'bg-white/10 text-white/75' : 'text-white/25 hover:text-white/45'}`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
+
           {holdings.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {holdings.map((h) => {
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              {sortedHoldings.map((h) => {
                 const driftInfo = getDriftInfo(h);
                 return (
                   <GlassCard
                     key={h.ticker}
                     padding="md"
-                    className="cursor-pointer hover:bg-white/[0.08] transition-colors"
+                    className="cursor-pointer hover:bg-white/[0.07] transition-colors"
                     onClick={() => setDrawerTicker(h.ticker)}
                   >
-                    <div className="space-y-3">
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <h3 className="text-xl font-bold text-white">{h.ticker}</h3>
-                          <p className="text-xs text-white/40 truncate max-w-[140px]">{h.name}</p>
-                          {priceSources[h.ticker] === 'excel' && (
-                            <p className="text-xs text-amber-400/70 mt-0.5">📊 Current Values are from Excel Import</p>
-                          )}
+                    {/* Header: ticker + name + badges */}
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="min-w-0">
+                        <div className="flex items-baseline gap-2">
+                          <h3 className="text-xl font-bold text-white font-mono leading-none">{h.ticker}</h3>
+                          <p className="text-xs text-white/22 font-mono leading-none">
+                            {h.sharesHeld % 1 === 0 ? h.sharesHeld.toFixed(0) : h.sharesHeld.toFixed(4)}&nbsp;{h.sharesHeld === 1 ? 'share' : 'shares'}
+                          </p>
                         </div>
-                        <div className="flex flex-col items-end gap-1">
-                          <AssetCategoryBadge category={h.assetCategory} />
-                          {driftInfo && Math.abs(driftInfo.drift) >= 2 && (
-                            <span className={`text-xs px-2 py-0.5 rounded-full font-mono ${Math.abs(driftInfo.drift) > 5 ? 'bg-[#EF4444]/15 text-[#EF4444]' : 'bg-amber-500/15 text-amber-400'}`}>
-                              {driftInfo.drift > 0 ? '+' : ''}{driftInfo.drift.toFixed(1)}%
-                            </span>
-                          )}
-                        </div>
+                        <p className="text-xs text-white/32 mt-0.5 truncate max-w-[180px]">{h.name}</p>
+                        {priceSources[h.ticker] === 'excel' && (
+                          <p className="text-xs text-amber-400/55 mt-0.5">Excel snapshot</p>
+                        )}
                       </div>
-
-                      <div className="space-y-1 text-sm">
-                        <div className="flex justify-between">
-                          <span className="text-white/50">Shares</span>
-                          <span className="text-white font-mono">{h.sharesHeld.toFixed(4)}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-white/50">Price</span>
-                          <div className="text-right">
-                            <span className="text-white font-mono">{formatCurrency(h.currentPrice, h.currency)}</span>
-                            {h.lastPriceUpdate && (
-                              <p className="text-white/25 text-xs">{formatRelativeTime(h.lastPriceUpdate)}</p>
-                            )}
-                          </div>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-white/50">Value</span>
-                          <span className="text-white font-mono font-semibold">{formatCurrency(h.currentValue, defaultCurrency)}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-white/50">Avg Cost</span>
-                          <span className="text-white/50 font-mono">{formatCurrency(h.blendedCostBasis, h.currency)}/share</span>
-                        </div>
+                      <div className="flex flex-col items-end gap-1 flex-shrink-0 ml-3">
+                        <AssetCategoryBadge category={h.assetCategory} />
+                        {/* Only show drift badge in individual mode — category-level drift on a single stock is confusing */}
+                        {allocationMode === 'individual' && driftInfo && Math.abs(driftInfo.drift) >= 2 && (
+                          <span className={`text-xs font-mono ${Math.abs(driftInfo.drift) > 5 ? 'text-[#EF4444]/65' : 'text-amber-400/65'}`}>
+                            {driftInfo.drift > 0 ? '+' : ''}{driftInfo.drift.toFixed(1)}%
+                          </span>
+                        )}
                       </div>
-
-                      <div className={`flex items-center justify-between pt-2 border-t border-white/5 ${h.unrealizedGain >= 0 ? 'text-[#22C55E]' : 'text-[#EF4444]'}`}>
-                        <span className="text-sm font-mono font-semibold">
-                          {h.unrealizedGain >= 0 ? '+' : ''}{formatCurrency(h.unrealizedGain, defaultCurrency)}
-                        </span>
-                        <span className="text-sm font-mono">
-                          {h.unrealizedGain >= 0 ? '+' : ''}{h.unrealizedGainPercent.toFixed(2)}%
-                        </span>
-                      </div>
-
-                      {allocationMode !== 'none' && driftInfo && (
-                        <p className="text-xs text-white/30">
-                          {h.portfolioPercent.toFixed(1)}% actual · {driftInfo.target}% target
-                        </p>
-                      )}
                     </div>
+
+                    {/* Hero: value */}
+                    <p className="text-2xl font-bold font-mono text-white leading-none mb-1.5">
+                      {formatCurrency(h.currentValue, defaultCurrency)}
+                    </p>
+
+                    {/* Gain row */}
+                    <div className={`flex items-baseline gap-2 mb-3 ${h.unrealizedGain >= 0 ? 'text-[#22C55E]' : 'text-[#EF4444]'}`}>
+                      <span className="text-sm font-mono font-medium">
+                        {h.unrealizedGain >= 0 ? '+' : ''}{formatCurrency(h.unrealizedGain, defaultCurrency)}
+                      </span>
+                      <span className="text-xs font-mono opacity-65">
+                        {h.unrealizedGain >= 0 ? '+' : ''}{h.unrealizedGainPercent.toFixed(2)}%
+                      </span>
+                    </div>
+
+                    {/* Secondary details footer */}
+                    <div className="pt-2.5 border-t border-white/[0.06] flex items-center gap-1.5 text-xs text-white/28 font-mono flex-wrap">
+                      <span>
+                        {formatCurrency(h.currentPrice, h.currency)}
+                        {h.lastPriceUpdate && (
+                          <span className="text-white/15 ml-1">{formatRelativeTime(h.lastPriceUpdate)}</span>
+                        )}
+                      </span>
+                      <span className="text-white/15">·</span>
+                      <span>avg {formatCurrency(h.blendedCostBasis, h.currency)}</span>
+                    </div>
+
+                    {/* Allocation line — only meaningful in individual mode */}
+                    {allocationMode === 'individual' && driftInfo && (
+                      <p className="text-xs text-white/18 mt-1.5 font-mono">
+                        {h.portfolioPercent.toFixed(1)}% actual · {driftInfo.target}% target
+                      </p>
+                    )}
                   </GlassCard>
                 );
               })}
