@@ -46,25 +46,3 @@ export async function fetchCoinPrices(
   }
   return result;
 }
-
-/**
- * Fetch a coin's closing price for a specific past date.
- * @param coinId  CoinGecko ID e.g. "bitcoin"
- * @param date    ISO date string YYYY-MM-DD
- * @param vsCurrency  Target currency code, e.g. "usd"
- */
-export async function fetchCoinHistoricalPrice(
-  coinId: string,
-  date: string,
-  vsCurrency = 'usd',
-): Promise<number> {
-  // CoinGecko history API expects DD-MM-YYYY
-  const [year, month, day] = date.split('-');
-  const cgDate = `${day}-${month}-${year}`;
-  const res = await fetch(`${BASE}/coins/${encodeURIComponent(coinId)}/history?date=${cgDate}`);
-  if (!res.ok) throw new Error(`CoinGecko history failed: HTTP ${res.status}`);
-  const data = await res.json() as { market_data?: { current_price?: Record<string, number> } };
-  const price = data?.market_data?.current_price?.[vsCurrency.toLowerCase()];
-  if (price == null) throw new Error(`No price data for ${coinId} on ${date}`);
-  return price;
-}

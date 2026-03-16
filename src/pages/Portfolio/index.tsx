@@ -15,7 +15,7 @@ import { calculateCurrentHoldings } from '../../utils/calculations';
 import { ASSET_CATEGORIES, ALPHA_VANTAGE_MAX_REQUESTS, CURRENCIES } from '../../utils/constants';
 import { fetchStockQuote, searchSymbol, fetchHistoricalPrice } from '../../services/alphaVantage';
 import { fetchTaseSecurityPrice, fetchTaseHistoricalPrice } from '../../services/taseDataHub';
-import { searchCoin, fetchCoinPrices, fetchCoinHistoricalPrice } from '../../services/coinGecko';
+import { searchCoin, fetchCoinPrices } from '../../services/coinGecko';
 import { useAutoFetchExchangeRates } from '../../hooks/useAutoFetchExchangeRates';
 import { ExcelImportModal } from './ExcelImportModal';
 import type { ImportRow } from '../../services/excelImport';
@@ -195,7 +195,7 @@ export default function Portfolio() {
     try {
       let fetched: number;
       if (assetCategory === 'crypto') {
-        fetched = await fetchCoinHistoricalPrice(ticker, tradeDate, tradeCurrency);
+        throw new Error('Historical crypto prices are not available — please enter the price manually.');
       } else if (tradeMkt === 'tase') {
         if (!israeliApiKey) throw new Error('Add your TASE API key in Settings first.');
         fetched = await fetchTaseHistoricalPrice(parseInt(ticker), tradeDate, israeliApiKey);
