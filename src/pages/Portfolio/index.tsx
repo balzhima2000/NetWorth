@@ -632,7 +632,7 @@ export default function Portfolio() {
             />
             <Input label={lookingUpName ? 'Looking up...' : 'Security Name'} placeholder={tradeMkt === 'tase' ? 'iShares MSCI ACWI...' : 'Apple Inc.'} value={companyName} onChange={(e) => setCompanyName(e.target.value)} disabled={lookingUpName} />
           </div>
-          {!editingTrade && (
+          {!editingTrade && assetCategory === 'crypto' && (
             <div className="flex gap-1 p-1 bg-white/5 rounded-xl w-fit">
               <button
                 onClick={() => { setInputMode('units'); setTotalAmount(''); }}
@@ -689,6 +689,7 @@ export default function Portfolio() {
             const cat = e.target.value as AssetCategory;
             setAssetCategory(cat);
             if (cat === 'crypto') { setTradeMkt('global'); setTradeCurrency('USD'); setTicker(''); setCompanyName(''); }
+            else { setInputMode('units'); setTotalAmount(''); }
           }} options={ASSET_CATEGORIES.map((c) => ({ value: c.id, label: c.label }))} />
           <Input label="Notes (optional)" placeholder="Any notes..." value={tradeNotes} onChange={(e) => setTradeNotes(e.target.value)} />
         </div>
