@@ -75,6 +75,9 @@ export default function Settings() {
   const israeliApiKey = useSettingsStore((s) => s.israeliApiKey);
   const setIsraeliApiKey = useSettingsStore((s) => s.setIsraeliApiKey);
   const israeliRequestsToday = useSettingsStore((s) => s.israeliRequestsToday);
+  // Crypto API (Coinlayer)
+  const cryptoApiKey = useSettingsStore((s) => s.cryptoApiKey);
+  const setCryptoApiKey = useSettingsStore((s) => s.setCryptoApiKey);
   const lastBackupDate = useSettingsStore((s) => s.lastBackupDate);
   const setLastBackupDate = useSettingsStore((s) => s.setLastBackupDate);
   const exchangeRates = useSettingsStore((s) => s.exchangeRates);
@@ -118,6 +121,7 @@ export default function Settings() {
   const [fxKeyStatus, setFxKeyStatus] = useState<KeyStatus>('idle');
   const [newIsraeliKey, setNewIsraeliKey] = useState(israeliApiKey);
   const [israeliKeyStatus, setIsraeliKeyStatus] = useState<KeyStatus>('idle');
+  const [newCryptoKey, setNewCryptoKey] = useState(cryptoApiKey);
 
   const handleTestStocksKey = async () => {
     if (!newStocksKey) return;
@@ -660,6 +664,38 @@ export default function Settings() {
                 ? <p>Requests today: <span className="text-white/60">{israeliRequestsToday}</span> <span className="text-white/20">(limit: 10/2 sec)</span></p>
                 : <p className="text-amber-400/60">Not configured — TASE prices entered manually</p>}
               <p>Get access at: <a href="https://datahub.tase.co.il/login" target="_blank" rel="noopener noreferrer" className="!text-blue-400 hover:!text-blue-300 underline underline-offset-2">datahub.tase.co.il</a> — subscribe to <span className="text-white/50">Securities data End of Day</span> (stocks) and <span className="text-white/50">Mutual Funds</span> (ETFs &amp; funds)</p>
+            </div>
+          </div>
+
+          {/* Crypto — Coinlayer */}
+          <div className="p-4 bg-white/5 rounded-xl border border-white/8 space-y-3">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-semibold text-white">🪙 Crypto</p>
+              <span className="text-xs text-white/40 bg-white/5 px-2 py-0.5 rounded-full">Coinlayer</span>
+            </div>
+            {cryptoApiKey ? (
+              <>
+                <Input type="password" value={cryptoApiKey} disabled />
+                <Button variant="ghost" size="sm" onClick={() => { setCryptoApiKey(''); setNewCryptoKey(''); toast.success('Crypto key removed.'); }}>Remove</Button>
+              </>
+            ) : (
+              <>
+                <Input
+                  type="password"
+                  placeholder="Enter API key..."
+                  value={newCryptoKey}
+                  onChange={(e) => setNewCryptoKey(e.target.value)}
+                />
+                <Button variant="secondary" size="sm" onClick={() => { setCryptoApiKey(newCryptoKey); toast.success('Coinlayer key saved.'); }} disabled={!newCryptoKey}>
+                  Save Key
+                </Button>
+              </>
+            )}
+            <div className="text-xs text-white/30 space-y-0.5">
+              {cryptoApiKey
+                ? <p>✅ Configured — live &amp; historical crypto prices enabled</p>
+                : <p className="text-amber-400/60">Not configured — crypto prices entered manually</p>}
+              <p>Free plan: 100 requests/month. Get your key at: <a href="https://coinlayer.com" target="_blank" rel="noopener noreferrer" className="!text-blue-400 hover:!text-blue-300 underline underline-offset-2">coinlayer.com</a></p>
             </div>
           </div>
 

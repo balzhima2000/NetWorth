@@ -15,7 +15,8 @@ import { calculateCurrentHoldings } from '../../utils/calculations';
 import { ASSET_CATEGORIES, ALPHA_VANTAGE_MAX_REQUESTS, CURRENCIES } from '../../utils/constants';
 import { fetchStockQuote, searchSymbol, fetchHistoricalPrice } from '../../services/alphaVantage';
 import { fetchTaseSecurityPrice, fetchTaseHistoricalPrice } from '../../services/taseDataHub';
-import { searchCoin, fetchCoinPrices } from '../../services/coinGecko';
+import { searchCoin } from '../../services/coinGecko';
+import { fetchCoinlayerLivePrices, fetchCoinlayerHistoricalPrice } from '../../services/coinlayer';
 import { useAutoFetchExchangeRates } from '../../hooks/useAutoFetchExchangeRates';
 import { ExcelImportModal } from './ExcelImportModal';
 import type { ImportRow } from '../../services/excelImport';
@@ -46,6 +47,7 @@ export default function Portfolio() {
   const resetRequestsIfNewDay = useSettingsStore((s) => s.resetRequestsIfNewDay);
   const exchangeRates = useSettingsStore((s) => s.exchangeRates);
   const israeliApiKey = useSettingsStore((s) => s.israeliApiKey);
+  const cryptoApiKey = useSettingsStore((s) => s.cryptoApiKey);
 
   const manualEntries = useNetWorthStore((s) => s.manualEntries);
   const deleteManualEntry = useNetWorthStore((s) => s.deleteManualEntry);
@@ -75,9 +77,10 @@ export default function Portfolio() {
   const requestsRemaining = ALPHA_VANTAGE_MAX_REQUESTS - stocksRequestsToday;
 
   // Can refresh if there are global holdings with a stocks API key + quota, or TASE holdings with an Israeli API key
-  const hasRefreshableGlobal = holdings.some((h) => (h.market ?? 'global') === 'global') && !!stocksApiKey && requestsRemaining > 0;
+  const hasRefreshableGlobal = holdings.some((h) => (h.market ?? 'global') === 'global' && h.assetCategory !== 'crypto') && !!stocksApiKey && requestsRemaining > 0;
   const hasRefreshableTase = holdings.some((h) => h.market === 'tase') && !!israeliApiKey;
-  const canRefreshPrices = hasRefreshableGlobal || hasRefreshableTase;
+  const hasRefreshableCrypto = holdings.some((h) => h.assetCategory === 'crypto') && !!cryptoApiKey;
+  const canRefreshPrices = hasRefreshableGlobal || hasRefreshableTase || hasRefreshableCrypto;
 
   const [showTradeModal, setShowTradeModal] = useState(false);
   const [editingTrade, setEditingTrade] = useState<StockTrade | null>(null);
@@ -161,7 +164,7 @@ export default function Portfolio() {
         const results = await searchCoin(ticker);
         if (results.length > 0) {
           setCompanyName(results[0].name);
-          setTicker(results[0].id);
+          setTicker(results[0].symbol); // store uppercase symbol (BTC, ETH) for Coinlayer
         }
       } catch {}
       setLookingUpName(false);
@@ -178,7 +181,7 @@ export default function Portfolio() {
 
   const validateSell = (): boolean => {
     if (tradeType !== 'sell') return true;
-    const finalTick = assetCategory === 'crypto' ? ticker.toLowerCase() : ticker.toUpperCase();
+    const finalTick = ticker.toUpperCase();
     const holding = holdings.find((h) => h.ticker === finalTick);
     const qty = parseFloat(quantity);
     if (!holding || qty > holding.sharesHeld) {
@@ -195,7 +198,8 @@ export default function Portfolio() {
     try {
       let fetched: number;
       if (assetCategory === 'crypto') {
-        throw new Error('Historical crypto prices are not available — please enter the price manually.');
+        if (!cryptoApiKey) throw new Error('Add your Coinlayer API key in Settings first.');
+        fetched = await fetchCoinlayerHistoricalPrice(ticker.toUpperCase(), tradeDate, cryptoApiKey);
       } else if (tradeMkt === 'tase') {
         if (!israeliApiKey) throw new Error('Add your TASE API key in Settings first.');
         fetched = await fetchTaseHistoricalPrice(parseInt(ticker), tradeDate, israeliApiKey);
@@ -216,7 +220,7 @@ export default function Portfolio() {
   const handleSaveTrade = () => {
     if (!ticker || !quantity || !price) return;
     if (!validateSell()) return;
-    const upperTicker = assetCategory === 'crypto' ? ticker.toLowerCase() : ticker.toUpperCase();
+    const upperTicker = ticker.toUpperCase();
     const qty = parseFloat(quantity);
     const px = parseFloat(price); // stored in native currency (tradeCurrency), no conversion
     if (editingTrade) {
@@ -288,16 +292,22 @@ export default function Portfolio() {
       await new Promise((r) => setTimeout(r, 300));
     }
 
-    // ── Crypto holdings (CoinGecko) ──
+    // ── Crypto holdings (Coinlayer) ──
     if (cryptoHoldings.length > 0) {
-      setRefreshProgress('Updating crypto prices...');
-      try {
-        const prices = await fetchCoinPrices(cryptoHoldings.map((h) => h.ticker), 'usd');
-        for (const h of cryptoHoldings) {
-          const p = prices[h.ticker];
-          if (p != null) { updateCurrentPrice(h.ticker, p); done++; }
+      if (!cryptoApiKey) {
+        toast.error('Add your Coinlayer API key in Settings to refresh crypto prices.');
+      } else {
+        setRefreshProgress('Updating crypto prices...');
+        try {
+          const prices = await fetchCoinlayerLivePrices(cryptoHoldings.map((h) => h.ticker), cryptoApiKey);
+          for (const h of cryptoHoldings) {
+            const p = prices[h.ticker];
+            if (p != null) { updateCurrentPrice(h.ticker, p); done++; }
+          }
+        } catch (e: any) {
+          toast.error(e.message || 'Crypto price refresh failed.');
         }
-      } catch { /* silent fail */ }
+      }
     }
 
     if (done === total) {
@@ -610,7 +620,7 @@ export default function Portfolio() {
               label={assetCategory === 'crypto' ? 'Coin ID' : tradeMkt === 'tase' ? 'Security ID' : 'Ticker Symbol'}
               placeholder={assetCategory === 'crypto' ? 'e.g. bitcoin, ethereum' : tradeMkt === 'tase' ? 'e.g. 1159235' : 'AAPL'}
               value={ticker}
-              onChange={(e) => { setTicker(assetCategory === 'crypto' ? e.target.value.toLowerCase() : tradeMkt === 'tase' ? e.target.value : e.target.value.toUpperCase()); setCompanyName(''); setTickerError(''); }}
+              onChange={(e) => { setTicker(tradeMkt === 'tase' ? e.target.value : e.target.value.toUpperCase()); setCompanyName(''); setTickerError(''); }}
               onBlur={handleTickerBlur}
               error={tickerError}
               required
@@ -621,7 +631,7 @@ export default function Portfolio() {
             <Input label={assetCategory === 'crypto' ? 'Amount' : 'Shares'} type="number" inputMode="decimal" placeholder="10" value={quantity} onChange={(e) => setQuantity(e.target.value)} required />
             <div className="flex gap-2 items-end">
               <Input label={tradeType === 'sell' ? 'Sell Price' : 'Buy Price'} type="number" inputMode="decimal" placeholder="150.00" value={price} onChange={(e) => setPrice(e.target.value)} required />
-              {(assetCategory === 'crypto' || (tradeMkt === 'global' ? stocksApiKey : israeliApiKey)) && ticker && (
+              {(assetCategory === 'crypto' ? cryptoApiKey : (tradeMkt === 'global' ? stocksApiKey : israeliApiKey)) && ticker && (
                 <Button
                   variant="ghost"
                   size="sm"

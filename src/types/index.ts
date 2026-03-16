@@ -192,6 +192,7 @@ export interface Settings {
   israeliApiKey: string;          // TASE DataHub — Israeli market (Securities - Basic, free)
   israeliRequestsToday: number;
   israeliRequestsResetDate: string;
+  cryptoApiKey: string;           // Coinlayer — crypto current + historical prices
   fireTarget: number | null;
   activityFeedShowTransactions: boolean;
   activityFeedShowTrades: boolean;

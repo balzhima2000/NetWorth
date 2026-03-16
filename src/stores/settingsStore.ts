@@ -18,6 +18,7 @@ interface SettingsStore extends Settings {
   setFxApiKey: (key: string) => void;
   setFxProvider: (provider: 'alpha-vantage' | 'massive' | 'boi') => void;
   setIsraeliApiKey: (key: string) => void;
+  setCryptoApiKey: (key: string) => void;
   // ── Per-slot request counters ──
   decrementStocksRequests: () => void;
   decrementFxRequests: () => void;
@@ -46,6 +47,7 @@ const defaultSettings: Settings = {
   israeliApiKey: '',
   israeliRequestsToday: 0,
   israeliRequestsResetDate: today(),
+  cryptoApiKey: '',
   fireTarget: null,
   activityFeedShowTransactions: true,
   activityFeedShowTrades: true,
@@ -79,6 +81,7 @@ export const useSettingsStore = create<SettingsStore>()(
       setFxApiKey: (key) => set({ fxApiKey: key }),
       setFxProvider: (provider) => set({ fxProvider: provider }),
       setIsraeliApiKey: (key) => set({ israeliApiKey: key }),
+      setCryptoApiKey: (key) => set({ cryptoApiKey: key }),
       decrementStocksRequests: () =>
         set((state) => ({ stocksRequestsToday: state.stocksRequestsToday + 1 })),
       decrementFxRequests: () =>
