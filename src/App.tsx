@@ -5,6 +5,7 @@ import { AppShell } from './components/layout';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { ToastProvider } from './components/ui/Toast';
 import { useAutoAdd } from './hooks/useAutoAdd';
+import { useSyncManager } from './hooks/useSyncManager';
 import Setup from './pages/Setup';
 import Dashboard from './pages/Dashboard';
 import Portfolio from './pages/Portfolio';
@@ -27,6 +28,8 @@ function AppInner() {
 
   // Auto-add recurring payments and installments on startup
   useAutoAdd();
+  // Cloud sync (no-op when not signed in)
+  useSyncManager();
 
   return (
     <Routes>
