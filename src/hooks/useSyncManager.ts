@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { supabase } from '../lib/supabase';
+import { supabase, supabaseConfigured } from '../lib/supabase';
 import {
   computeChecksum,
   getSyncMeta,
@@ -286,6 +286,7 @@ export function useSyncManager(): SyncManagerState {
 
   // ── Auth state + lifecycle ────────────────────────────────────────────────
   useEffect(() => {
+    if (!supabaseConfigured) return;
     let realtimeChannel: ReturnType<typeof supabase.channel> | null = null;
     const storeUnsubs: Array<() => void> = [];
 

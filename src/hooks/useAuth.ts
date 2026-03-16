@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '../lib/supabase';
+import { supabase, supabaseConfigured } from '../lib/supabase';
 import type { User } from '../lib/supabase';
 
 export interface AuthState {
@@ -14,6 +14,8 @@ export function useAuth(): AuthState {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    if (!supabaseConfigured) { setIsLoading(false); return; }
+
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
@@ -29,6 +31,7 @@ export function useAuth(): AuthState {
   }, []);
 
   const sendMagicLink = async (email: string): Promise<{ error: string | null }> => {
+    if (!supabaseConfigured) return { error: 'Sync not configured' };
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: { shouldCreateUser: true },
@@ -37,6 +40,7 @@ export function useAuth(): AuthState {
   };
 
   const signOut = async () => {
+    if (!supabaseConfigured) return;
     await supabase.auth.signOut();
   };
 
