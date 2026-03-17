@@ -368,14 +368,61 @@ export default function Spending() {
   const pacingBudget = totalBudget > 0 ? totalBudget * (elapsedDays / daysInMonth) : null;
   const pacingDelta = pacingBudget !== null ? monthSpending - pacingBudget : null;
 
-  // Category spending (current month expenses)
+  // Category spending (current month expenses + recurring that have already fired)
   const categorySpend = useMemo(() => {
     const map: Record<string, number> = {};
+
+    // 1. Regular transactions
     monthTransactions.filter(t => t.type === 'expense').forEach(t => {
       map[t.category] = (map[t.category] ?? 0) + txToDefault(t);
     });
+
+    // 2. Recurring payments that fired this month (up to today)
+    const todayStr = getTodayISO();
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const monthStr = `${year}-${pad(month)}`;
+
+    recurringPayments.forEach((rp) => {
+      if (!rp.isActive || rp.type !== 'expense') return;
+      if (rp.startDate > `${monthStr}-31`) return; // hasn't started yet
+      if (rp.endDate && rp.endDate < `${monthStr}-01`) return; // ended before this month
+
+      const rpCurrency = rp.currency ?? defaultCurrency;
+      const rpRate = exchangeRates.find(r => r.currency === rpCurrency);
+      const converted = rpCurrency === defaultCurrency ? rp.amount : rpRate ? rp.amount * rpRate.rateToDefault : rp.amount;
+
+      if (rp.frequency === 'monthly' && rp.dayOfMonth) {
+        const daysInM = new Date(year, month, 0).getDate();
+        const day = Math.min(rp.dayOfMonth, daysInM);
+        const dueDate = `${monthStr}-${pad(day)}`;
+        if (dueDate >= rp.startDate && dueDate <= todayStr) {
+          map[rp.category] = (map[rp.category] ?? 0) + converted;
+        }
+      } else if (rp.frequency === 'weekly' && rp.dayOfWeek !== null) {
+        // Count every matching weekday in this month up to today
+        const daysInM = new Date(year, month, 0).getDate();
+        for (let d = 1; d <= daysInM; d++) {
+          const date = new Date(year, month - 1, d);
+          const dateStr = `${monthStr}-${pad(d)}`;
+          if (date.getDay() === rp.dayOfWeek && dateStr >= rp.startDate && dateStr <= todayStr) {
+            map[rp.category] = (map[rp.category] ?? 0) + converted;
+          }
+        }
+      } else if (rp.frequency === 'yearly') {
+        const startD = new Date(rp.startDate);
+        if (startD.getMonth() + 1 === month) {
+          const daysInM = new Date(year, month, 0).getDate();
+          const day = Math.min(startD.getDate(), daysInM);
+          const dueDate = `${monthStr}-${pad(day)}`;
+          if (dueDate >= rp.startDate && dueDate <= todayStr) {
+            map[rp.category] = (map[rp.category] ?? 0) + converted;
+          }
+        }
+      }
+    });
+
     return map;
-  }, [monthTransactions]);
+  }, [monthTransactions, recurringPayments, year, month, defaultCurrency, exchangeRates]);
 
   // Category spending prev month (for MoM)
   const prevCategorySpend = useMemo(() => {
