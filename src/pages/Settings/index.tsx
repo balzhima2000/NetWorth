@@ -4,6 +4,7 @@ import { useSyncManager } from '../../hooks/useSyncManager';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { useToast } from '../../hooks/useToast';
 import { useCardsStore } from '../../stores/cardsStore';
+import type { IncomeDestination } from '../../stores/cardsStore';
 import { usePortfolioStore } from '../../stores/portfolioStore';
 import { useTransactionStore } from '../../stores/transactionStore';
 import { useBudgetStore } from '../../stores/budgetStore';
@@ -103,6 +104,9 @@ export default function Settings() {
   const addCard = useCardsStore((s) => s.addCard);
   const updateCard = useCardsStore((s) => s.updateCard);
   const deleteCard = useCardsStore((s) => s.deleteCard);
+  const incomeDestinations = useCardsStore((s) => s.incomeDestinations);
+  const addIncomeDestination = useCardsStore((s) => s.addIncomeDestination);
+  const deleteIncomeDestination = useCardsStore((s) => s.deleteIncomeDestination);
 
   const categories = useCategoriesStore((s) => s.categories);
   const addCategory = useCategoriesStore((s) => s.addCategory);
@@ -297,6 +301,11 @@ export default function Settings() {
   const [cardName, setCardName] = useState('');
   const [cardColor, setCardColor] = useState(CARD_COLORS[0]);
   const [deleteCardId, setDeleteCardId] = useState<string | null>(null);
+
+  // ── Income Destinations State ──
+  const [newDestName, setNewDestName] = useState('');
+  const [showNewDestInput, setShowNewDestInput] = useState(false);
+  const [deleteDestId, setDeleteDestId] = useState<string | null>(null);
 
   const openAddCard = () => {
     setEditingCard(null); setCardName(''); setCardColor(CARD_COLORS[0]); setShowCardModal(true);
@@ -869,6 +878,77 @@ export default function Settings() {
         </div>
       </GlassCard>
 
+      {/* ── INCOME DESTINATIONS ── */}
+      <GlassCard padding="lg">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="text-xl font-semibold text-white">🏦 Income Destinations</h2>
+            <p className="text-white/40 text-xs mt-0.5">Where income lands — shown when adding income transactions</p>
+          </div>
+          {!showNewDestInput && (
+            <Button variant="secondary" size="sm" onClick={() => setShowNewDestInput(true)}>+ Add Account</Button>
+          )}
+        </div>
+        <div className="space-y-2">
+          {/* Cash — built-in, non-deletable */}
+          <div className="flex items-center justify-between p-2.5 bg-white/5 rounded-xl border border-white/8 opacity-60">
+            <div className="flex items-center gap-3">
+              <span className="text-base leading-none">💵</span>
+              <span className="text-white text-sm font-medium">Cash</span>
+              <span className="text-xs text-white/30">built-in</span>
+            </div>
+          </div>
+          {incomeDestinations.filter(d => d.id !== 'cash').map((dest) => (
+            <div key={dest.id} className="flex items-center justify-between p-2.5 bg-white/5 rounded-xl border border-white/8">
+              <div className="flex items-center gap-3">
+                <span className="text-base leading-none">{dest.icon}</span>
+                <span className="text-white text-sm font-medium">{dest.name}</span>
+              </div>
+              <button
+                onClick={() => setDeleteDestId(dest.id)}
+                className="p-1.5 rounded-lg text-white/30 hover:text-[#EF4444] hover:bg-[#EF4444]/10 transition-colors"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+              </button>
+            </div>
+          ))}
+          {/* Inline add input */}
+          {showNewDestInput && (
+            <div className="flex gap-2 items-center pt-1">
+              <input
+                autoFocus
+                type="text"
+                placeholder="e.g. Chase Checking, Savings Account"
+                value={newDestName}
+                onChange={e => setNewDestName(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === 'Enter' && newDestName.trim()) {
+                    addIncomeDestination({ id: crypto.randomUUID(), name: newDestName.trim(), icon: '🏦' });
+                    setNewDestName(''); setShowNewDestInput(false);
+                  } else if (e.key === 'Escape') {
+                    setShowNewDestInput(false); setNewDestName('');
+                  }
+                }}
+                className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white placeholder-white/25 focus:outline-none focus:border-[#10B981]/50"
+              />
+              <button
+                disabled={!newDestName.trim()}
+                onClick={() => {
+                  if (!newDestName.trim()) return;
+                  addIncomeDestination({ id: crypto.randomUUID(), name: newDestName.trim(), icon: '🏦' });
+                  setNewDestName(''); setShowNewDestInput(false);
+                }}
+                className="px-3 py-2 rounded-xl text-sm font-semibold bg-[#10B981]/20 text-[#10B981] hover:bg-[#10B981]/30 disabled:opacity-40 transition-all"
+              >Add</button>
+              <button onClick={() => { setShowNewDestInput(false); setNewDestName(''); }} className="px-2 py-2 rounded-xl text-sm text-white/40 hover:text-white/60 transition-all">✕</button>
+            </div>
+          )}
+          {incomeDestinations.filter(d => d.id !== 'cash').length === 0 && !showNewDestInput && (
+            <p className="text-white/30 text-sm">No accounts added yet</p>
+          )}
+        </div>
+      </GlassCard>
+
       {/* ── ASSETS & LIABILITIES ── */}
       <GlassCard padding="lg">
         <h2 className="text-xl font-semibold text-white mb-1">🏦 Assets & Liabilities</h2>
@@ -1046,6 +1126,7 @@ export default function Settings() {
       {/* CONFIRM DIALOGS */}
       <ConfirmDialog isOpen={!!deleteCatId} onClose={() => setDeleteCatId(null)} onConfirm={() => { handleDeleteCat(); }} title="Delete Category" message="Delete this category?" confirmLabel="Delete" confirmVariant="danger" />
       <ConfirmDialog isOpen={!!deleteCardId} onClose={() => setDeleteCardId(null)} onConfirm={() => { if (deleteCardId) { deleteCard(deleteCardId); setDeleteCardId(null); } }} title="Delete Card" message="Delete this payment card? Transactions linked to it will remain." confirmLabel="Delete" confirmVariant="danger" />
+      <ConfirmDialog isOpen={!!deleteDestId} onClose={() => setDeleteDestId(null)} onConfirm={() => { if (deleteDestId) { deleteIncomeDestination(deleteDestId); setDeleteDestId(null); } }} title="Remove Account" message="Remove this income destination? Past transactions will not be affected." confirmLabel="Remove" confirmVariant="danger" />
       <ConfirmDialog isOpen={!!deleteEntryId} onClose={() => setDeleteEntryId(null)} onConfirm={() => { if (deleteEntryId) { deleteManualEntry(deleteEntryId); setDeleteEntryId(null); } }} title="Delete Entry" message="Delete this asset/liability entry?" confirmLabel="Delete" confirmVariant="danger" />
     </div>
   );
