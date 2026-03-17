@@ -19,6 +19,8 @@ import { testMassiveKey, fetchExchangeRateMassive } from '../../services/massive
 import { fetchFrankfurterRates } from '../../services/frankfurterApi';
 import { testTaseKey } from '../../services/taseDataHub';
 import { exportFullBackup, exportTransactionsCSV, parseBackup } from '../../services/exportImport';
+import { supabase, supabaseConfigured } from '../../lib/supabase';
+import { ALL_STORE_KEYS } from '../../utils/syncHelpers';
 import type { SpendingCategory, Card, ManualEntry } from '../../types/index';
 
 const EMOJI_OPTIONS = [
@@ -415,21 +417,40 @@ export default function Settings() {
     toast.success('Data imported successfully.');
   };
 
-  // ── Clear All Data ──
-  const [showClearConfirm, setShowClearConfirm] = useState(false);
+  // ── Reset / Clear Data ──
+  const [showSoftResetConfirm, setShowSoftResetConfirm] = useState(false);
+  const [showHardResetConfirm, setShowHardResetConfirm] = useState(false);
   const [clearText, setClearText] = useState('');
 
-  const handleClearAll = () => {
-    if (clearText !== 'DELETE') return;
-    usePortfolioStore.setState({ trades: [], currentPrices: {}, lastPriceUpdates: {} });
+  const clearAllStores = () => {
+    usePortfolioStore.setState({ trades: [], currentPrices: {}, lastPriceUpdates: {}, priceSources: {} });
     useTransactionStore.setState({ transactions: [], lastUsedPaymentMethod: 'cash' });
     useBudgetStore.setState({ budgets: [], summaries: [] });
     useNetWorthStore.setState({ manualEntries: [], snapshots: [], lastSnapshotDate: null });
-    useCardsStore.setState({ cards: [] });
+    useCardsStore.setState({ cards: [], incomeDestinations: [{ id: 'cash', name: 'Cash', icon: '💵' }] });
     useRecurringStore.setState({ recurringPayments: [], installmentPlans: [] });
     useAllocationStore.setState({ mode: 'none', targets: {} });
+    // Remove from localStorage so the debounced sync push reads null and skips Supabase upsert
+    ALL_STORE_KEYS.forEach(key => localStorage.removeItem(key));
+  };
+
+  const handleSoftReset = () => {
+    clearAllStores();
     setHasCompletedSetup(false);
-    setShowClearConfirm(false);
+    setShowSoftResetConfirm(false);
+  };
+
+  const handleHardReset = async () => {
+    if (clearText !== 'DELETE') return;
+    clearAllStores();
+    if (supabaseConfigured) {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase.from('sync_stores').delete().eq('user_id', user.id);
+      }
+    }
+    setHasCompletedSetup(false);
+    setShowHardResetConfirm(false);
     setClearText('');
   };
 
@@ -1032,11 +1053,19 @@ export default function Settings() {
 
       {/* ── DANGER ZONE ── */}
       <GlassCard padding="lg" className="border border-[#EF4444]/20">
-        <h2 className="text-xl font-semibold text-[#EF4444] mb-2">⚠️ Danger Zone</h2>
-        <p className="text-white/40 text-sm mb-4">This will delete ALL your data and return you to the setup screen. This cannot be undone.</p>
-        <Button variant="danger" onClick={() => { setClearText(''); setShowClearConfirm(true); }} fullWidth>
-          Clear All Data
-        </Button>
+        <h2 className="text-xl font-semibold text-[#EF4444] mb-4">⚠️ Danger Zone</h2>
+        <div className="space-y-3">
+          <div className="p-4 bg-white/[0.03] rounded-xl border border-white/8">
+            <p className="text-white font-medium text-sm mb-0.5">Reset This Device</p>
+            <p className="text-white/40 text-xs mb-3">Clears all local data. Your cloud backup is preserved — sign back in to restore.</p>
+            <Button variant="danger" size="sm" onClick={() => setShowSoftResetConfirm(true)}>Reset This Device</Button>
+          </div>
+          <div className="p-4 bg-white/[0.03] rounded-xl border border-white/8">
+            <p className="text-white font-medium text-sm mb-0.5">Delete Everything</p>
+            <p className="text-white/40 text-xs mb-3">Permanently deletes all data from this device and the cloud. Cannot be undone.</p>
+            <Button variant="danger" size="sm" onClick={() => { setClearText(''); setShowHardResetConfirm(true); }}>Delete Everything</Button>
+          </div>
+        </div>
       </GlassCard>
 
       {/* CATEGORY MODAL */}
@@ -1112,11 +1141,17 @@ export default function Settings() {
         </div>
       </Modal>
 
-      {/* CLEAR CONFIRM */}
-      <Modal isOpen={showClearConfirm} onClose={() => setShowClearConfirm(false)} title="Clear All Data" size="sm"
-        footer={<><Button variant="ghost" onClick={() => setShowClearConfirm(false)}>Cancel</Button><Button variant="danger" onClick={handleClearAll} disabled={clearText !== 'DELETE'}>Clear All Data</Button></>}>
+      {/* SOFT RESET CONFIRM */}
+      <Modal isOpen={showSoftResetConfirm} onClose={() => setShowSoftResetConfirm(false)} title="Reset This Device" size="sm"
+        footer={<><Button variant="ghost" onClick={() => setShowSoftResetConfirm(false)}>Cancel</Button><Button variant="danger" onClick={handleSoftReset}>Reset This Device</Button></>}>
+        <p className="text-white/70">This will clear all data on this device. Your cloud backup is safe — sign back in to restore everything.</p>
+      </Modal>
+
+      {/* HARD RESET CONFIRM */}
+      <Modal isOpen={showHardResetConfirm} onClose={() => setShowHardResetConfirm(false)} title="Delete Everything" size="sm"
+        footer={<><Button variant="ghost" onClick={() => setShowHardResetConfirm(false)}>Cancel</Button><Button variant="danger" onClick={handleHardReset} disabled={clearText !== 'DELETE'}>Delete Everything</Button></>}>
         <div className="space-y-4">
-          <p className="text-white/70">This will permanently delete all your data including transactions, trades, assets, and settings. You will be returned to the setup screen.</p>
+          <p className="text-white/70">Permanently deletes all data from this device and your cloud backup. This cannot be undone.</p>
           <p className="text-white/50 text-sm">Type <strong className="text-white">DELETE</strong> to confirm:</p>
           <Input value={clearText} onChange={(e) => setClearText(e.target.value.toUpperCase())} placeholder="DELETE" />
         </div>
