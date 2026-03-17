@@ -977,10 +977,10 @@ export default function Spending() {
             </div>
             <div className="flex items-center gap-2">
               <Button variant={showFilters ? 'secondary' : 'ghost'} size="sm" onClick={() => setShowFilters(!showFilters)}>
+                Filters
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="flex-shrink-0">
                   <path d="M1 3h12M3 7h8M5 11h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
                 </svg>
-                Filters
                 {hasFilters && <span className="px-1.5 py-0.5 bg-[#10B981] text-black rounded text-[10px] font-bold leading-none">{[filterDateFrom, filterDateTo, filterCategory, filterType !== 'all' && filterType, filterPayment !== 'all' && filterPayment].filter(Boolean).length}</span>}
               </Button>
             </div>
