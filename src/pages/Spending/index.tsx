@@ -231,6 +231,9 @@ export default function Spending() {
   const fxApiKey = useSettingsStore((s) => s.fxApiKey);
   const decrementFxRequests = useSettingsStore((s) => s.decrementFxRequests);
   const cards = useCardsStore((s) => s.cards).filter((c) => c.isActive);
+  const incomeDestinations = useCardsStore((s) => s.incomeDestinations);
+  const addIncomeDestination = useCardsStore((s) => s.addIncomeDestination);
+  const deleteIncomeDestination = useCardsStore((s) => s.deleteIncomeDestination);
 
   const recurringPayments = useRecurringStore((s) => s.recurringPayments);
   const addRecurringPayment = useRecurringStore((s) => s.addRecurringPayment);
@@ -267,6 +270,8 @@ export default function Spending() {
   const [txRate, setTxRate] = useState('');
   const [fetchingTxRate, setFetchingTxRate] = useState(false);
   const [deleteTxId, setDeleteTxId] = useState<string | null>(null);
+  const [showAddDestination, setShowAddDestination] = useState(false);
+  const [newDestName, setNewDestName] = useState('');
 
   // ── Budget modal state ───────────────────────────────────────────────────
   const [showBudgetModal, setShowBudgetModal] = useState(false);
@@ -577,6 +582,8 @@ export default function Spending() {
     ...cards.map(c => ({ value: c.id, label: `💳 ${c.name}` })),
   ];
 
+  const destinationOptions = incomeDestinations.map(d => ({ value: d.id, label: `${d.icon} ${d.name}` }));
+
   // ── Transaction handlers ─────────────────────────────────────────────────
 
   const openAddTx = (type: 'expense' | 'income' = 'expense') => {
@@ -586,9 +593,11 @@ export default function Spending() {
     setTxCategory((type === 'expense' ? categories[0] : incomeCategories[0])?.id ?? '');
     setTxDate(getTodayISO());
     setTxNotes('');
-    setTxPayment(lastUsedPaymentMethod);
+    setTxPayment(type === 'income' ? (incomeDestinations[0]?.id ?? 'cash') : lastUsedPaymentMethod);
     setTxCurrency(defaultCurrency);
     setTxRate('');
+    setShowAddDestination(false);
+    setNewDestName('');
     setShowAddTx(true);
   };
 
@@ -1293,8 +1302,8 @@ export default function Spending() {
         footer={<><Button variant="ghost" onClick={() => setShowAddTx(false)}>Cancel</Button><Button variant="primary" onClick={handleSaveTx} disabled={!txAmount || !txCategory}>{editingTx ? 'Save Changes' : 'Add Transaction'}</Button></>}>
         <div className="space-y-4">
           <div className="flex gap-2">
-            <button onClick={() => { setTxType('expense'); setTxCategory(''); }} className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all ${txType === 'expense' ? 'bg-[#EF4444] text-white' : 'bg-white/5 text-white/50 hover:bg-white/10'}`}>Expense</button>
-            <button onClick={() => { setTxType('income'); setTxCategory(''); }} className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all ${txType === 'income' ? 'bg-[#22C55E] text-black' : 'bg-white/5 text-white/50 hover:bg-white/10'}`}>Income</button>
+            <button onClick={() => { setTxType('expense'); setTxCategory(''); setTxPayment(lastUsedPaymentMethod); setShowAddDestination(false); setNewDestName(''); }} className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all ${txType === 'expense' ? 'bg-[#EF4444] text-white' : 'bg-white/5 text-white/50 hover:bg-white/10'}`}>Expense</button>
+            <button onClick={() => { setTxType('income'); setTxCategory(''); setTxPayment(incomeDestinations[0]?.id ?? 'cash'); setShowAddDestination(false); setNewDestName(''); }} className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all ${txType === 'income' ? 'bg-[#22C55E] text-black' : 'bg-white/5 text-white/50 hover:bg-white/10'}`}>Income</button>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <Input label="Amount" type="number" inputMode="decimal" placeholder="0.00" value={txAmount} onChange={e => setTxAmount(e.target.value)} required />
@@ -1334,7 +1343,62 @@ export default function Spending() {
           )}
           <Select label="Category" value={txCategory} onChange={e => setTxCategory(e.target.value)} options={txCategoryOptions.map(c => ({ value: c.id, label: `${c.emoji} ${c.name}` }))} required />
           <Input label="Date" type="date" value={txDate} onChange={e => setTxDate(e.target.value)} />
-          <Select label="Payment Method" value={txPayment} onChange={e => setTxPayment(e.target.value)} options={paymentOptions} />
+          {txType === 'income' ? (
+            <div className="space-y-2">
+              <Select label="Destination" value={txPayment} onChange={e => setTxPayment(e.target.value)} options={destinationOptions} />
+              {/* Inline add-account row */}
+              {showAddDestination ? (
+                <div className="flex gap-2 items-center">
+                  <input
+                    autoFocus
+                    type="text"
+                    placeholder="Account name (e.g. Chase Checking)"
+                    value={newDestName}
+                    onChange={e => setNewDestName(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter' && newDestName.trim()) {
+                        const id = crypto.randomUUID();
+                        addIncomeDestination({ id, name: newDestName.trim(), icon: '🏦' });
+                        setTxPayment(id);
+                        setNewDestName('');
+                        setShowAddDestination(false);
+                      } else if (e.key === 'Escape') {
+                        setShowAddDestination(false);
+                        setNewDestName('');
+                      }
+                    }}
+                    className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white placeholder-white/25 focus:outline-none focus:border-[#10B981]/50"
+                  />
+                  <button
+                    disabled={!newDestName.trim()}
+                    onClick={() => {
+                      if (!newDestName.trim()) return;
+                      const id = crypto.randomUUID();
+                      addIncomeDestination({ id, name: newDestName.trim(), icon: '🏦' });
+                      setTxPayment(id);
+                      setNewDestName('');
+                      setShowAddDestination(false);
+                    }}
+                    className="px-3 py-2 rounded-xl text-sm font-semibold bg-[#10B981]/20 text-[#10B981] hover:bg-[#10B981]/30 disabled:opacity-40 transition-all"
+                  >Add</button>
+                  <button onClick={() => { setShowAddDestination(false); setNewDestName(''); }} className="px-3 py-2 rounded-xl text-sm text-white/40 hover:text-white/60 transition-all">✕</button>
+                </div>
+              ) : (
+                <button onClick={() => setShowAddDestination(true)} className="text-xs text-[#10B981]/70 hover:text-[#10B981] transition-colors flex items-center gap-1">
+                  <span>+</span> Add bank account or other account
+                </button>
+              )}
+              {/* Allow deleting custom destinations (not cash) */}
+              {txPayment !== 'cash' && incomeDestinations.find(d => d.id === txPayment) && (
+                <button
+                  onClick={() => { deleteIncomeDestination(txPayment); setTxPayment(incomeDestinations[0]?.id ?? 'cash'); }}
+                  className="text-xs text-[#EF4444]/60 hover:text-[#EF4444] transition-colors"
+                >Remove this account</button>
+              )}
+            </div>
+          ) : (
+            <Select label="Payment Method" value={txPayment} onChange={e => setTxPayment(e.target.value)} options={paymentOptions} />
+          )}
           <Input label="Notes (optional)" placeholder="Description..." value={txNotes} onChange={e => setTxNotes(e.target.value)} />
         </div>
       </Modal>
