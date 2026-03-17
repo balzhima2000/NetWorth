@@ -353,9 +353,7 @@ function TreemapCanvas({
     setZoom(newZoom);
   };
 
-  // Use world dimensions for layout (not container dimensions)
-  const width  = WORLD_W;
-  const height = WORLD_H;
+  // World dimensions used directly as WORLD_W / WORLD_H in layout calls below
 
   const primaryCats = useMemo(
     () => categories.filter(c => c.kind === 'primary').sort((a, b) => a.order - b.order),

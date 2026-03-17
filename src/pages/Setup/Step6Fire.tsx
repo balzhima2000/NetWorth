@@ -10,8 +10,6 @@ interface Step6FireProps {
 // Sub-steps: 0=target, 1=annual expenses, 2=monthly contribution, 3=return assumptions
 type SubStep = 0 | 1 | 2 | 3;
 
-const SUB_STEPS: SubStep[] = [0, 1, 2, 3];
-
 export default function Step6Fire({ onNext, onBack }: Step6FireProps) {
   const [subStep, setSubStep] = useState<SubStep>(0);
 
@@ -116,7 +114,7 @@ export default function Step6Fire({ onNext, onBack }: Step6FireProps) {
           <Button variant="primary" onClick={advanceSub} fullWidth>Continue</Button>
         </div>
 
-        <button onClick={finish} className="text-white/35 text-sm hover:text-white/60 transition-colors underline underline-offset-2">
+        <button onClick={() => finish()} className="text-white/35 text-sm hover:text-white/60 transition-colors underline underline-offset-2">
           Skip remaining setup
         </button>
       </div>
@@ -147,7 +145,7 @@ export default function Step6Fire({ onNext, onBack }: Step6FireProps) {
           <Button variant="primary" onClick={advanceSub} fullWidth>Continue</Button>
         </div>
 
-        <button onClick={finish} className="text-white/35 text-sm hover:text-white/60 transition-colors underline underline-offset-2">
+        <button onClick={() => finish()} className="text-white/35 text-sm hover:text-white/60 transition-colors underline underline-offset-2">
           Skip remaining setup
         </button>
       </div>
@@ -187,7 +185,7 @@ export default function Step6Fire({ onNext, onBack }: Step6FireProps) {
         <Button variant="primary" onClick={() => finish()} fullWidth>Finish setup</Button>
       </div>
 
-      <button onClick={finish} className="text-white/35 text-sm hover:text-white/60 transition-colors underline underline-offset-2">
+      <button onClick={() => finish()} className="text-white/35 text-sm hover:text-white/60 transition-colors underline underline-offset-2">
         Skip remaining setup
       </button>
     </div>
