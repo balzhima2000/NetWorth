@@ -836,7 +836,7 @@ export default function Spending() {
                 <p className="text-white/45 text-xs font-medium tracking-wide uppercase mb-1.5">Top category</p>
                 <div className="flex items-baseline justify-between gap-2">
                   <p className="text-white text-base font-medium truncate">{catInfo.emoji} {catInfo.name}</p>
-                  <p className="text-white font-bold font-mono text-xl flex-shrink-0">{formatCurrency(largestCatEntry[1], defaultCurrency, true)}</p>
+                  <p className="text-white font-bold font-mono text-xl flex-shrink-0">{formatCurrency(largestCatEntry[1], defaultCurrency)}</p>
                 </div>
               </GlassCard>
             );
