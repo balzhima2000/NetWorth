@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useQuickAddStore } from '../../stores/quickAddStore';
 
@@ -36,15 +36,51 @@ const ACTIONS_BOTTOM = 'calc(env(safe-area-inset-bottom) + 164px)';
 
 export function QuickAddFAB() {
   const [open, setOpen] = useState(false);
+  const [visible, setVisible] = useState(true);
   const setTarget = useQuickAddStore((s) => s.setTarget);
   const navigate = useNavigate();
   const location = useLocation();
+  const lastScrollY = useRef(0);
+  const ticking = useRef(false);
+
+  // Hide FAB on settings page
+  const isSettings = location.pathname.startsWith('/settings');
+
+  // Always show when route changes
+  useEffect(() => { setVisible(true); setOpen(false); }, [location.pathname]);
+
+  // Same scroll-direction logic as MobileNav
+  useEffect(() => {
+    const scroller = document.querySelector('main.flex-1.overflow-y-auto') as HTMLElement | null;
+    if (!scroller) return;
+
+    const onScroll = () => {
+      if (ticking.current) return;
+      ticking.current = true;
+      requestAnimationFrame(() => {
+        const y = scroller.scrollTop;
+        const delta = y - lastScrollY.current;
+        if (Math.abs(delta) > 6) {
+          setVisible(delta < 0 || y < 60);
+          lastScrollY.current = y;
+        }
+        ticking.current = false;
+      });
+    };
+
+    scroller.addEventListener('scroll', onScroll, { passive: true });
+    return () => scroller.removeEventListener('scroll', onScroll);
+  }, []);
 
   const handleAction = (key: 'expense' | 'income' | 'trade', route: string) => {
     setOpen(false);
     setTarget(key);
     if (location.pathname !== route) navigate(route);
   };
+
+  if (isSettings) return null;
+
+  const showFAB = visible || open; // keep visible while menu is open
 
   return (
     <>
@@ -68,12 +104,10 @@ export function QuickAddFAB() {
           className="fixed right-4 z-50 flex flex-col gap-2.5 items-end"
           style={{ bottom: ACTIONS_BOTTOM }}
         >
-          {/* Reversed so bottom card animates first (feels more natural) */}
           {[...actions].reverse().map((action, i) => (
             <button
               key={action.key}
               onClick={() => handleAction(action.key, action.route)}
-              // stagger classes defined in index.css
               className={`fab-action-${i + 1} flex items-center gap-3 pl-3 pr-5 py-2.5 rounded-2xl active:scale-95`}
               style={{
                 background: 'rgba(10, 10, 10, 0.96)',
@@ -84,7 +118,6 @@ export function QuickAddFAB() {
                 transition: 'transform 150ms ease, box-shadow 150ms ease',
               }}
             >
-              {/* Colored icon bubble */}
               <span
                 className="w-9 h-9 rounded-xl flex items-center justify-center text-lg flex-shrink-0"
                 style={{ background: `${action.accent}1a` }}
@@ -112,9 +145,13 @@ export function QuickAddFAB() {
           boxShadow: open
             ? '0 4px 16px rgba(16, 185, 129, 0.30)'
             : '0 8px 28px rgba(16, 185, 129, 0.45)',
-          transition: 'box-shadow 250ms ease, transform 200ms ease',
+          opacity: showFAB ? 1 : 0,
+          translate: showFAB ? '0 0' : '0 16px',
+          transition: showFAB
+            ? 'opacity 420ms cubic-bezier(0.22,1,0.36,1), translate 420ms cubic-bezier(0.22,1,0.36,1), box-shadow 250ms ease'
+            : 'opacity 220ms ease, translate 220ms ease, box-shadow 250ms ease',
+          pointerEvents: showFAB ? 'auto' : 'none',
         }}
-        // active state via CSS — inline active:scale-90 doesn't work on style prop
         onPointerDown={(e) => (e.currentTarget.style.transform = 'scale(0.91)')}
         onPointerUp={(e) => (e.currentTarget.style.transform = '')}
         onPointerLeave={(e) => (e.currentTarget.style.transform = '')}
@@ -129,12 +166,7 @@ export function QuickAddFAB() {
             transform: open ? 'rotate(45deg)' : 'rotate(0deg)',
           }}
         >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2.5}
-            d="M12 4v16m8-8H4"
-          />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
         </svg>
       </button>
     </>

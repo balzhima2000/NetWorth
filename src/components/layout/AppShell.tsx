@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { TopBar } from './TopBar';
@@ -18,6 +18,12 @@ export function AppShell() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const location = useLocation();
   const title = pageTitles[location.pathname] ?? '';
+
+  // Scroll to top instantly on every page navigation
+  useEffect(() => {
+    const scroller = document.querySelector('main.flex-1.overflow-y-auto') as HTMLElement | null;
+    if (scroller) scroller.scrollTop = 0;
+  }, [location.pathname]);
 
   return (
     <div className="flex h-dvh bg-[#000000]">
