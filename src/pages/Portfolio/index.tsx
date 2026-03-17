@@ -420,7 +420,7 @@ export default function Portfolio() {
             <div>
               <p className="text-white/35 text-xs font-medium tracking-wide uppercase mb-1.5">Portfolio Value</p>
               <h2 className="text-3xl sm:text-4xl font-bold text-white font-mono leading-none">
-                {formatCurrency(totalValue, defaultCurrency, true)}
+                {formatCurrency(totalValue, defaultCurrency)}
               </h2>
             </div>
 
@@ -429,7 +429,7 @@ export default function Portfolio() {
               <div>
                 <p className="text-white/30 text-xs mb-0.5">Unrealized Gain</p>
                 <p className={`text-xl font-semibold font-mono ${totalGain >= 0 ? 'text-[#22C55E]' : 'text-[#EF4444]'}`}>
-                  {totalGain >= 0 ? '+' : ''}{formatCurrency(totalGain, defaultCurrency, true)}
+                  {totalGain >= 0 ? '+' : ''}{formatCurrency(totalGain, defaultCurrency)}
                 </p>
               </div>
               <div className="w-px bg-white/8 self-stretch" />

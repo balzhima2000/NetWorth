@@ -889,7 +889,7 @@ export default function Settings() {
                     <p className="text-white/40 text-xs">{getAssetCatLabel(entry.assetCategory)} · Updated {formatDate(entry.lastUpdated, 'short')}</p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <p className="text-[#22C55E] font-mono text-sm font-semibold">{formatCurrency(entry.value, defaultCurrency, true)}</p>
+                    <p className="text-[#22C55E] font-mono text-sm font-semibold">{formatCurrency(entry.value, defaultCurrency)}</p>
                     <button onClick={() => openEditEntry(entry)} className="p-1.5 rounded-lg text-white/30 hover:text-white/70 hover:bg-white/10 transition-colors">
                       <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                     </button>
@@ -920,7 +920,7 @@ export default function Settings() {
                     <p className="text-white/40 text-xs">{getAssetCatLabel(entry.assetCategory)} · Updated {formatDate(entry.lastUpdated, 'short')}</p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <p className="text-[#EF4444] font-mono text-sm font-semibold">-{formatCurrency(entry.value, defaultCurrency, true)}</p>
+                    <p className="text-[#EF4444] font-mono text-sm font-semibold">-{formatCurrency(entry.value, defaultCurrency)}</p>
                     <button onClick={() => openEditEntry(entry)} className="p-1.5 rounded-lg text-white/30 hover:text-white/70 hover:bg-white/10 transition-colors">
                       <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                     </button>

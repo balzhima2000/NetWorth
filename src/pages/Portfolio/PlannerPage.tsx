@@ -459,7 +459,7 @@ function TreemapCanvas({
               {gl.rect.w > 100 && (
                 <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
                   <span style={{ color: 'rgba(255,255,255,0.30)', fontSize: 10, fontFamily: 'JetBrains Mono, monospace' }}>
-                    {formatCurrency(catValue, defaultCurrency, true)}
+                    {formatCurrency(catValue, defaultCurrency)}
                   </span>
                   <span style={{ color: 'rgba(255,255,255,0.20)', fontSize: 10, fontFamily: 'JetBrains Mono, monospace' }}>
                     {catPct.toFixed(1)}%
@@ -582,7 +582,7 @@ function MobilePlannerView({
                 </span>
               </div>
               <div className="flex items-center gap-3">
-                <span className="text-white/40 text-xs font-mono">{formatCurrency(group.total, defaultCurrency, true)}</span>
+                <span className="text-white/40 text-xs font-mono">{formatCurrency(group.total, defaultCurrency)}</span>
                 <span className="text-white/25 text-xs font-mono">{pct.toFixed(1)}%</span>
               </div>
             </div>
@@ -629,7 +629,7 @@ function MobilePlannerView({
                     </div>
                     <div className="text-right flex-shrink-0">
                       <p className="text-white/70 text-sm font-mono">
-                        {formatCurrency(h.currentValue, defaultCurrency, true)}
+                        {formatCurrency(h.currentValue, defaultCurrency)}
                       </p>
                       <p className="text-white/30 text-xs font-mono">{hPct.toFixed(1)}%</p>
                     </div>

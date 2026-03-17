@@ -136,10 +136,10 @@ export default function Fire() {
                   <div>
                     <p className="text-white/50 text-sm mb-1">Your FIRE Number</p>
                     <p className="text-4xl font-bold text-white font-mono">
-                      {formatCurrency(fireNumber, defaultCurrency, true)}
+                      {formatCurrency(fireNumber, defaultCurrency)}
                     </p>
                     <p className="text-white/40 text-sm mt-2">
-                      At {fn_withdrawal}% withdrawal rate on {formatCurrency(parseFloat(fn_expenses), defaultCurrency, true)}/year
+                      At {fn_withdrawal}% withdrawal rate on {formatCurrency(parseFloat(fn_expenses), defaultCurrency)}/year
                     </p>
                   </div>
                   <div className="p-3 rounded-xl bg-white/5 border border-white/10 text-sm text-white/60 space-y-1">
@@ -169,7 +169,7 @@ export default function Fire() {
                   </Button>
                   {fireTarget && (
                     <p className="text-xs text-white/40 text-center">
-                      Current target: {formatCurrency(fireTarget, defaultCurrency, true)}
+                      Current target: {formatCurrency(fireTarget, defaultCurrency)}
                     </p>
                   )}
                 </div>
@@ -258,7 +258,7 @@ export default function Fire() {
                   {ttfResult.years < 600 && (
                     <div className="p-3 bg-white/5 rounded-xl border border-white/10 text-sm text-white/50">
                       <p>You'll reach your FIRE target of{' '}
-                        <span className="text-white">{formatCurrency(parseFloat(ttf_target), defaultCurrency, true)}</span>{' '}
+                        <span className="text-white">{formatCurrency(parseFloat(ttf_target), defaultCurrency)}</span>{' '}
                         in <span className="text-[#22C55E]">{Math.ceil(ttfResult.years)} years</span> ({ttfResult.targetYear}).
                       </p>
                     </div>
@@ -281,7 +281,7 @@ export default function Fire() {
                 currency={defaultCurrency}
               />
               <p className="text-white/30 text-xs mt-3">
-                The dashed line represents your FIRE target of {formatCurrency(parseFloat(ttf_target) || 0, defaultCurrency, true)}
+                The dashed line represents your FIRE target of {formatCurrency(parseFloat(ttf_target) || 0, defaultCurrency)}
               </p>
             </GlassCard>
           )}
@@ -333,17 +333,17 @@ export default function Fire() {
                     </div>
                     <div className="text-right">
                       <p className="text-white font-bold font-mono text-lg">
-                        {formatCurrency(row.annualSpending, defaultCurrency, true)}<span className="text-white/40 text-sm font-normal">/yr</span>
+                        {formatCurrency(row.annualSpending, defaultCurrency)}<span className="text-white/40 text-sm font-normal">/yr</span>
                       </p>
                       <p className="text-white/50 text-sm font-mono">
-                        {formatCurrency(row.monthlySpending, defaultCurrency, true)}<span className="text-white/30 text-xs">/mo</span>
+                        {formatCurrency(row.monthlySpending, defaultCurrency)}<span className="text-white/30 text-xs">/mo</span>
                       </p>
                     </div>
                   </div>
                 ))}
               </div>
               <p className="text-white/30 text-xs mt-4">
-                Based on {formatCurrency(parseFloat(swr_savings), defaultCurrency, true)} total savings.
+                Based on {formatCurrency(parseFloat(swr_savings), defaultCurrency)} total savings.
                 These are historical guidelines — actual results vary with market conditions.
               </p>
             </GlassCard>
@@ -402,7 +402,7 @@ export default function Fire() {
                   <div className="p-5 bg-white/5 rounded-xl border border-white/10 text-center">
                     <p className="text-white/40 text-sm mb-1">Final Portfolio Value</p>
                     <p className="text-4xl font-bold text-white font-mono">
-                      {formatCurrency(ciResult.finalValue, defaultCurrency, true)}
+                      {formatCurrency(ciResult.finalValue, defaultCurrency)}
                     </p>
                     <p className="text-white/30 text-sm mt-1">after {ci_years} years</p>
                   </div>
@@ -410,13 +410,13 @@ export default function Fire() {
                     <div className="p-3 bg-[#10B981]/10 rounded-xl border border-[#10B981]/30">
                       <p className="text-[#10B981]/70 text-xs mb-1">Total Contributed</p>
                       <p className="text-lg font-bold text-white font-mono">
-                        {formatCurrency(ciResult.totalContributed, defaultCurrency, true)}
+                        {formatCurrency(ciResult.totalContributed, defaultCurrency)}
                       </p>
                     </div>
                     <div className="p-3 bg-[#22C55E]/10 rounded-xl border border-[#22C55E]/30">
                       <p className="text-[#22C55E]/70 text-xs mb-1">Total Growth</p>
                       <p className="text-lg font-bold text-[#22C55E] font-mono">
-                        +{formatCurrency(ciResult.totalGrowth, defaultCurrency, true)}
+                        +{formatCurrency(ciResult.totalGrowth, defaultCurrency)}
                       </p>
                     </div>
                   </div>

@@ -181,7 +181,7 @@ function WealthCompositionDonut({
               color: 'rgba(255,255,255,0.82)',
             }}
           >
-            {formatCurrency(total, currency, true)}
+            {formatCurrency(total, currency)}
           </p>
           <p
             className="uppercase tracking-widest leading-none mt-1"
@@ -203,7 +203,7 @@ function WealthCompositionDonut({
             <div className="min-w-0">
               <p className="text-[11px] text-white/40 leading-none truncate">{s.label}</p>
               <p className="text-xs font-mono text-white/70 mt-0.5 leading-none">
-                {formatCurrency(s.value, currency, true)}
+                {formatCurrency(s.value, currency)}
               </p>
               <p className="text-[10px] text-white/25 mt-0.5 leading-none">
                 {((s.value / total) * 100).toFixed(0)}%
@@ -220,7 +220,7 @@ function WealthCompositionDonut({
                 className="text-xs font-mono mt-0.5 leading-none"
                 style={{ color: 'rgba(239,68,68,0.75)' }}
               >
-                −{formatCurrency(liabilities, currency, true)}
+                −{formatCurrency(liabilities, currency)}
               </p>
             </div>
           </div>
@@ -400,7 +400,7 @@ export default function Dashboard() {
         id: 'due',
         icon: '📅',
         label: `${dueSoon.length} recurring payment${dueSoon.length > 1 ? 's' : ''} due within 7 days`,
-        value: formatCurrency(dueSoonTotal, defaultCurrency, true),
+        value: formatCurrency(dueSoonTotal, defaultCurrency),
         href: '/spending',
         severity: 'warning',
       });
@@ -641,12 +641,12 @@ export default function Dashboard() {
             className="text-4xl font-bold text-white font-mono leading-none"
             style={{ letterSpacing: '-0.5px' }}
           >
-            {formatCurrency(displayNetWorth, defaultCurrency, true)}
+            {formatCurrency(displayNetWorth, defaultCurrency)}
           </h1>
 
           {netWorthChange && (
             <p className="text-sm font-mono mt-1.5" style={{ color: changeColor }}>
-              {isPositive ? '+' : ''}{formatCurrency(netWorthChange.amount, defaultCurrency, true)}
+              {isPositive ? '+' : ''}{formatCurrency(netWorthChange.amount, defaultCurrency)}
               <span className="text-white/25 ml-1.5 text-xs">vs {selectedPeriod.label}</span>
             </p>
           )}
@@ -671,24 +671,24 @@ export default function Dashboard() {
           >
             <MetricCell
               label="Assets"
-              value={formatCurrency(totalAssets, defaultCurrency, true)}
+              value={formatCurrency(totalAssets, defaultCurrency)}
               color="#22C55E"
             />
             {liabilitiesTotal > 0 && (
               <MetricCell
                 label="Debt"
-                value={formatCurrency(liabilitiesTotal, defaultCurrency, true)}
+                value={formatCurrency(liabilitiesTotal, defaultCurrency)}
                 color="#EF4444"
               />
             )}
             <MetricCell
               label="Spent"
-              value={formatCurrency(monthSpending, defaultCurrency, true)}
+              value={formatCurrency(monthSpending, defaultCurrency)}
             />
             {monthIncome > 0 && (
               <MetricCell
                 label="Cash Flow"
-                value={`${monthCashFlow >= 0 ? '+' : ''}${formatCurrency(monthCashFlow, defaultCurrency, true)}`}
+                value={`${monthCashFlow >= 0 ? '+' : ''}${formatCurrency(monthCashFlow, defaultCurrency)}`}
                 color={monthCashFlow >= 0 ? '#22C55E' : '#EF4444'}
               />
             )}
@@ -720,13 +720,13 @@ export default function Dashboard() {
             <div className="grid grid-cols-2 gap-3">
               <MetricCell
                 label="Spent"
-                value={formatCurrency(monthSpending, defaultCurrency, true)}
+                value={formatCurrency(monthSpending, defaultCurrency)}
                 sub={`${monthExpenses.length} transactions`}
               />
               {monthIncome > 0 && (
                 <MetricCell
                   label="Income"
-                  value={formatCurrency(monthIncome, defaultCurrency, true)}
+                  value={formatCurrency(monthIncome, defaultCurrency)}
                   color="#22C55E"
                 />
               )}
@@ -888,7 +888,7 @@ export default function Dashboard() {
                   </div>
                   <div className="text-right flex-shrink-0 ml-2">
                     <p className="text-white font-mono text-sm">
-                      {formatCurrency(h.currentValue, defaultCurrency, true)}
+                      {formatCurrency(h.currentValue, defaultCurrency)}
                     </p>
                     <p
                       className="text-[11px] font-mono"
@@ -910,7 +910,7 @@ export default function Dashboard() {
               <div>
                 <p className="text-white/70 text-sm font-semibold">🔥 FIRE Progress</p>
                 <p className="text-white/30 text-xs mt-0.5">
-                  Target: {formatCurrency(fireTarget, defaultCurrency, true)}
+                  Target: {formatCurrency(fireTarget, defaultCurrency)}
                 </p>
               </div>
               <div className="text-right">
@@ -922,7 +922,7 @@ export default function Dashboard() {
                 </p>
                 {fireRemaining !== null && fireRemaining > 0 && (
                   <p className="text-xs text-white/30 mt-0.5">
-                    {formatCurrency(fireRemaining, defaultCurrency, true)} left
+                    {formatCurrency(fireRemaining, defaultCurrency)} left
                   </p>
                 )}
               </div>
@@ -1015,7 +1015,7 @@ export default function Dashboard() {
               className="text-4xl md:text-5xl font-bold text-white font-mono"
               style={{ letterSpacing: '-0.5px' }}
             >
-              {formatCurrency(netWorth, defaultCurrency, true)}
+              {formatCurrency(netWorth, defaultCurrency)}
             </h1>
             {netWorthChange && (
               <div className="flex items-center gap-2 mt-2">
@@ -1024,7 +1024,7 @@ export default function Dashboard() {
                   style={{ color: changeColor }}
                 >
                   {isPositive ? '+' : ''}
-                  {formatCurrency(netWorthChange.amount, defaultCurrency, true)}
+                  {formatCurrency(netWorthChange.amount, defaultCurrency)}
                 </span>
                 <span
                   className="text-xs font-mono px-2 py-0.5 rounded-full font-semibold"
@@ -1068,28 +1068,28 @@ export default function Dashboard() {
           >
             <MetricCell
               label="Total Assets"
-              value={formatCurrency(totalAssets, defaultCurrency, true)}
+              value={formatCurrency(totalAssets, defaultCurrency)}
               color="#22C55E"
-              sub={portfolioValue > 0 ? `Portfolio: ${formatCurrency(portfolioValue, defaultCurrency, true)}` : undefined}
+              sub={portfolioValue > 0 ? `Portfolio: ${formatCurrency(portfolioValue, defaultCurrency)}` : undefined}
             />
             {liabilitiesTotal > 0 && (
               <MetricCell
                 label="Liabilities"
-                value={formatCurrency(liabilitiesTotal, defaultCurrency, true)}
+                value={formatCurrency(liabilitiesTotal, defaultCurrency)}
                 color="#EF4444"
               />
             )}
             <MetricCell
               label="Month Spending"
-              value={formatCurrency(monthSpending, defaultCurrency, true)}
+              value={formatCurrency(monthSpending, defaultCurrency)}
               sub={`${monthExpenses.length} transactions`}
             />
             {monthIncome > 0 && (
               <MetricCell
                 label="Cash Flow"
-                value={`${monthCashFlow >= 0 ? '+' : ''}${formatCurrency(monthCashFlow, defaultCurrency, true)}`}
+                value={`${monthCashFlow >= 0 ? '+' : ''}${formatCurrency(monthCashFlow, defaultCurrency)}`}
                 color={monthCashFlow >= 0 ? '#22C55E' : '#EF4444'}
-                sub={`Income: ${formatCurrency(monthIncome, defaultCurrency, true)}`}
+                sub={`Income: ${formatCurrency(monthIncome, defaultCurrency)}`}
               />
             )}
           </div>
@@ -1129,14 +1129,14 @@ export default function Dashboard() {
                 )}
               </div>
               <h3 className="text-2xl font-bold font-mono" style={{ color: 'rgba(255,255,255,0.9)' }}>
-                {formatCurrency(monthSpending, defaultCurrency, true)}
+                {formatCurrency(monthSpending, defaultCurrency)}
               </h3>
               <p className="text-xs text-white/30 mt-1">
                 {monthExpenses.length} transaction{monthExpenses.length !== 1 ? 's' : ''} this month
               </p>
               {prevMonthSpending > 0 && (
                 <p className="text-xs text-white/25 mt-0.5">
-                  Last month: {formatCurrency(prevMonthSpending, defaultCurrency, true)}
+                  Last month: {formatCurrency(prevMonthSpending, defaultCurrency)}
                 </p>
               )}
               <button
@@ -1157,19 +1157,19 @@ export default function Dashboard() {
                   style={{ color: monthCashFlow >= 0 ? '#22C55E' : '#EF4444' }}
                 >
                   {monthCashFlow >= 0 ? '+' : ''}
-                  {formatCurrency(monthCashFlow, defaultCurrency, true)}
+                  {formatCurrency(monthCashFlow, defaultCurrency)}
                 </h3>
                 <div className="mt-2 space-y-1">
                   <div className="flex items-center justify-between">
                     <p className="text-xs text-white/30">Income</p>
                     <p className="text-xs font-mono text-[#22C55E]">
-                      {formatCurrency(monthIncome, defaultCurrency, true)}
+                      {formatCurrency(monthIncome, defaultCurrency)}
                     </p>
                   </div>
                   <div className="flex items-center justify-between">
                     <p className="text-xs text-white/30">Expenses</p>
                     <p className="text-xs font-mono text-white/60">
-                      {formatCurrency(monthSpending, defaultCurrency, true)}
+                      {formatCurrency(monthSpending, defaultCurrency)}
                     </p>
                   </div>
                 </div>
@@ -1180,7 +1180,7 @@ export default function Dashboard() {
                   Portfolio
                 </p>
                 <h3 className="text-2xl font-bold font-mono text-[#3B82F6]">
-                  {formatCurrency(portfolioValue, defaultCurrency, true)}
+                  {formatCurrency(portfolioValue, defaultCurrency)}
                 </h3>
                 {holdings.length > 0 && (
                   <p className="text-xs text-white/30 mt-1">
@@ -1372,7 +1372,7 @@ export default function Dashboard() {
                 <div>
                   <p className="text-white/70 text-sm font-semibold">🔥 FIRE Progress</p>
                   <p className="text-white/30 text-xs mt-0.5">
-                    Target: {formatCurrency(fireTarget, defaultCurrency, true)}
+                    Target: {formatCurrency(fireTarget, defaultCurrency)}
                   </p>
                 </div>
                 <p
@@ -1399,14 +1399,14 @@ export default function Dashboard() {
               <div className="flex items-center justify-between">
                 {fireRemaining !== null && fireRemaining > 0 ? (
                   <p className="text-xs text-white/35">
-                    {formatCurrency(fireRemaining, defaultCurrency, true)} remaining
+                    {formatCurrency(fireRemaining, defaultCurrency)} remaining
                   </p>
                 ) : (
                   <p className="text-xs text-[#22C55E]">🎉 Target reached!</p>
                 )}
                 {netWorth > 0 && fireTarget > 0 && (
                   <p className="text-xs text-white/25">
-                    {formatCurrency(netWorth, defaultCurrency, true)} / {formatCurrency(fireTarget, defaultCurrency, true)}
+                    {formatCurrency(netWorth, defaultCurrency)} / {formatCurrency(fireTarget, defaultCurrency)}
                   </p>
                 )}
               </div>
@@ -1452,7 +1452,7 @@ export default function Dashboard() {
                       </div>
                       <div className="text-right flex-shrink-0 ml-2">
                         <p className="text-white font-mono text-xs">
-                          {formatCurrency(h.currentValue, defaultCurrency, true)}
+                          {formatCurrency(h.currentValue, defaultCurrency)}
                         </p>
                         <p
                           className="text-[10px] font-mono"
@@ -1477,7 +1477,7 @@ export default function Dashboard() {
           <div className="flex items-center justify-between mb-5">
             <h2 className="text-sm font-semibold text-white">Wealth Composition</h2>
             <p className="text-xs text-white/30">
-              {formatCurrency(totalAssets, defaultCurrency, true)} total assets
+              {formatCurrency(totalAssets, defaultCurrency)} total assets
             </p>
           </div>
           <WealthCompositionDonut

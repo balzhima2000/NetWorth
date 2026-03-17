@@ -148,9 +148,9 @@ function BudgetCard({ cat, budget, spent, status, pct, defaultCurrency, onEdit, 
   const barOpacity = status === 'healthy' ? 0.45 : 0.75;
 
   const subText =
-    !budget ? (spent > 0 ? `${formatCurrency(spent, defaultCurrency, true)} spent, no limit` : 'No budget set') :
-    status === 'exceeded' ? `Over by ${formatCurrency(overAmount, defaultCurrency, true)}` :
-    `${formatCurrency(remaining, defaultCurrency, true)} left`;
+    !budget ? (spent > 0 ? `${formatCurrency(spent, defaultCurrency)} spent, no limit` : 'No budget set') :
+    status === 'exceeded' ? `Over by ${formatCurrency(overAmount, defaultCurrency)}` :
+    `${formatCurrency(remaining, defaultCurrency)} left`;
 
   return (
     <div className="glass rounded-xl">
@@ -742,8 +742,8 @@ export default function Spending() {
 
   const pacingLabel = pacingDelta !== null
     ? pacingDelta > 0
-      ? `${formatCurrency(pacingDelta, defaultCurrency, true)} ahead of pace`
-      : `${formatCurrency(Math.abs(pacingDelta), defaultCurrency, true)} under pace`
+      ? `${formatCurrency(pacingDelta, defaultCurrency)} ahead of pace`
+      : `${formatCurrency(Math.abs(pacingDelta), defaultCurrency)} under pace`
     : null;
 
   // Top categories for breakdown
@@ -810,7 +810,7 @@ export default function Spending() {
                     {budgetUsedPct !== null ? `${Math.round(budgetUsedPct)}% of budget` : 'Budget'}
                   </span>
                   <span className="text-white/40 text-xs font-mono">
-                    {formatCurrency(monthSpending, defaultCurrency, true)} / {formatCurrency(totalBudget, defaultCurrency, true)}
+                    {formatCurrency(monthSpending, defaultCurrency)} / {formatCurrency(totalBudget, defaultCurrency)}
                   </span>
                 </div>
                 <ProgressBar
@@ -824,7 +824,7 @@ export default function Spending() {
                       {remainingBudget >= 0 ? 'Budget left' : 'Over budget'}
                     </span>
                     <span className={`text-xs font-mono font-semibold ${remainingBudget >= 0 ? 'text-white/75' : 'text-[#EF4444]'}`}>
-                      {remainingBudget < 0 ? '-' : ''}{formatCurrency(Math.abs(remainingBudget), defaultCurrency, true)}
+                      {remainingBudget < 0 ? '-' : ''}{formatCurrency(Math.abs(remainingBudget), defaultCurrency)}
                     </span>
                   </div>
                 )}
@@ -836,7 +836,7 @@ export default function Spending() {
                 <div>
                   <p className="text-white/35 text-xs">Upcoming this month</p>
                   <p className="text-amber-400/80 text-sm font-mono font-medium">
-                    +{formatCurrency(upcomingTotal, defaultCurrency, true)} ({upcomingCount})
+                    +{formatCurrency(upcomingTotal, defaultCurrency)} ({upcomingCount})
                   </p>
                 </div>
               </div>
@@ -854,7 +854,7 @@ export default function Spending() {
               <div>
                 <p className="text-white/35 text-xs">Net this month</p>
                 <p className={`text-sm font-mono font-semibold ${netThisMonth >= 0 ? 'text-[#22C55E]/80' : 'text-[#EF4444]/80'}`}>
-                  {netThisMonth >= 0 ? '+' : ''}{formatCurrency(netThisMonth, defaultCurrency, true)}
+                  {netThisMonth >= 0 ? '+' : ''}{formatCurrency(netThisMonth, defaultCurrency)}
                 </p>
               </div>
               {savingsRate !== null && (
@@ -873,7 +873,7 @@ export default function Spending() {
         <div className="grid grid-cols-2 gap-3">
           <MetricTile
             label="Daily average"
-            value={formatCurrency(dailyAvg, defaultCurrency, true)}
+            value={formatCurrency(dailyAvg, defaultCurrency)}
             sub={`Day ${elapsedDays} of ${daysInMonth}`}
           />
           {largestCatEntry ? (() => {
@@ -1124,7 +1124,7 @@ export default function Spending() {
                 />
                 <MetricTile
                   label="Total remaining"
-                  value={budgetedCount > 0 ? formatCurrency(totalPositiveRemaining, defaultCurrency, true) : '—'}
+                  value={budgetedCount > 0 ? formatCurrency(totalPositiveRemaining, defaultCurrency) : '—'}
                   sub={budgetedCount > 0 ? `across ${budgetedCount} budget${budgetedCount > 1 ? 's' : ''}` : 'no budgets set'}
                   valueColor={budgetedCount > 0 ? 'text-[#22C55E]' : 'text-white/30'}
                 />
@@ -1167,7 +1167,7 @@ export default function Spending() {
           {upcomingRecurring.count30 > 0 && (
             <MetricTile
               label="Due in next 30 days"
-              value={formatCurrency(upcomingRecurring.total30, defaultCurrency, true)}
+              value={formatCurrency(upcomingRecurring.total30, defaultCurrency)}
               sub={`${upcomingRecurring.count30} payment${upcomingRecurring.count30 > 1 ? 's' : ''} upcoming`}
               valueColor="text-white/70"
             />
@@ -1219,7 +1219,7 @@ export default function Spending() {
                               if (rpCurrency === defaultCurrency) return null;
                               const rate = exchangeRates.find(r => r.currency === rpCurrency);
                               if (!rate) return <p className="text-white/25 text-xs">{rpCurrency}</p>;
-                              return <p className="text-white/25 text-xs">{formatCurrency(p.amount * rate.rateToDefault, defaultCurrency, true)}</p>;
+                              return <p className="text-white/25 text-xs">{formatCurrency(p.amount * rate.rateToDefault, defaultCurrency)}</p>;
                             })()}
                           </div>
                           <button onClick={() => updateRecurringPayment(p.id, { isActive: !p.isActive })} className="p-1.5 rounded-lg text-white/25 hover:text-white/65 hover:bg-white/8 transition-colors text-sm" title={p.isActive ? 'Pause' : 'Resume'}>
@@ -1269,7 +1269,7 @@ export default function Spending() {
                               </button>
                             </div>
                           </div>
-                          <p className="text-white/35 text-xs mb-2">{paid} of {p.totalInstallments} paid · Next: {formatDate(p.nextPaymentDate, 'short')} · Total: {formatCurrency(p.totalAmount, defaultCurrency, true)}</p>
+                          <p className="text-white/35 text-xs mb-2">{paid} of {p.totalInstallments} paid · Next: {formatDate(p.nextPaymentDate, 'short')} · Total: {formatCurrency(p.totalAmount, defaultCurrency)}</p>
                           <ProgressBar value={paid} max={p.totalInstallments} color="blue" />
                         </div>
                       </div>
