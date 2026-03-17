@@ -194,6 +194,10 @@ export interface Settings {
   israeliRequestsResetDate: string;
   cryptoApiKey: string;           // Coinlayer — crypto current + historical prices
   fireTarget: number | null;
+  fireAnnualExpenses: number | null;
+  fireMonthlyContribution: number | null;
+  fireExpectedReturn: number;   // % e.g. 7
+  fireWithdrawalRate: number;   // % e.g. 4
   activityFeedShowTransactions: boolean;
   activityFeedShowTrades: boolean;
   activityFeedShowRecurring: boolean;

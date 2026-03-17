@@ -25,6 +25,7 @@ interface SettingsStore extends Settings {
   decrementIsraeliRequests: () => void;
   resetRequestsIfNewDay: () => void;
   setFireTarget: (target: number | null) => void;
+  setFireProfile: (profile: { annualExpenses?: number | null; monthlyContribution?: number | null; expectedReturn?: number; withdrawalRate?: number }) => void;
   setActivityFeedSettings: (settings: { showTransactions?: boolean; showTrades?: boolean; showRecurring?: boolean }) => void;
   setLastBackupDate: (date: string) => void;
   setBudgetAlertsEnabled: (enabled: boolean) => void;
@@ -49,6 +50,10 @@ const defaultSettings: Settings = {
   israeliRequestsResetDate: today(),
   cryptoApiKey: '',
   fireTarget: null,
+  fireAnnualExpenses: null,
+  fireMonthlyContribution: null,
+  fireExpectedReturn: 7,
+  fireWithdrawalRate: 4,
   activityFeedShowTransactions: true,
   activityFeedShowTrades: true,
   activityFeedShowRecurring: true,
@@ -107,6 +112,13 @@ export const useSettingsStore = create<SettingsStore>()(
         if (Object.keys(updates).length > 0) set(updates);
       },
       setFireTarget: (target) => set({ fireTarget: target }),
+      setFireProfile: ({ annualExpenses, monthlyContribution, expectedReturn, withdrawalRate }) =>
+        set((state) => ({
+          fireAnnualExpenses:      annualExpenses      !== undefined ? annualExpenses      : state.fireAnnualExpenses,
+          fireMonthlyContribution: monthlyContribution !== undefined ? monthlyContribution : state.fireMonthlyContribution,
+          fireExpectedReturn:      expectedReturn      !== undefined ? expectedReturn      : state.fireExpectedReturn,
+          fireWithdrawalRate:      withdrawalRate      !== undefined ? withdrawalRate      : state.fireWithdrawalRate,
+        })),
       setActivityFeedSettings: ({ showTransactions, showTrades, showRecurring }) =>
         set((state) => ({
           activityFeedShowTransactions: showTransactions ?? state.activityFeedShowTransactions,
@@ -118,7 +130,7 @@ export const useSettingsStore = create<SettingsStore>()(
     }),
     {
       name: 'nw-settings',
-      version: 3,
+      version: 4,
       migrate: (persisted: any, version) => {
         if (version < 2) {
           const t = today();
@@ -134,8 +146,13 @@ export const useSettingsStore = create<SettingsStore>()(
           persisted.israeliRequestsResetDate = t;
         }
         if (version < 3) {
-          // Add FX provider preference — default to alpha-vantage for existing users
           persisted.fxProvider = 'alpha-vantage';
+        }
+        if (version < 4) {
+          persisted.fireAnnualExpenses      = null;
+          persisted.fireMonthlyContribution = null;
+          persisted.fireExpectedReturn      = 7;
+          persisted.fireWithdrawalRate      = 4;
         }
         return persisted;
       },

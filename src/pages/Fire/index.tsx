@@ -32,23 +32,27 @@ const SWR_BG_MAP: Record<string, string> = {
 };
 
 export default function Fire() {
-  const fireTarget = useSettingsStore((s) => s.fireTarget);
-  const setFireTarget = useSettingsStore((s) => s.setFireTarget);
-  const defaultCurrency = useSettingsStore((s) => s.defaultCurrency);
+  const fireTarget             = useSettingsStore((s) => s.fireTarget);
+  const fireAnnualExpenses     = useSettingsStore((s) => s.fireAnnualExpenses);
+  const fireMonthlyContribution= useSettingsStore((s) => s.fireMonthlyContribution);
+  const fireExpectedReturn     = useSettingsStore((s) => s.fireExpectedReturn);
+  const fireWithdrawalRate     = useSettingsStore((s) => s.fireWithdrawalRate);
+  const setFireTarget          = useSettingsStore((s) => s.setFireTarget);
+  const defaultCurrency        = useSettingsStore((s) => s.defaultCurrency);
 
   useEffect(() => { document.title = 'FIRE Calculators — NetWorth Tracker'; }, []);
 
   const [activeTab, setActiveTab] = useState('fire-number');
 
   // Tab 1: FIRE Number
-  const [fn_expenses, setFnExpenses] = useState('');
-  const [fn_withdrawal, setFnWithdrawal] = useState('4');
+  const [fn_expenses,   setFnExpenses]   = useState(fireAnnualExpenses ? String(fireAnnualExpenses) : '');
+  const [fn_withdrawal, setFnWithdrawal] = useState(String(fireWithdrawalRate));
 
   // Tab 2: Time to FIRE
   const [ttf_savings, setTtfSavings] = useState('');
-  const [ttf_monthly, setTtfMonthly] = useState('');
-  const [ttf_return, setTtfReturn] = useState('7');
-  const [ttf_target, setTtfTarget] = useState(fireTarget ? String(fireTarget) : '');
+  const [ttf_monthly, setTtfMonthly] = useState(fireMonthlyContribution ? String(fireMonthlyContribution) : '');
+  const [ttf_return,  setTtfReturn]  = useState(String(fireExpectedReturn));
+  const [ttf_target,  setTtfTarget]  = useState(fireTarget ? String(fireTarget) : '');
 
   // Tab 3: SWR
   const [swr_savings, setSwrSavings] = useState('');
