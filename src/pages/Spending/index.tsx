@@ -15,6 +15,7 @@ import { formatCurrency, formatDate, getCurrentMonthYear, getTodayISO } from '..
 import { CURRENCIES } from '../../utils/constants';
 import { fetchExchangeRate } from '../../services/alphaVantage';
 import type { Transaction, RecurringPayment } from '../../types/index';
+import TrendsTab from './TrendsTab';
 
 const FREQUENCIES = [
   { value: 'weekly', label: 'Weekly' },
@@ -764,6 +765,7 @@ export default function Spending() {
     { id: 'transactions', label: '💳 Transactions' },
     { id: 'budgets', label: '🎯 Budgets' },
     { id: 'recurring', label: '🔄 Recurring' },
+    { id: 'trends', label: '📈 Trends' },
   ];
 
   const budgetCatInfo = getCategoryInfo(budgetCategory);
@@ -1347,6 +1349,20 @@ export default function Spending() {
             )}
           </div>
         </div>
+      )}
+
+      {/* ═══════════════════════════════════════════════════════════════════ */}
+      {/* TRENDS TAB                                                         */}
+      {/* ═══════════════════════════════════════════════════════════════════ */}
+
+      {activeTab === 'trends' && (
+        <TrendsTab
+          transactions={transactions}
+          defaultCurrency={defaultCurrency}
+          categories={categories}
+          currentMonth={month}
+          currentYear={year}
+        />
       )}
 
       {/* ═══════════════════════════════════════════════════════════════════ */}
