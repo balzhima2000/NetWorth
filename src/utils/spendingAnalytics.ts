@@ -124,6 +124,8 @@ export function getCategoryTrends(
 
 /**
  * Returns daily expense totals for a given month/year (all days 1–N, including zero-spend days).
+ * Excludes auto-added recurring/installment transactions since those don't reflect
+ * real daily spending patterns — they fire on a fixed schedule regardless of user behavior.
  */
 export function getDailyTotals(
   transactions: Transaction[],
@@ -138,6 +140,7 @@ export function getDailyTotals(
         const d = new Date(t.date);
         return (
           t.type === 'expense' &&
+          !t.isAutoAdded &&
           d.getFullYear() === year &&
           d.getMonth() + 1 === month &&
           d.getDate() === day
