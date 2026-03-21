@@ -606,7 +606,7 @@ export default function Spending() {
 
   const paymentOptions = [
     { value: 'cash', label: '💵 Cash' },
-    ...cards.map(c => ({ value: c.id, label: `💳 ${c.name}` })),
+    ...cards.map(c => ({ value: c.id, label: `💳 ${c.name || 'Unnamed Card'}` })),
   ];
 
   const destinationOptions = incomeDestinations.map(d => ({ value: d.id, label: `${d.icon} ${d.name}` }));
@@ -1054,7 +1054,7 @@ export default function Spending() {
                   if (activeType === 'expense') {
                     return (
                       <Select label="Payment Method" value={filterPayment} onChange={e => setFilterPayment(e.target.value)}
-                        options={[{ value: 'all', label: 'All Methods' }, { value: 'cash', label: '💵 Cash' }, ...cards.map(c => ({ value: c.id, label: `💳 ${c.name}` }))]} />
+                        options={[{ value: 'all', label: 'All Methods' }, { value: 'cash', label: '💵 Cash' }, ...cards.map(c => ({ value: c.id, label: `💳 ${c.name || 'Unnamed Card'}` }))]} />
                     );
                   }
                   // All — show combined
@@ -1063,7 +1063,7 @@ export default function Spending() {
                       options={[
                         { value: 'all', label: 'All' },
                         { value: 'cash', label: '💵 Cash' },
-                        ...cards.map(c => ({ value: c.id, label: `💳 ${c.name}` })),
+                        ...cards.map(c => ({ value: c.id, label: `💳 ${c.name || 'Unnamed Card'}` })),
                         ...incomeDestinations.filter(d => d.id !== 'cash').map(d => ({ value: d.id, label: `${d.icon} ${d.name}` })),
                       ]} />
                   );

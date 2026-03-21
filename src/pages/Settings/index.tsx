@@ -889,7 +889,7 @@ export default function Settings() {
           >
             <option value="cash">💵 Cash</option>
             {cards.filter(c => c.isActive).map(c => (
-              <option key={c.id} value={c.id}>💳 {c.name}</option>
+              <option key={c.id} value={c.id}>💳 {c.name || 'Unnamed Card'}</option>
             ))}
           </select>
         </div>
