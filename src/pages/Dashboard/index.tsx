@@ -6,7 +6,7 @@ import { useSettingsStore } from '../../stores/settingsStore';
 import { useRecurringStore } from '../../stores/recurringStore';
 import { useBudgetStore } from '../../stores/budgetStore';
 import { GlassCard, Button, EmptyState } from '../../components/ui';
-import { formatCurrency, formatDate, getCurrentMonthYear } from '../../utils/formatters';
+import { formatCurrency, formatDate, getCurrentMonthYear, getTodayISO } from '../../utils/formatters';
 import { calculateCurrentHoldings } from '../../utils/calculations';
 import { NetWorthLineChart } from '../../components/charts/NetWorthLineChart';
 import { TREND_PERIODS } from '../../utils/constants';
@@ -348,16 +348,16 @@ export default function Dashboard() {
   // ── FIRE ────────────────────────────────────────────────────────
   const fireProgress = fireTarget ? Math.min((netWorth / fireTarget) * 100, 100) : null;
 
-  // ── Upcoming recurring (7 days) ────────────────────────────────
+  // ── Upcoming recurring (rest of this month) ──────────────────────
   const dueSoon = useMemo(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const in7 = new Date(today);
-    in7.setDate(today.getDate() + 7);
+    const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+    endOfMonth.setHours(23, 59, 59, 999);
     return recurringPayments.filter((p) => {
       if (!p.isActive) return false;
       const due = new Date(p.nextDueDate);
-      return due >= today && due <= in7;
+      return due >= today && due <= endOfMonth;
     });
   }, [recurringPayments]);
 
@@ -469,16 +469,62 @@ export default function Dashboard() {
   }, [assetsManual, portfolioValue]);
 
   // ── Top spending categories this month ────────────────────────
+  // Mirrors the Spending page's categorySpend logic: transactions + recurring
   const topSpendingCategories = useMemo(() => {
     const catMap = new Map<string, number>();
+
+    // 1. Regular expense transactions
     monthExpenses.forEach((t) => {
       catMap.set(t.category, (catMap.get(t.category) ?? 0) + t.convertedAmount);
     });
+
+    // 2. Recurring payments that fired this month but don't have a matching auto-added tx
+    const todayStr = getTodayISO();
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const monthStr = `${year}-${pad(month)}`;
+
+    recurringPayments.forEach((rp) => {
+      if (!rp.isActive || rp.type !== 'expense') return;
+      if (rp.startDate > `${monthStr}-31`) return;
+      if (rp.endDate && rp.endDate < `${monthStr}-01`) return;
+
+      const rpCurrency = rp.currency ?? defaultCurrency;
+      const rpRate = exchangeRates.find(r => r.currency === rpCurrency);
+      const converted = rpCurrency === defaultCurrency ? rp.amount : rpRate ? rp.amount * rpRate.rateToDefault : rp.amount;
+
+      const addIfNotPresent = (dueDateStr: string) => {
+        if (dueDateStr < rp.startDate || dueDateStr > todayStr) return;
+        if (rp.endDate && dueDateStr > rp.endDate) return;
+        const alreadyCovered = monthExpenses.some(
+          t => t.isAutoAdded && t.category === rp.category && t.date === dueDateStr && Math.abs(t.convertedAmount - converted) < 0.01
+        );
+        if (!alreadyCovered) catMap.set(rp.category, (catMap.get(rp.category) ?? 0) + converted);
+      };
+
+      if (rp.frequency === 'monthly' && rp.dayOfMonth) {
+        const day = Math.min(rp.dayOfMonth, new Date(year, month, 0).getDate());
+        addIfNotPresent(`${monthStr}-${pad(day)}`);
+      } else if (rp.frequency === 'weekly' && rp.dayOfWeek !== null) {
+        const daysInM = new Date(year, month, 0).getDate();
+        for (let d = 1; d <= daysInM; d++) {
+          if (new Date(year, month - 1, d).getDay() === rp.dayOfWeek) {
+            addIfNotPresent(`${monthStr}-${pad(d)}`);
+          }
+        }
+      } else if (rp.frequency === 'yearly') {
+        const startD = new Date(rp.startDate);
+        if (startD.getMonth() + 1 === month) {
+          const day = Math.min(startD.getDate(), new Date(year, month, 0).getDate());
+          addIfNotPresent(`${monthStr}-${pad(day)}`);
+        }
+      }
+    });
+
     return [...catMap.entries()]
       .sort((a, b) => b[1] - a[1])
       .slice(0, 5)
       .map(([cat, amount]) => ({ cat, amount }));
-  }, [monthExpenses]);
+  }, [monthExpenses, recurringPayments, year, month, defaultCurrency, exchangeRates]);
 
   // ── Improved activity feed ─────────────────────────────────────
   const dueSoonActivity = useMemo(
