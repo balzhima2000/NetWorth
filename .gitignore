@@ -24,3 +24,7 @@ Thumbs.db
 
 # TypeScript build cache
 *.tsbuildinfo
+
+# Local Claude/MCP config
+.mcp.json
+.claude/settings.local.json

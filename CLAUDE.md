@@ -104,8 +104,9 @@ Parses a broker `.xlsx` snapshot (one row = one open position) into `ImportRow[]
 - Step 5 is **automatically skipped** when `portfolioMode === 'simple'` (skip in `handleNext` at step 4; skip-back in `handleBack` at step 6).
 - Step 8 Done screen shows a summary including holdings imported count (from `portfolioStore.trades`).
 
-## Auto-push
-All committed fixes are automatically pushed to the remote (`git push` after every commit).
+## Workflow rules
+- **Auto-push**: Unless told otherwise, always push after executing the user's orders.
+- **Preview viewport**: Always use the desktop/PC version (1920×1080) for previews by default, unless told otherwise.
 
 ## File map (key files)
 ```
