@@ -66,14 +66,14 @@ export default function Step8Sync({ onNext, onBack }: Step8SyncProps) {
           <p className="text-white/50">
             We sent a sign-in email to <span className="text-white font-medium">{email}</span>.
             <br />
-            Click the link — or enter the code below.
+            Enter the code below to sign in.
           </p>
         </div>
 
         <div className="space-y-3 text-left max-w-sm mx-auto">
           <Input
             type="text"
-            placeholder="6-digit code"
+            placeholder="Enter code from email"
             value={code}
             onChange={(e) => setCode(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') void handleVerify(); }}
