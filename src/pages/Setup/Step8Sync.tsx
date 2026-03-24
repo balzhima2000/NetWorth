@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { Button, Input } from '../../components/ui';
 
@@ -12,6 +12,14 @@ export default function Step8Sync({ onNext, onBack }: Step8SyncProps) {
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Auto-advance when auth completes (same-tab magic link flow)
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_IN') onNext();
+    });
+    return () => subscription.unsubscribe();
+  }, [onNext]);
 
   const handleSend = async () => {
     if (!email.trim()) return;

@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useSettingsStore } from '../../stores/settingsStore';
+import { supabase, supabaseConfigured } from '../../lib/supabase';
 import Step1Name from './Step1Name';
 import Step2Privacy from './Step2Privacy';
 import Step3Currency from './Step3Currency';
@@ -29,6 +30,23 @@ export default function SetupWizard() {
   const hasCompletedSetup = useSettingsStore((s) => s.hasCompletedSetup);
   const portfolioMode = useSettingsStore((s) => s.portfolioMode);
   const [currentStep, setCurrentStep] = useState<StepNumber>(1);
+
+  // If user arrives at setup with an active session (e.g. magic link opened in new tab),
+  // jump to the Done step so they can complete setup and proceed.
+  useEffect(() => {
+    if (!supabaseConfigured) return;
+
+    // Check for existing session on mount
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) setCurrentStep(9 as StepNumber);
+    });
+
+    // Also listen for sign-in that completes while on setup (new-tab hash processing)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_IN') setCurrentStep(9 as StepNumber);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
 
   if (hasCompletedSetup) {
     return <Navigate to="/dashboard" replace />;
