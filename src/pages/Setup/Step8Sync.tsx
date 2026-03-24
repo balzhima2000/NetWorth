@@ -10,10 +10,12 @@ interface Step8SyncProps {
 export default function Step8Sync({ onNext, onBack }: Step8SyncProps) {
   const [email, setEmail] = useState('');
   const [sent, setSent] = useState(false);
+  const [code, setCode] = useState('');
+  const [verifying, setVerifying] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Auto-advance when auth completes (same-tab magic link flow)
+  // Auto-advance when auth completes (magic link click or successful OTP verify)
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === 'SIGNED_IN') onNext();
@@ -39,6 +41,22 @@ export default function Step8Sync({ onNext, onBack }: Step8SyncProps) {
     }
   };
 
+  const handleVerify = async () => {
+    if (!code.trim()) return;
+    setVerifying(true);
+    setError(null);
+
+    const { error: verifyError } = await supabase.auth.verifyOtp({
+      email: email.trim(),
+      token: code.trim(),
+      type: 'email',
+    });
+
+    setVerifying(false);
+    if (verifyError) setError(verifyError.message);
+    // on success, onAuthStateChange fires SIGNED_IN → onNext() called automatically
+  };
+
   if (sent) {
     return (
       <div className="text-center space-y-8 max-w-md mx-auto">
@@ -46,15 +64,35 @@ export default function Step8Sync({ onNext, onBack }: Step8SyncProps) {
           <div className="text-5xl mb-4">📬</div>
           <h1 className="text-3xl font-bold text-white mb-2">Check your email</h1>
           <p className="text-white/50">
-            We sent a sign-in link to <span className="text-white font-medium">{email}</span>.
+            We sent a sign-in email to <span className="text-white font-medium">{email}</span>.
             <br />
-            Click the link in the email to sign in.
+            Click the link — or enter the code below.
           </p>
+        </div>
+
+        <div className="space-y-3 text-left max-w-sm mx-auto">
+          <Input
+            type="text"
+            placeholder="6-digit code"
+            value={code}
+            onChange={(e) => setCode(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') void handleVerify(); }}
+          />
+          {error && <p className="text-[#EF4444] text-sm">{error}</p>}
+          <Button
+            variant="primary"
+            size="lg"
+            fullWidth
+            onClick={() => void handleVerify()}
+            disabled={!code.trim() || verifying}
+          >
+            {verifying ? 'Verifying…' : 'Verify Code'}
+          </Button>
         </div>
 
         <p className="text-white/30 text-sm">
           Didn't get it? Check spam or{' '}
-          <button className="text-white/50 underline hover:text-white transition-colors" onClick={() => { setSent(false); setError(null); }}>
+          <button className="text-white/50 underline hover:text-white transition-colors" onClick={() => { setSent(false); setCode(''); setError(null); }}>
             try again
           </button>.
         </p>

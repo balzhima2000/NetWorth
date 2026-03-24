@@ -36,12 +36,14 @@ const EMOJI_OPTIONS = [
 
 export default function Settings() {
   const toast = useToast();
-  const { user, sendMagicLink, signOut } = useAuth();
+  const { user, sendMagicLink, verifyOtp, signOut } = useAuth();
   const { syncStatus, lastSyncedAt, forcePull, forcePush } = useSyncManager();
   const [syncEmail, setSyncEmail] = useState('');
   const [syncEmailSent, setSyncEmailSent] = useState(false);
   const [syncEmailError, setSyncEmailError] = useState<string | null>(null);
   const [syncEmailLoading, setSyncEmailLoading] = useState(false);
+  const [syncCode, setSyncCode] = useState('');
+  const [syncCodeVerifying, setSyncCodeVerifying] = useState(false);
 
   const handleSendCode = async () => {
     if (!syncEmail.trim()) return;
@@ -54,6 +56,16 @@ export default function Settings() {
     } else {
       setSyncEmailSent(true);
     }
+  };
+
+  const handleVerifyCode = async () => {
+    if (!syncCode.trim()) return;
+    setSyncCodeVerifying(true);
+    setSyncEmailError(null);
+    const { error } = await verifyOtp(syncEmail.trim(), syncCode.trim());
+    setSyncCodeVerifying(false);
+    if (error) setSyncEmailError(error);
+    // on success, onAuthStateChange in useAuth updates user state automatically
   };
 
   // Page title
@@ -501,16 +513,36 @@ export default function Settings() {
             </div>
           </div>
         ) : syncEmailSent ? (
-          /* Magic link sent */
+          /* OTP / magic link sent */
           <div className="space-y-3">
             <p className="text-white/60 text-sm">
-              A sign-in link was sent to <span className="text-white font-medium">{syncEmail}</span>. Click the link in the email to sign in.
+              A sign-in email was sent to <span className="text-white font-medium">{syncEmail}</span>. Click the link — or enter the code below.
             </p>
+            <div className="flex gap-2 flex-wrap items-start">
+              <div className="flex-1 min-w-[140px]">
+                <Input
+                  type="text"
+                  placeholder="6-digit code"
+                  value={syncCode}
+                  onChange={(e) => setSyncCode(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') void handleVerifyCode(); }}
+                />
+              </div>
+              <Button
+                variant="secondary"
+                size="md"
+                onClick={() => void handleVerifyCode()}
+                disabled={!syncCode.trim() || syncCodeVerifying}
+              >
+                {syncCodeVerifying ? 'Verifying…' : 'Verify'}
+              </Button>
+            </div>
+            {syncEmailError && <p className="text-[#EF4444] text-xs">{syncEmailError}</p>}
             <p className="text-white/30 text-xs">
               Didn't get it? Check spam or{' '}
               <button
                 className="text-white/50 underline hover:text-white transition-colors"
-                onClick={() => { setSyncEmailSent(false); setSyncEmailError(null); }}
+                onClick={() => { setSyncEmailSent(false); setSyncCode(''); setSyncEmailError(null); }}
               >
                 try again
               </button>.
