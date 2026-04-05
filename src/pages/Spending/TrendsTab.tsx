@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import {
   ResponsiveContainer,
-  LineChart,
+  ComposedChart,
   Line,
   BarChart,
   Bar,
@@ -82,7 +82,7 @@ export default function TrendsTab({
   }, [allCategoryMonths, period]);
 
   const savingsRateData = useMemo(
-    () => monthlyTotals.filter((m) => m.income > 0),
+    () => monthlyTotals.filter((m) => m.income > 0).map(m => ({ ...m, saved: m.income - m.expenses })),
     [monthlyTotals]
   );
 
@@ -145,18 +145,27 @@ export default function TrendsTab({
         </GlassCard>
       )}
 
-      {/* ── 3. Savings Rate Trend ───────────────────────────────────────── */}
+      {/* ── 3. Savings Rate Trend (combo: bars = amount saved, line = rate %) ── */}
       {savingsRateData.length >= 2 && (
         <GlassCard padding="lg">
           <SectionHeader
             title="Savings Rate"
-            subtitle="(Income − Expenses) ÷ Income — months without income are excluded"
+            subtitle="Bars show amount saved · Line shows savings rate %"
           />
-          <ResponsiveContainer width="100%" height={200}>
-            <LineChart data={savingsRateData} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
+          <ResponsiveContainer width="100%" height={240}>
+            <ComposedChart data={savingsRateData} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
               <XAxis dataKey="label" stroke="rgba(255,255,255,0.25)" fontSize={11} />
               <YAxis
+                yAxisId="amount"
+                stroke="rgba(255,255,255,0.25)"
+                fontSize={11}
+                width={55}
+                tickFormatter={(v) => formatCurrency(v, defaultCurrency, true)}
+              />
+              <YAxis
+                yAxisId="rate"
+                orientation="right"
                 stroke="rgba(255,255,255,0.25)"
                 fontSize={11}
                 width={45}
@@ -170,11 +179,23 @@ export default function TrendsTab({
                   color: 'white',
                   fontSize: 12,
                 }}
-                formatter={(value: number | undefined) => value !== undefined ? [`${Math.round(value)}%`, 'Savings Rate'] : ['', 'Savings Rate']}
+                formatter={(value?: number, name?: string) => {
+                  if (value === undefined) return ['', ''];
+                  if (name === 'saved') return [formatCurrency(value, defaultCurrency), 'Saved'];
+                  return [`${Math.round(value)}%`, 'Savings Rate'];
+                }}
               />
-              <ReferenceLine y={0} stroke="rgba(255,255,255,0.15)" strokeDasharray="4 4" />
-              <ReferenceLine y={20} stroke="rgba(34,197,94,0.2)" strokeDasharray="4 4" label={{ value: '20%', fill: 'rgba(34,197,94,0.4)', fontSize: 10, position: 'right' }} />
+              <ReferenceLine yAxisId="amount" y={0} stroke="rgba(255,255,255,0.15)" strokeDasharray="4 4" />
+              <Bar
+                yAxisId="amount"
+                dataKey="saved"
+                fill="rgba(16,185,129,0.25)"
+                stroke="rgba(16,185,129,0.5)"
+                strokeWidth={1}
+                radius={[4, 4, 0, 0]}
+              />
               <Line
+                yAxisId="rate"
                 type="monotone"
                 dataKey="savingsRate"
                 stroke="#10B981"
@@ -182,7 +203,7 @@ export default function TrendsTab({
                 dot={{ r: 3, fill: '#10B981' }}
                 activeDot={{ r: 5 }}
               />
-            </LineChart>
+            </ComposedChart>
           </ResponsiveContainer>
         </GlassCard>
       )}
