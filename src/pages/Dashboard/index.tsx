@@ -5,6 +5,7 @@ import { useTransactionStore } from '../../stores/transactionStore';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { useRecurringStore } from '../../stores/recurringStore';
 import { useBudgetStore } from '../../stores/budgetStore';
+import { useCategoriesStore } from '../../stores/categoriesStore';
 import { GlassCard, Button, EmptyState } from '../../components/ui';
 import { formatCurrency, formatDate, getCurrentMonthYear, getTodayISO } from '../../utils/formatters';
 import { calculateCurrentHoldings } from '../../utils/calculations';
@@ -250,6 +251,8 @@ export default function Dashboard() {
   const transactions = useTransactionStore((s) => s.transactions);
   const recurringPayments = useRecurringStore((s) => s.recurringPayments);
   const getBudgetsByMonth = useBudgetStore((s) => s.getBudgetsByMonth);
+  const categories = useCategoriesStore((s) => s.categories);
+  const incomeCategories = useCategoriesStore((s) => s.incomeCategories);
 
   const defaultCurrency = useSettingsStore((s) => s.defaultCurrency);
   const exchangeRates = useSettingsStore((s) => s.exchangeRates);
@@ -259,6 +262,9 @@ export default function Dashboard() {
   const setActivityFeedSettings = useSettingsStore((s) => s.setActivityFeedSettings);
 
   const [selectedPeriod, setSelectedPeriod] = useState<TrendPeriod>(TREND_PERIODS[1]);
+
+  const allCategories = useMemo(() => [...categories, ...incomeCategories], [categories, incomeCategories]);
+  const getCatInfo = (catId: string) => allCategories.find(c => c.id === catId);
 
   // ── Core financial calculations ────────────────────────────────
   const holdings = useMemo(
@@ -864,10 +870,10 @@ export default function Dashboard() {
                           className="w-7 h-7 rounded-xl flex items-center justify-center text-sm flex-shrink-0"
                           style={{ background: 'rgba(255,255,255,0.06)' }}
                         >
-                          💳
+                          {getCatInfo(tx.category)?.emoji ?? '💳'}
                         </span>
                         <div className="min-w-0">
-                          <p className="text-white text-sm font-medium truncate leading-tight">{tx.category}</p>
+                          <p className="text-white text-sm font-medium truncate leading-tight">{getCatInfo(tx.category)?.name ?? tx.category}</p>
                           <p className="text-white/30 text-[11px] mt-0.5">{formatDate(tx.date, 'short')}</p>
                         </div>
                       </div>
@@ -1327,10 +1333,10 @@ export default function Dashboard() {
                             className="w-7 h-7 rounded-lg flex items-center justify-center text-sm flex-shrink-0"
                             style={{ background: 'rgba(255,255,255,0.06)' }}
                           >
-                            💳
+                            {getCatInfo(tx.category)?.emoji ?? '💳'}
                           </span>
                           <div className="min-w-0">
-                            <p className="text-white text-sm font-medium truncate leading-tight">{tx.category}</p>
+                            <p className="text-white text-sm font-medium truncate leading-tight">{getCatInfo(tx.category)?.name ?? tx.category}</p>
                             <p className="text-white/30 text-[11px] mt-0.5">{formatDate(tx.date, 'short')}</p>
                           </div>
                         </div>
