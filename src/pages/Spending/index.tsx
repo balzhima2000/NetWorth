@@ -822,12 +822,13 @@ export default function Spending() {
         <Button variant="primary" onClick={() => openAddTx()}>+ Add Transaction</Button>
       </div>
 
-      {/* ── Summary Block ──────────────────────────────────────────────────── */}
-      <GlassCard padding="none">
-        <div className="grid grid-cols-2">
+      {/* ── Summary Tiles — mobile only (sm:hidden) ────────────────────────── */}
+      <div className="sm:hidden space-y-3">
+        {/* Primary row: Spending + Income */}
+        <div className="grid grid-cols-1 gap-3">
 
-          {/* Top-left: This Month Spent */}
-          <div className="p-4 sm:p-5 border-r border-b border-white/[0.06]">
+          {/* Spending card */}
+          <GlassCard padding="md">
             <p className="text-white/45 text-xs font-medium tracking-wide uppercase mb-2">This Month Spent</p>
             <div className="flex items-end justify-between gap-2 mb-3">
               <p className="text-3xl font-bold font-mono text-[#EF4444]">
@@ -872,15 +873,15 @@ export default function Spending() {
                 </div>
               </div>
             )}
-          </div>
+          </GlassCard>
 
-          {/* Top-right: Income */}
-          <div className="p-4 sm:p-5 border-b border-white/[0.06]">
+          {/* Income card */}
+          <GlassCard padding="md">
             <p className="text-white/45 text-xs font-medium tracking-wide uppercase mb-2">Income</p>
             <p className="text-3xl font-bold font-mono mb-3 text-[#22C55E]">
               {formatCurrency(monthIncome, defaultCurrency)}
             </p>
-            <div className="flex items-center gap-4 pt-3 border-t border-white/5">
+            <div className="flex items-center gap-4 mt-auto pt-3 border-t border-white/5">
               <div>
                 <p className="text-white/35 text-xs">Net this month</p>
                 <p className={`text-sm font-mono font-semibold ${netThisMonth >= 0 ? 'text-[#22C55E]/80' : 'text-[#EF4444]/80'}`}>
@@ -896,38 +897,143 @@ export default function Spending() {
                 </div>
               )}
             </div>
-          </div>
+          </GlassCard>
+        </div>
 
-          {/* Bottom-left: Daily Average */}
-          <div className="p-4 sm:p-5 border-r border-white/[0.06]">
-            <p className="text-white/45 text-xs font-medium tracking-wide uppercase mb-1.5">Daily Average</p>
-            <p className="text-2xl font-bold font-mono text-white">
-              {formatCurrency(dailyAvg, defaultCurrency)}
-            </p>
-            <p className="text-white/35 text-xs mt-1">Day {elapsedDays} of {daysInMonth}</p>
-          </div>
-
-          {/* Bottom-right: Top Category */}
-          <div className="p-4 sm:p-5">
-            <p className="text-white/45 text-xs font-medium tracking-wide uppercase mb-1.5">Top Category</p>
-            {largestCatEntry ? (() => {
-              const catInfo = getCategoryInfo(largestCatEntry[0]);
-              return (
+        {/* Secondary row: small tiles */}
+        <div className="grid grid-cols-2 gap-3">
+          <MetricTile
+            label="Daily average"
+            value={formatCurrency(dailyAvg, defaultCurrency)}
+            sub={`Day ${elapsedDays} of ${daysInMonth}`}
+          />
+          {largestCatEntry ? (() => {
+            const catInfo = getCategoryInfo(largestCatEntry[0]);
+            return (
+              <GlassCard padding="md">
+                <p className="text-white/45 text-xs font-medium tracking-wide uppercase mb-1.5">Top category</p>
                 <div className="flex items-baseline justify-between gap-2">
                   <p className="text-white text-base font-medium truncate">{catInfo.emoji} {catInfo.name}</p>
                   <p className="text-white font-bold font-mono text-xl flex-shrink-0">{formatCurrency(largestCatEntry[1], defaultCurrency)}</p>
                 </div>
-              );
-            })() : (
-              <p className="text-white/30 text-sm">No expenses yet</p>
-            )}
-          </div>
-
+              </GlassCard>
+            );
+          })() : (
+            <MetricTile label="Top category" value="—" sub="No expenses yet" />
+          )}
         </div>
-      </GlassCard>
+      </div>
 
-      {/* ── Spending Heatmap ──────────────────────────────────────────────── */}
-      <SpendingHeatmap />
+      {/* ── Summary Block — desktop only (hidden sm:block) ─────────────────── */}
+      <div className="hidden sm:block">
+        <GlassCard padding="none">
+          <div className="grid grid-cols-2">
+
+            {/* Top-left: This Month Spent */}
+            <div className="p-4 sm:p-5 border-r border-b border-white/[0.06]">
+              <p className="text-white/45 text-xs font-medium tracking-wide uppercase mb-2">This Month Spent</p>
+              <div className="flex items-end justify-between gap-2 mb-3">
+                <p className="text-3xl font-bold font-mono text-[#EF4444]">
+                  {formatCurrency(monthSpending, defaultCurrency)}
+                </p>
+                {momLabel && (
+                  <span className={`text-xs font-medium px-2 py-0.5 rounded-full mb-1 ${momChange! >= 0 ? 'bg-[#EF4444]/10 text-[#EF4444]/80' : 'bg-[#22C55E]/10 text-[#22C55E]/80'}`}>
+                    {momLabel}
+                  </span>
+                )}
+              </div>
+              {totalBudget > 0 && (
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-white/40 text-xs">
+                      {budgetUsedPct !== null ? `${Math.round(budgetUsedPct)}% of budget` : 'Budget'}
+                    </span>
+                    <span className="text-white/40 text-xs font-mono">
+                      {formatCurrency(monthSpending, defaultCurrency)} / {formatCurrency(totalBudget, defaultCurrency)}
+                    </span>
+                  </div>
+                  <ProgressBar value={Math.min(monthSpending, totalBudget)} max={totalBudget} colorAuto />
+                  {remainingBudget !== null && (
+                    <div className="flex items-center justify-between pt-1">
+                      <span className={`text-xs font-medium ${remainingBudget >= 0 ? 'text-white/40' : 'text-[#EF4444]/70'}`}>
+                        {remainingBudget >= 0 ? 'Budget left' : 'Over budget'}
+                      </span>
+                      <span className={`text-xs font-mono font-semibold ${remainingBudget >= 0 ? 'text-white/75' : 'text-[#EF4444]'}`}>
+                        {remainingBudget < 0 ? '-' : ''}{formatCurrency(Math.abs(remainingBudget), defaultCurrency)}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
+              {upcomingCount > 0 && (
+                <div className="flex items-center gap-4 mt-3 pt-3 border-t border-white/5">
+                  <div>
+                    <p className="text-white/35 text-xs">Upcoming this month</p>
+                    <p className="text-amber-400/80 text-sm font-mono font-medium">
+                      +{formatCurrency(upcomingTotal, defaultCurrency)} ({upcomingCount})
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Top-right: Income */}
+            <div className="p-4 sm:p-5 border-b border-white/[0.06]">
+              <p className="text-white/45 text-xs font-medium tracking-wide uppercase mb-2">Income</p>
+              <p className="text-3xl font-bold font-mono mb-3 text-[#22C55E]">
+                {formatCurrency(monthIncome, defaultCurrency)}
+              </p>
+              <div className="flex items-center gap-4 pt-3 border-t border-white/5">
+                <div>
+                  <p className="text-white/35 text-xs">Net this month</p>
+                  <p className={`text-sm font-mono font-semibold ${netThisMonth >= 0 ? 'text-[#22C55E]/80' : 'text-[#EF4444]/80'}`}>
+                    {netThisMonth >= 0 ? '+' : ''}{formatCurrency(netThisMonth, defaultCurrency)}
+                  </p>
+                </div>
+                {savingsRate !== null && (
+                  <div>
+                    <p className="text-white/35 text-xs">Savings rate</p>
+                    <p className={`text-sm font-mono font-semibold ${savingsRate >= 20 ? 'text-[#22C55E]/80' : savingsRate >= 0 ? 'text-white/70' : 'text-[#EF4444]/80'}`}>
+                      {Math.round(savingsRate)}%
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Bottom-left: Daily Average */}
+            <div className="p-4 sm:p-5 border-r border-white/[0.06]">
+              <p className="text-white/45 text-xs font-medium tracking-wide uppercase mb-1.5">Daily Average</p>
+              <p className="text-2xl font-bold font-mono text-white">
+                {formatCurrency(dailyAvg, defaultCurrency)}
+              </p>
+              <p className="text-white/35 text-xs mt-1">Day {elapsedDays} of {daysInMonth}</p>
+            </div>
+
+            {/* Bottom-right: Top Category */}
+            <div className="p-4 sm:p-5">
+              <p className="text-white/45 text-xs font-medium tracking-wide uppercase mb-1.5">Top Category</p>
+              {largestCatEntry ? (() => {
+                const catInfo = getCategoryInfo(largestCatEntry[0]);
+                return (
+                  <div className="flex items-baseline justify-between gap-2">
+                    <p className="text-white text-base font-medium truncate">{catInfo.emoji} {catInfo.name}</p>
+                    <p className="text-white font-bold font-mono text-xl flex-shrink-0">{formatCurrency(largestCatEntry[1], defaultCurrency)}</p>
+                  </div>
+                );
+              })() : (
+                <p className="text-white/30 text-sm">No expenses yet</p>
+              )}
+            </div>
+
+          </div>
+        </GlassCard>
+      </div>
+
+      {/* ── Spending Heatmap — desktop only (hidden sm:block) ─────────────── */}
+      <div className="hidden sm:block">
+        <SpendingHeatmap />
+      </div>
 
       {/* ── Insights / Alerts Strip ────────────────────────────────────────── */}
       {(budgetAttention.length > 0 || pacingLabel || topCategories.length > 0) && (
