@@ -258,25 +258,6 @@ export default function SpendingHeatmap() {
   const [isDragging, setIsDragging] = useState(false);
   const dragStartRef = useRef<string | null>(null);
 
-  // ── Responsive cell sizing — fills the full card width ──
-  const [cellSize, setCellSize] = useState(13);
-  const cellUnit = cellSize + CELL_GAP;
-  const gridWrapRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const el = gridWrapRef.current;
-    if (!el) return;
-    const update = () => {
-      const available = el.clientWidth - LABEL_COL_WIDTH;
-      const size = Math.floor((available - (weeks.length - 1) * CELL_GAP) / weeks.length);
-      setCellSize(Math.max(MIN_CELL_SIZE, size));
-    };
-    update();
-    const ro = new ResizeObserver(update);
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, [weeks.length]);
-
   // ── Build date grid (52 weeks back from today, aligned to Sunday) ──
   const { weeks, endDate, startDate } = useMemo(() => {
     const today = new Date();
@@ -305,6 +286,25 @@ export default function SpendingHeatmap() {
 
     return { weeks, endDate, startDate };
   }, []);
+
+  // ── Responsive cell sizing — fills the full card width ──
+  const [cellSize, setCellSize] = useState(13);
+  const cellUnit = cellSize + CELL_GAP;
+  const gridWrapRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = gridWrapRef.current;
+    if (!el) return;
+    const update = () => {
+      const available = el.clientWidth - LABEL_COL_WIDTH;
+      const size = Math.floor((available - (weeks.length - 1) * CELL_GAP) / weeks.length);
+      setCellSize(Math.max(MIN_CELL_SIZE, size));
+    };
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [weeks.length]);
 
   // ── Process transactions into day-level spend map ──
   const { dayMap, dailyAverage, spendDays } = useMemo(() => {
