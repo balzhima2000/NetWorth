@@ -822,13 +822,12 @@ export default function Spending() {
         <Button variant="primary" onClick={() => openAddTx()}>+ Add Transaction</Button>
       </div>
 
-      {/* ── Summary Tiles ──────────────────────────────────────────────────── */}
-      <div className="space-y-3">
-        {/* Primary row: Spending + Net */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      {/* ── Summary Block ──────────────────────────────────────────────────── */}
+      <GlassCard padding="none">
+        <div className="grid grid-cols-2">
 
-          {/* Spending card */}
-          <GlassCard padding="md">
+          {/* Top-left: This Month Spent */}
+          <div className="p-4 sm:p-5 border-r border-b border-white/[0.06]">
             <p className="text-white/45 text-xs font-medium tracking-wide uppercase mb-2">This Month Spent</p>
             <div className="flex items-end justify-between gap-2 mb-3">
               <p className="text-3xl font-bold font-mono text-[#EF4444]">
@@ -840,7 +839,6 @@ export default function Spending() {
                 </span>
               )}
             </div>
-
             {totalBudget > 0 && (
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
@@ -851,11 +849,7 @@ export default function Spending() {
                     {formatCurrency(monthSpending, defaultCurrency)} / {formatCurrency(totalBudget, defaultCurrency)}
                   </span>
                 </div>
-                <ProgressBar
-                  value={Math.min(monthSpending, totalBudget)}
-                  max={totalBudget}
-                  colorAuto
-                />
+                <ProgressBar value={Math.min(monthSpending, totalBudget)} max={totalBudget} colorAuto />
                 {remainingBudget !== null && (
                   <div className="flex items-center justify-between pt-1">
                     <span className={`text-xs font-medium ${remainingBudget >= 0 ? 'text-white/40' : 'text-[#EF4444]/70'}`}>
@@ -868,7 +862,6 @@ export default function Spending() {
                 )}
               </div>
             )}
-
             {upcomingCount > 0 && (
               <div className="flex items-center gap-4 mt-3 pt-3 border-t border-white/5">
                 <div>
@@ -879,16 +872,15 @@ export default function Spending() {
                 </div>
               </div>
             )}
-          </GlassCard>
+          </div>
 
-          {/* Income card */}
-          <GlassCard padding="md">
+          {/* Top-right: Income */}
+          <div className="p-4 sm:p-5 border-b border-white/[0.06]">
             <p className="text-white/45 text-xs font-medium tracking-wide uppercase mb-2">Income</p>
             <p className="text-3xl font-bold font-mono mb-3 text-[#22C55E]">
               {formatCurrency(monthIncome, defaultCurrency)}
             </p>
-
-            <div className="flex items-center gap-4 mt-auto pt-3 border-t border-white/5">
+            <div className="flex items-center gap-4 pt-3 border-t border-white/5">
               <div>
                 <p className="text-white/35 text-xs">Net this month</p>
                 <p className={`text-sm font-mono font-semibold ${netThisMonth >= 0 ? 'text-[#22C55E]/80' : 'text-[#EF4444]/80'}`}>
@@ -904,32 +896,35 @@ export default function Spending() {
                 </div>
               )}
             </div>
-          </GlassCard>
-        </div>
+          </div>
 
-        {/* Secondary row: small tiles */}
-        <div className="grid grid-cols-2 gap-3">
-          <MetricTile
-            label="Daily average"
-            value={formatCurrency(dailyAvg, defaultCurrency)}
-            sub={`Day ${elapsedDays} of ${daysInMonth}`}
-          />
-          {largestCatEntry ? (() => {
-            const catInfo = getCategoryInfo(largestCatEntry[0]);
-            return (
-              <GlassCard padding="md">
-                <p className="text-white/45 text-xs font-medium tracking-wide uppercase mb-1.5">Top category</p>
+          {/* Bottom-left: Daily Average */}
+          <div className="p-4 sm:p-5 border-r border-white/[0.06]">
+            <p className="text-white/45 text-xs font-medium tracking-wide uppercase mb-1.5">Daily Average</p>
+            <p className="text-2xl font-bold font-mono text-white">
+              {formatCurrency(dailyAvg, defaultCurrency)}
+            </p>
+            <p className="text-white/35 text-xs mt-1">Day {elapsedDays} of {daysInMonth}</p>
+          </div>
+
+          {/* Bottom-right: Top Category */}
+          <div className="p-4 sm:p-5">
+            <p className="text-white/45 text-xs font-medium tracking-wide uppercase mb-1.5">Top Category</p>
+            {largestCatEntry ? (() => {
+              const catInfo = getCategoryInfo(largestCatEntry[0]);
+              return (
                 <div className="flex items-baseline justify-between gap-2">
                   <p className="text-white text-base font-medium truncate">{catInfo.emoji} {catInfo.name}</p>
                   <p className="text-white font-bold font-mono text-xl flex-shrink-0">{formatCurrency(largestCatEntry[1], defaultCurrency)}</p>
                 </div>
-              </GlassCard>
-            );
-          })() : (
-            <MetricTile label="Top category" value="—" sub="No expenses yet" />
-          )}
+              );
+            })() : (
+              <p className="text-white/30 text-sm">No expenses yet</p>
+            )}
+          </div>
+
         </div>
-      </div>
+      </GlassCard>
 
       {/* ── Spending Heatmap ──────────────────────────────────────────────── */}
       <SpendingHeatmap />

@@ -2,7 +2,7 @@ import { useState, useMemo, useRef, useEffect } from 'react';
 import { useTransactionStore } from '../../stores/transactionStore';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { useCategoriesStore } from '../../stores/categoriesStore';
-import { formatCurrency, formatDate } from '../../utils/formatters';
+import { formatCurrency } from '../../utils/formatters';
 import { GlassCard } from '../../components/ui';
 import type { Transaction, SpendingCategory } from '../../types/index';
 
@@ -136,112 +136,6 @@ function HeatmapTooltip({
         )}
       </div>
     </div>
-  );
-}
-
-function CategoryBreakdown({
-  catTotals,
-  catTopTxn,
-  priorCatTotals,
-  totalSpend,
-  categories,
-  defaultCurrency,
-  hasSelection,
-}: {
-  catTotals: Record<string, number>;
-  catTopTxn: Record<string, Transaction>;
-  priorCatTotals: Record<string, number>;
-  totalSpend: number;
-  categories: SpendingCategory[];
-  defaultCurrency: string;
-  hasSelection: boolean;
-}) {
-  const sorted = Object.entries(catTotals)
-    .filter(([, v]) => v > 0)
-    .sort((a, b) => b[1] - a[1]);
-
-  const maxAmount = sorted[0]?.[1] ?? 1;
-
-  if (sorted.length === 0) {
-    return (
-      <GlassCard padding="md">
-        <p className="text-white/30 text-sm text-center py-6">No expense data for this period.</p>
-      </GlassCard>
-    );
-  }
-
-  return (
-    <GlassCard padding="none">
-      <div className="p-4 sm:p-5 border-b border-white/[0.06]">
-        <h2 className="text-sm font-semibold text-white/80">
-          Spending by Category
-          {!hasSelection && <span className="text-white/35 font-normal ml-1.5">· Last 12 months</span>}
-        </h2>
-      </div>
-      <div className="divide-y divide-white/[0.04]">
-        {sorted.map(([catId, amount]) => {
-          const cat = categories.find(c => c.id === catId);
-          const label = cat?.name ?? catId;
-          const emoji = cat?.emoji ?? '💰';
-          const color = cat?.color ?? '#6b7280';
-          const pct = totalSpend > 0 ? (amount / totalSpend) * 100 : 0;
-          const barPct = (amount / maxAmount) * 100;
-          const prior = priorCatTotals[catId] ?? 0;
-          const delta = prior > 0 ? ((amount - prior) / prior) * 100 : null;
-          const topTxn = catTopTxn[catId];
-
-          return (
-            <div key={catId} className="px-4 sm:px-5 py-3.5">
-              <div className="flex items-start justify-between gap-3 mb-2">
-                <div className="flex items-center gap-2 min-w-0">
-                  <span className="text-base leading-none flex-shrink-0">{emoji}</span>
-                  <span className="text-sm font-medium text-white/85 truncate">{label}</span>
-                </div>
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  {delta !== null && hasSelection && (
-                    <span
-                      className="text-[10px] font-semibold px-1.5 py-0.5 rounded-md"
-                      style={{
-                        color: delta > 10 ? '#ef4444' : delta < -10 ? '#22c55e' : 'rgba(255,255,255,0.4)',
-                        background: delta > 10 ? 'rgba(239,68,68,0.1)' : delta < -10 ? 'rgba(34,197,94,0.1)' : 'rgba(255,255,255,0.06)',
-                      }}
-                    >
-                      {delta > 0 ? '+' : ''}{delta.toFixed(0)}%
-                    </span>
-                  )}
-                  <span className="text-xs text-white/35">{pct.toFixed(1)}%</span>
-                  <span className="text-sm font-semibold text-white tabular-nums">
-                    {formatCurrency(amount, defaultCurrency)}
-                  </span>
-                </div>
-              </div>
-
-              {/* Bar */}
-              <div className="h-1.5 rounded-full bg-white/[0.06] overflow-hidden mb-2">
-                <div
-                  className="h-full rounded-full transition-all duration-500"
-                  style={{ width: `${barPct}%`, backgroundColor: color, opacity: 0.8 }}
-                />
-              </div>
-
-              {/* Top transaction */}
-              {topTxn && (
-                <div className="flex items-center gap-1.5 text-[11px] text-white/30">
-                  <span className="text-white/20">Top:</span>
-                  <span className="text-white/45 truncate max-w-[200px]">{topTxn.notes || 'Transaction'}</span>
-                  <span className="text-white/25">·</span>
-                  <span>{formatDate(topTxn.date, 'short')}</span>
-                  <span className="text-white/25">·</span>
-                  <span className="text-white/50 font-medium tabular-nums">
-                    {formatCurrency(topTxn.convertedAmount || topTxn.amount, defaultCurrency)}
-                  </span>
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
-    </GlassCard>
   );
 }
 
