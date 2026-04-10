@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { useTransactionStore } from '../../stores/transactionStore';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { useCategoriesStore } from '../../stores/categoriesStore';
@@ -35,9 +35,9 @@ function daysBetween(a: string, b: string): number {
 
 // ─────────────────────────── constants ────────────────────────────────────
 
-const CELL_SIZE = 13;
 const CELL_GAP = 3;
-const CELL_UNIT = CELL_SIZE + CELL_GAP;
+const MIN_CELL_SIZE = 10;
+const LABEL_COL_WIDTH = 32; // 30px label + 2px gap
 
 const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -257,6 +257,25 @@ export default function SpendingHeatmap() {
   const [selEnd, setSelEnd] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const dragStartRef = useRef<string | null>(null);
+
+  // ── Responsive cell sizing — fills the full card width ──
+  const [cellSize, setCellSize] = useState(13);
+  const cellUnit = cellSize + CELL_GAP;
+  const gridWrapRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = gridWrapRef.current;
+    if (!el) return;
+    const update = () => {
+      const available = el.clientWidth - LABEL_COL_WIDTH;
+      const size = Math.floor((available - (weeks.length - 1) * CELL_GAP) / weeks.length);
+      setCellSize(Math.max(MIN_CELL_SIZE, size));
+    };
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [weeks.length]);
 
   // ── Build date grid (52 weeks back from today, aligned to Sunday) ──
   const { weeks, endDate, startDate } = useMemo(() => {
@@ -478,76 +497,74 @@ export default function SpendingHeatmap() {
             )}
           </div>
 
-          <div className="overflow-x-auto">
-            <div className="flex" style={{ minWidth: `${weeks.length * CELL_UNIT + 40}px` }}>
-              {/* Day label column — all 7 days */}
-              <div
-                className="flex flex-col mr-2 flex-shrink-0"
-                style={{ width: 30, paddingTop: 24 }}
-              >
-                {DAY_LABELS.map((label) => (
-                  <div
-                    key={label}
-                    style={{ height: CELL_SIZE, marginBottom: CELL_GAP }}
-                    className="flex items-center justify-end text-[9px] text-white/30 font-medium pr-1"
+          <div ref={gridWrapRef} className="flex">
+            {/* Day label column — all 7 days */}
+            <div
+              className="flex flex-col mr-2 flex-shrink-0"
+              style={{ width: 30, paddingTop: 24 }}
+            >
+              {DAY_LABELS.map((label) => (
+                <div
+                  key={label}
+                  style={{ height: cellSize, marginBottom: CELL_GAP }}
+                  className="flex items-center justify-end text-[9px] text-white/30 font-medium pr-1"
+                >
+                  {label}
+                </div>
+              ))}
+            </div>
+
+            {/* Calendar grid */}
+            <div className="flex-1 min-w-0">
+              {/* Month labels row */}
+              <div className="relative" style={{ height: 22 }}>
+                {monthLabels.map(({ label, colIndex }) => (
+                  <span
+                    key={`${label}-${colIndex}`}
+                    className="absolute text-[10px] text-white/35 font-medium"
+                    style={{ left: colIndex * cellUnit, top: 4 }}
                   >
                     {label}
-                  </div>
+                  </span>
                 ))}
               </div>
 
-              {/* Calendar grid */}
-              <div className="flex-1">
-                {/* Month labels row */}
-                <div className="relative" style={{ height: 22 }}>
-                  {monthLabels.map(({ label, colIndex }) => (
-                    <span
-                      key={`${label}-${colIndex}`}
-                      className="absolute text-[10px] text-white/35 font-medium"
-                      style={{ left: colIndex * CELL_UNIT, top: 4 }}
-                    >
-                      {label}
-                    </span>
-                  ))}
-                </div>
+              {/* Week columns */}
+              <div className="flex" style={{ gap: CELL_GAP }}>
+                {weeks.map((week, wi) => (
+                  <div key={wi} className="flex flex-col" style={{ gap: CELL_GAP }}>
+                    {week.map((date, di) => {
+                      if (!date) {
+                        return <div key={di} style={{ width: cellSize, height: cellSize }} />;
+                      }
+                      const dayData = dayMap.get(date);
+                      const total = dayData?.total ?? 0;
+                      const intensity = getIntensity(total);
+                      const inSel = hasSelection && date >= selMin! && date <= selMax!;
+                      const dimmed = hasSelection && !inSel;
 
-                {/* Week columns */}
-                <div className="flex" style={{ gap: CELL_GAP }}>
-                  {weeks.map((week, wi) => (
-                    <div key={wi} className="flex flex-col" style={{ gap: CELL_GAP }}>
-                      {week.map((date, di) => {
-                        if (!date) {
-                          return <div key={di} style={{ width: CELL_SIZE, height: CELL_SIZE }} />;
-                        }
-                        const dayData = dayMap.get(date);
-                        const total = dayData?.total ?? 0;
-                        const intensity = getIntensity(total);
-                        const inSel = hasSelection && date >= selMin! && date <= selMax!;
-                        const dimmed = hasSelection && !inSel;
-
-                        return (
-                          <div
-                            key={di}
-                            title={date}
-                            style={{
-                              width: CELL_SIZE,
-                              height: CELL_SIZE,
-                              borderRadius: 3,
-                              cursor: 'pointer',
-                              backgroundColor: INTENSITY_COLORS[intensity],
-                              outline: inSel ? '1px solid rgba(255,255,255,0.35)' : 'none',
-                              outlineOffset: '1px',
-                              opacity: dimmed ? 0.35 : 1,
-                              transition: 'opacity 0.08s',
-                            }}
-                            onMouseDown={(e) => handleMouseDown(date, e)}
-                            onMouseEnter={(e) => handleMouseEnter(date, dayData, e)}
-                          />
-                        );
-                      })}
-                    </div>
-                  ))}
-                </div>
+                      return (
+                        <div
+                          key={di}
+                          title={date}
+                          style={{
+                            width: cellSize,
+                            height: cellSize,
+                            borderRadius: Math.max(2, Math.floor(cellSize / 5)),
+                            cursor: 'pointer',
+                            backgroundColor: INTENSITY_COLORS[intensity],
+                            outline: inSel ? '1px solid rgba(255,255,255,0.35)' : 'none',
+                            outlineOffset: '1px',
+                            opacity: dimmed ? 0.35 : 1,
+                            transition: 'opacity 0.08s',
+                          }}
+                          onMouseDown={(e) => handleMouseDown(date, e)}
+                          onMouseEnter={(e) => handleMouseEnter(date, dayData, e)}
+                        />
+                      );
+                    })}
+                  </div>
+                ))}
               </div>
             </div>
           </div>
