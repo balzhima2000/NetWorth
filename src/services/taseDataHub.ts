@@ -20,6 +20,14 @@
 
 const BASE = 'https://datahubapi.tase.co.il';
 
+type JsonRecord = Record<string, unknown>;
+
+const asRecord = (value: unknown): JsonRecord =>
+  (value && typeof value === 'object' ? (value as JsonRecord) : {});
+
+const asRecordArray = (value: unknown): JsonRecord[] =>
+  Array.isArray(value) ? value.map(asRecord) : [];
+
 function headers(apiKey: string): HeadersInit {
   return {
     apikey: apiKey,
@@ -42,14 +50,16 @@ export interface TaseSecurity {
  * Normalises price field names across all TASE endpoints.
  * Field names vary by product: stocks use closingPrice, funds use redemptionPrice or nav.
  */
-function extractPrice(item: any): number | null {
+function extractPrice(item: JsonRecord): number | null {
   const v =
     item.closingPrice    ?? item.ClosingPrice    ??
     item.redemptionPrice ?? item.RedemptionPrice ?? // mutual funds
     item.nav             ?? item.Nav             ?? // ETF net asset value
     item.price           ?? item.Price           ??
     item.lastPrice       ?? item.LastPrice;
-  return v != null ? parseFloat(v) : null;
+  if (v == null) return null;
+  const n = typeof v === 'number' ? v : Number(v);
+  return Number.isFinite(n) ? n : null;
 }
 
 /**
@@ -62,7 +72,8 @@ async function fetchTaseEodPrice(securityId: number, apiKey: string): Promise<nu
   const res = await fetch(url, { headers: headers(apiKey) });
   if (!res.ok) throw new Error(`EoD HTTP ${res.status}`);
   const data = await res.json();
-  const list: any[] = data?.result ?? data ?? [];
+  const dataObj = asRecord(data);
+  const list = asRecordArray(dataObj.result ?? dataObj);
   if (!list.length) throw new Error(`No EoD data for securityId ${securityId}`);
   const price = extractPrice(list[0]);
   if (price == null) throw new Error('No price field in EoD response');
@@ -79,8 +90,9 @@ async function fetchFundPrice(path: string, apiKey: string): Promise<number> {
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const data = await res.json();
   // Response may be a direct object, or wrapped in result/data
-  const raw = data?.result ?? data?.data ?? data;
-  const item = Array.isArray(raw) ? raw[0] : raw;
+  const dataObj = asRecord(data);
+  const raw = dataObj.result ?? dataObj.data ?? dataObj;
+  const item = Array.isArray(raw) ? asRecord(raw[0]) : asRecord(raw);
   if (!item) throw new Error('Empty response from fund endpoint');
   const price = extractPrice(item);
   if (price == null) throw new Error('No price field in fund response');
@@ -122,7 +134,8 @@ export async function fetchTaseSecurityPrice(
   const res = await fetch(url, { headers: headers(apiKey) });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const data = await res.json();
-  const list: any[] = data?.result ?? data ?? [];
+  const dataObj = asRecord(data);
+  const list = asRecordArray(dataObj.result ?? dataObj);
   const item = list[0];
   if (!item) throw new Error(`Security ${securityId} not found in any subscribed TASE product`);
   const price = extractPrice(item);
@@ -146,15 +159,18 @@ export async function fetchTaseHistoricalPrice(
   const res = await fetch(url, { headers: headers(apiKey) });
   if (!res.ok) throw new Error(`EoD HTTP ${res.status}`);
   const data = await res.json();
-  const list: any[] = data?.result ?? data ?? [];
+  const dataObj = asRecord(data);
+  const list = asRecordArray(dataObj.result ?? dataObj);
   if (!list.length) throw new Error(`No EoD data for securityId ${securityId}`);
 
   // Find the entry matching the requested date (field name may vary)
-  const entry = list.find((item: any) => {
+  const entry = list.find((item) => {
     const d: string =
-      item.tradingDate ?? item.TradingDate ??
-      item.date        ?? item.Date        ??
-      item.tradeDate   ?? item.TradeDate   ?? '';
+      String(
+        item.tradingDate ?? item.TradingDate ??
+        item.date ?? item.Date ??
+        item.tradeDate ?? item.TradeDate ?? ''
+      );
     return d.startsWith(date); // handles "2024-01-15" and "2024-01-15T00:00:00" formats
   });
 
@@ -183,13 +199,21 @@ export async function searchTaseSecurity(
   const res = await fetch(url, { headers: headers(apiKey) });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const data = await res.json();
-  const list: any[] = data?.result ?? data ?? [];
+  const dataObj = asRecord(data);
+  const list = asRecordArray(dataObj.result ?? dataObj);
   if (!list.length) return null;
   const first = list[0];
+  const securityIdRaw = first.securityId ?? first.SecurityId;
+  const securityId = typeof securityIdRaw === 'number' ? securityIdRaw : Number(securityIdRaw);
+  const name = String(first.name ?? first.Name ?? query);
+  const ticker = String(first.ticker ?? first.Ticker ?? query);
+
+  if (!Number.isFinite(securityId)) return null;
+
   return {
-    securityId: first.securityId ?? first.SecurityId,
-    name: first.name ?? first.Name ?? query,
-    ticker: first.ticker ?? first.Ticker ?? query,
+    securityId,
+    name,
+    ticker,
   };
 }
 

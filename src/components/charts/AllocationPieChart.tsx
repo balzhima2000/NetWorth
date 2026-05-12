@@ -38,10 +38,10 @@ export function AllocationPieChart({ data, currency, size = 200 }: AllocationPie
         </Pie>
         <Tooltip
           contentStyle={{
-            background: '#111111',
-            border: '1px solid rgba(255,255,255,0.1)',
-            borderRadius: 12,
-            color: 'white',
+            backgroundColor: '#3c3c3c',
+            border: 'none',
+            borderRadius: 10,
+            color: '#fff',
             fontSize: 12,
           }}
           formatter={(value: number | undefined) => value !== undefined ? [formatCurrency(value, currency), ''] : ['', '']}

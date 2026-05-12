@@ -12,6 +12,13 @@ import Portfolio from './pages/Portfolio';
 import Spending from './pages/Spending';
 import Fire from './pages/Fire';
 import Settings from './pages/Settings';
+import AccountSettings from './pages/Settings/Account';
+import APIsSettings from './pages/Settings/APIs';
+import CurrencySettings from './pages/Settings/Currency';
+import CategoriesSettings from './pages/Settings/Categories';
+import CardsSettings from './pages/Settings/Cards';
+import AssetsSettings from './pages/Settings/Assets';
+import BackupResetSettings from './pages/Settings/BackupReset';
 
 const NotFound = () => (
   <div className="flex items-center justify-center h-screen">
@@ -33,6 +40,12 @@ function AppInner() {
 
   return (
     <Routes>
+      {/* Root route */}
+      <Route
+        path="/"
+        element={<Navigate to={hasCompletedSetup ? '/dashboard' : '/setup'} replace />}
+      />
+
       {/* Setup route */}
       <Route path="/setup" element={<Setup />} />
 
@@ -41,12 +54,16 @@ function AppInner() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/portfolio" element={<Portfolio />} />
         <Route path="/spending" element={<Spending />} />
-<Route path="/fire" element={<Fire />} />
+        <Route path="/fire" element={<Fire />} />
         <Route path="/settings" element={<Settings />} />
+        <Route path="/settings/account" element={<AccountSettings />} />
+        <Route path="/settings/apis" element={<APIsSettings />} />
+        <Route path="/settings/currency" element={<CurrencySettings />} />
+        <Route path="/settings/categories" element={<CategoriesSettings />} />
+        <Route path="/settings/cards" element={<CardsSettings />} />
+        <Route path="/settings/assets" element={<AssetsSettings />} />
+        <Route path="/settings/backup" element={<BackupResetSettings />} />
       </Route>
-
-      {/* Root redirect */}
-      <Route path="/" element={<Navigate to={hasCompletedSetup ? '/dashboard' : '/setup'} replace />} />
 
       {/* 404 */}
       <Route path="*" element={<NotFound />} />

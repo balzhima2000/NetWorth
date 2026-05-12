@@ -23,25 +23,31 @@ export function FireProjectionChart({ data, fireTarget, currency }: FireProjecti
   return (
     <ResponsiveContainer width="100%" height={300}>
       <LineChart data={data} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+        <CartesianGrid stroke="#3c3c3c" strokeDasharray="0" vertical={false} />
         <XAxis
           dataKey="year"
-          stroke="rgba(255,255,255,0.3)"
+          stroke="#666"
           fontSize={11}
           tickFormatter={(v) => `Yr ${v}`}
+          tick={{ fill: '#666', fontSize: 9, fontFamily: 'var(--font-mono)' }}
+          axisLine={false}
+          tickLine={false}
         />
         <YAxis
-          stroke="rgba(255,255,255,0.3)"
+          stroke="#666"
           fontSize={11}
           width={70}
           tickFormatter={(v) => formatCurrency(v, currency, true)}
+          tick={{ fill: '#666', fontSize: 8, fontFamily: 'var(--font-mono)' }}
+          axisLine={false}
+          tickLine={false}
         />
         <Tooltip
           contentStyle={{
-            background: '#111111',
-            border: '1px solid rgba(255,255,255,0.1)',
-            borderRadius: 12,
-            color: 'white',
+            backgroundColor: '#3c3c3c',
+            border: 'none',
+            borderRadius: 10,
+            color: '#fff',
             fontSize: 12,
           }}
           formatter={(value: number | undefined) => value !== undefined ? [formatCurrency(value, currency), 'Portfolio'] : ['', 'Portfolio']}
@@ -62,10 +68,10 @@ export function FireProjectionChart({ data, fireTarget, currency }: FireProjecti
         <Line
           type="monotone"
           dataKey="portfolioValue"
-          stroke="#10B981"
+          stroke="#D6F377"
           strokeWidth={2}
           dot={false}
-          activeDot={{ r: 5, fill: '#10B981' }}
+          activeDot={{ r: 5, fill: '#D6F377' }}
         />
       </LineChart>
     </ResponsiveContainer>

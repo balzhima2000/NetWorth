@@ -4,7 +4,6 @@ import { Sidebar } from './Sidebar';
 import { TopBar } from './TopBar';
 import { MobileNav } from './MobileNav';
 import { BackupReminderBanner } from './BackupReminderBanner';
-import { QuickAddFAB } from '../mobile/QuickAddFAB';
 
 const pageTitles: Record<string, string> = {
   '/dashboard': 'Dashboard',
@@ -18,6 +17,7 @@ export function AppShell() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const location = useLocation();
   const title = pageTitles[location.pathname] ?? '';
+  const isDashboard = location.pathname === '/dashboard';
 
   // Scroll to top instantly on every page navigation
   useEffect(() => {
@@ -41,7 +41,7 @@ export function AppShell() {
           />
         </div>
 
-        <BackupReminderBanner />
+        {!isDashboard && <BackupReminderBanner />}
 
         <main className="flex-1 overflow-y-auto overflow-x-hidden gradient-bg">
           {/*
@@ -51,7 +51,7 @@ export function AppShell() {
           */}
           <div
             key={location.pathname}
-            className="page-enter max-w-7xl mx-auto p-4 pb-28 sm:p-6 lg:pb-6"
+            className={`page-enter max-w-7xl mx-auto p-4 ${isDashboard ? 'pb-4 sm:pb-6' : 'pb-28 sm:p-6 lg:pb-6'}`}
           >
             <Outlet />
           </div>
@@ -60,9 +60,6 @@ export function AppShell() {
         {/* Mobile floating nav — fixed, so no space is consumed in flex column */}
         <div className="lg:hidden">
           <MobileNav />
-        </div>
-        <div className="lg:hidden">
-          <QuickAddFAB />
         </div>
       </div>
     </div>

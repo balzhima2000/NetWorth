@@ -15,13 +15,13 @@ const DEFAULT_EXPENSE_CATEGORIES: SpendingCategory[] = [
 ];
 
 const DEFAULT_INCOME_CATEGORIES: SpendingCategory[] = [
-  { id: 'salary', name: 'Salary', emoji: '💼', color: '#10B981', isDefault: true },
-  { id: 'freelance', name: 'Freelance', emoji: '🧑‍💻', color: '#10B981', isDefault: true },
-  { id: 'investment', name: 'Dividends & Investments', emoji: '📈', color: '#10B981', isDefault: true },
-  { id: 'rental', name: 'Rental Income', emoji: '🏘️', color: '#10B981', isDefault: true },
-  { id: 'bonus', name: 'Bonus', emoji: '🎯', color: '#10B981', isDefault: true },
-  { id: 'gift', name: 'Gift', emoji: '🎁', color: '#10B981', isDefault: true },
-  { id: 'business', name: 'Business Income', emoji: '🏢', color: '#10B981', isDefault: true },
+  { id: 'salary', name: 'Salary', emoji: '💼', color: '#00E600', isDefault: true },
+  { id: 'freelance', name: 'Freelance', emoji: '🧑‍💻', color: '#00E600', isDefault: true },
+  { id: 'investment', name: 'Dividends & Investments', emoji: '📈', color: '#00E600', isDefault: true },
+  { id: 'rental', name: 'Rental Income', emoji: '🏘️', color: '#00E600', isDefault: true },
+  { id: 'bonus', name: 'Bonus', emoji: '🎯', color: '#00E600', isDefault: true },
+  { id: 'gift', name: 'Gift', emoji: '🎁', color: '#00E600', isDefault: true },
+  { id: 'business', name: 'Business Income', emoji: '🏢', color: '#00E600', isDefault: true },
   { id: 'other_income', name: 'Other', emoji: '💰', color: '#6b7280', isDefault: true },
 ];
 
@@ -35,6 +35,8 @@ interface CategoriesStore {
   updateIncomeCategory: (id: string, updates: Partial<SpendingCategory>) => void;
   deleteIncomeCategory: (id: string) => void;
 }
+
+type LegacyCategory = SpendingCategory & { type?: 'expense' | 'income' | 'both' | string };
 
 export const useCategoriesStore = create<CategoriesStore>()(
   persist(
@@ -72,9 +74,10 @@ export const useCategoriesStore = create<CategoriesStore>()(
         // Strip old 'type' field from expense categories if present
         if (state && state.categories) {
           state.categories = state.categories
-            .filter((c: any) => !c.type || c.type === 'expense' || c.type === 'both')
-            .map((c: any) => {
-              const { type: _type, ...rest } = c;
+            .filter((c: LegacyCategory) => !c.type || c.type === 'expense' || c.type === 'both')
+            .map((c: LegacyCategory) => {
+              const rest = { ...c };
+              delete rest.type;
               return rest as SpendingCategory;
             });
         }

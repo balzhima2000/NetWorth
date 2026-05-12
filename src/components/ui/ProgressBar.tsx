@@ -26,14 +26,14 @@ export function ProgressBar({
   let barColor: string;
   if (colorAuto) {
     const ratio = value / max;
-    if (ratio >= 1) barColor = '#EF4444';
+    if (ratio >= 1) barColor = '#FF5555';
     else if (ratio >= 0.8) barColor = '#F59E0B';
-    else barColor = '#10B981';
+    else barColor = '#D6F377';
   } else {
     const colorMap = {
-      green: '#10B981',
+      green: '#00E600',
       blue:  '#3B82F6',
-      red:   '#EF4444',
+      red:   '#FF5555',
       amber: '#F59E0B',
     };
     barColor = colorMap[color];

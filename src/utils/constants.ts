@@ -21,16 +21,16 @@ export const CURRENCIES = [
 ];
 
 export const ASSET_CATEGORIES = [
-  { id: 'stocks', label: 'Stocks', color: '#3B82F6' },
-  { id: 'bonds', label: 'Bonds', color: '#10B981' },
-  { id: 'crypto', label: 'Crypto', color: '#F59E0B' },
+  { id: 'stocks', label: 'Stocks', color: '#7433FF' },
+  { id: 'bonds', label: 'Bonds', color: '#00E600' },
+  { id: 'crypto', label: 'Crypto', color: '#FF4C00' },
   { id: 'other', label: 'Other', color: '#6B7280' },
 ] as const;
 
 export const ASSET_CATEGORY_COLORS: Record<string, string> = {
-  stocks: '#3B82F6',
-  bonds:  '#10B981',
-  crypto: '#F59E0B',
+  stocks: '#7433FF',
+  bonds:  '#00E600',
+  crypto: '#FF4C00',
   other:  '#6B7280',
 };
 
@@ -51,18 +51,18 @@ export const MANUAL_LIABILITY_CATEGORIES = [
 ];
 
 export const CARD_COLORS = [
-  '#10B981', '#3B82F6', '#EF4444', '#F59E0B', '#06B6D4',
-  '#EC4899', '#8B5CF6', '#22C55E', '#F97316', '#64748B',
+  '#00E600', '#FF4C00', '#7433FF', '#FF5555', '#FFFFFF',
+  '#D1D5DB', '#9CA3AF', '#6B7280', '#111827', '#000000',
 ];
 
 export const CHART_COLORS = {
-  green:  '#10B981',
-  red:    '#EF4444',
-  blue:   '#3B82F6',
-  amber:  '#F59E0B',
-  purple: '#8B5CF6',
-  cyan:   '#06B6D4',
-  pink:   '#EC4899',
+  green:  '#00E600',
+  red:    '#FF5555',
+  blue:   '#7433FF',
+  amber:  '#FF4C00',
+  purple: '#7433FF',
+  cyan:   '#FFFFFF',
+  pink:   '#D1D5DB',
   gray:   '#6B7280',
 };
 

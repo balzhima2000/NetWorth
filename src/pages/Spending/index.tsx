@@ -100,7 +100,7 @@ interface BudgetStatusBadgeProps { status: BudgetStatus; pct: number }
 function BudgetStatusBadge({ status, pct }: BudgetStatusBadgeProps) {
   if (status === 'healthy' || status === 'none') return null;
   const map: Record<BudgetStatus, { label: string; color: string }> = {
-    exceeded: { label: 'Over budget', color: '#EF4444' },
+    exceeded: { label: 'Over budget', color: '#FF5555' },
     warning:  { label: `${Math.round(pct)}%`,  color: '#F59E0B' },
     caution:  { label: `${Math.round(pct)}%`,  color: '#EAB308' },
     healthy:  { label: '', color: '' },
@@ -138,10 +138,10 @@ function BudgetCard({ cat, budget, spent, status, pct, defaultCurrency, onEdit, 
     'rgba(255,255,255,0.22)';
 
   const barColor =
-    status === 'exceeded' ? '#EF4444' :
+    status === 'exceeded' ? '#FF5555' :
     status === 'warning'  ? '#F59E0B' :
     status === 'caution'  ? '#EAB308' :
-    '#10B981';
+    '#00E600';
 
   const barOpacity = status === 'healthy' ? 0.45 : 0.75;
 
@@ -831,11 +831,11 @@ export default function Spending() {
           <GlassCard padding="md">
             <p className="text-white/45 text-xs font-medium tracking-wide uppercase mb-2">This Month Spent</p>
             <div className="flex items-end justify-between gap-2 mb-3">
-              <p className="text-3xl font-bold font-mono text-[#EF4444]">
+              <p className="text-3xl font-bold font-mono text-[#FF5555]">
                 {formatCurrency(monthSpending, defaultCurrency)}
               </p>
               {momLabel && (
-                <span className={`text-xs font-medium px-2 py-0.5 rounded-full mb-1 ${momChange! >= 0 ? 'bg-[#EF4444]/10 text-[#EF4444]/80' : 'bg-[#22C55E]/10 text-[#22C55E]/80'}`}>
+                <span className={`text-xs font-medium px-2 py-0.5 rounded-full mb-1 ${momChange! >= 0 ? 'bg-[#FF5555]/10 text-[#FF5555]/80' : 'bg-[#00E600]/10 text-[#00E600]/80'}`}>
                   {momLabel}
                 </span>
               )}
@@ -853,10 +853,10 @@ export default function Spending() {
                 <ProgressBar value={Math.min(monthSpending, totalBudget)} max={totalBudget} colorAuto />
                 {remainingBudget !== null && (
                   <div className="flex items-center justify-between pt-1">
-                    <span className={`text-xs font-medium ${remainingBudget >= 0 ? 'text-white/40' : 'text-[#EF4444]/70'}`}>
+                    <span className={`text-xs font-medium ${remainingBudget >= 0 ? 'text-white/40' : 'text-[#FF5555]/70'}`}>
                       {remainingBudget >= 0 ? 'Budget left' : 'Over budget'}
                     </span>
-                    <span className={`text-xs font-mono font-semibold ${remainingBudget >= 0 ? 'text-white/75' : 'text-[#EF4444]'}`}>
+                    <span className={`text-xs font-mono font-semibold ${remainingBudget >= 0 ? 'text-white/75' : 'text-[#FF5555]'}`}>
                       {remainingBudget < 0 ? '-' : ''}{formatCurrency(Math.abs(remainingBudget), defaultCurrency)}
                     </span>
                   </div>
@@ -878,20 +878,20 @@ export default function Spending() {
           {/* Income card */}
           <GlassCard padding="md">
             <p className="text-white/45 text-xs font-medium tracking-wide uppercase mb-2">Income</p>
-            <p className="text-3xl font-bold font-mono mb-3 text-[#22C55E]">
+            <p className="text-3xl font-bold font-mono mb-3 text-[#00E600]">
               {formatCurrency(monthIncome, defaultCurrency)}
             </p>
             <div className="flex items-center gap-4 mt-auto pt-3 border-t border-white/5">
               <div>
                 <p className="text-white/35 text-xs">Net this month</p>
-                <p className={`text-sm font-mono font-semibold ${netThisMonth >= 0 ? 'text-[#22C55E]/80' : 'text-[#EF4444]/80'}`}>
+                <p className={`text-sm font-mono font-semibold ${netThisMonth >= 0 ? 'text-[#00E600]/80' : 'text-[#FF5555]/80'}`}>
                   {netThisMonth >= 0 ? '+' : ''}{formatCurrency(netThisMonth, defaultCurrency)}
                 </p>
               </div>
               {savingsRate !== null && (
                 <div>
                   <p className="text-white/35 text-xs">Savings rate</p>
-                  <p className={`text-sm font-mono font-semibold ${savingsRate >= 20 ? 'text-[#22C55E]/80' : savingsRate >= 0 ? 'text-white/70' : 'text-[#EF4444]/80'}`}>
+                  <p className={`text-sm font-mono font-semibold ${savingsRate >= 20 ? 'text-[#00E600]/80' : savingsRate >= 0 ? 'text-white/70' : 'text-[#FF5555]/80'}`}>
                     {Math.round(savingsRate)}%
                   </p>
                 </div>
@@ -933,11 +933,11 @@ export default function Spending() {
             <div className="p-4 sm:p-5 border-r border-b border-white/[0.06]">
               <p className="text-white/45 text-xs font-medium tracking-wide uppercase mb-2">This Month Spent</p>
               <div className="flex items-end justify-between gap-2 mb-3">
-                <p className="text-3xl font-bold font-mono text-[#EF4444]">
+                <p className="text-3xl font-bold font-mono text-[#FF5555]">
                   {formatCurrency(monthSpending, defaultCurrency)}
                 </p>
                 {momLabel && (
-                  <span className={`text-xs font-medium px-2 py-0.5 rounded-full mb-1 ${momChange! >= 0 ? 'bg-[#EF4444]/10 text-[#EF4444]/80' : 'bg-[#22C55E]/10 text-[#22C55E]/80'}`}>
+                  <span className={`text-xs font-medium px-2 py-0.5 rounded-full mb-1 ${momChange! >= 0 ? 'bg-[#FF5555]/10 text-[#FF5555]/80' : 'bg-[#00E600]/10 text-[#00E600]/80'}`}>
                     {momLabel}
                   </span>
                 )}
@@ -955,10 +955,10 @@ export default function Spending() {
                   <ProgressBar value={Math.min(monthSpending, totalBudget)} max={totalBudget} colorAuto />
                   {remainingBudget !== null && (
                     <div className="flex items-center justify-between pt-1">
-                      <span className={`text-xs font-medium ${remainingBudget >= 0 ? 'text-white/40' : 'text-[#EF4444]/70'}`}>
+                      <span className={`text-xs font-medium ${remainingBudget >= 0 ? 'text-white/40' : 'text-[#FF5555]/70'}`}>
                         {remainingBudget >= 0 ? 'Budget left' : 'Over budget'}
                       </span>
-                      <span className={`text-xs font-mono font-semibold ${remainingBudget >= 0 ? 'text-white/75' : 'text-[#EF4444]'}`}>
+                      <span className={`text-xs font-mono font-semibold ${remainingBudget >= 0 ? 'text-white/75' : 'text-[#FF5555]'}`}>
                         {remainingBudget < 0 ? '-' : ''}{formatCurrency(Math.abs(remainingBudget), defaultCurrency)}
                       </span>
                     </div>
@@ -980,20 +980,20 @@ export default function Spending() {
             {/* Top-right: Income */}
             <div className="p-4 sm:p-5 border-b border-white/[0.06]">
               <p className="text-white/45 text-xs font-medium tracking-wide uppercase mb-2">Income</p>
-              <p className="text-3xl font-bold font-mono mb-3 text-[#22C55E]">
+              <p className="text-3xl font-bold font-mono mb-3 text-[#00E600]">
                 {formatCurrency(monthIncome, defaultCurrency)}
               </p>
               <div className="flex items-center gap-4 pt-3 border-t border-white/5">
                 <div>
                   <p className="text-white/35 text-xs">Net this month</p>
-                  <p className={`text-sm font-mono font-semibold ${netThisMonth >= 0 ? 'text-[#22C55E]/80' : 'text-[#EF4444]/80'}`}>
+                  <p className={`text-sm font-mono font-semibold ${netThisMonth >= 0 ? 'text-[#00E600]/80' : 'text-[#FF5555]/80'}`}>
                     {netThisMonth >= 0 ? '+' : ''}{formatCurrency(netThisMonth, defaultCurrency)}
                   </p>
                 </div>
                 {savingsRate !== null && (
                   <div>
                     <p className="text-white/35 text-xs">Savings rate</p>
-                    <p className={`text-sm font-mono font-semibold ${savingsRate >= 20 ? 'text-[#22C55E]/80' : savingsRate >= 0 ? 'text-white/70' : 'text-[#EF4444]/80'}`}>
+                    <p className={`text-sm font-mono font-semibold ${savingsRate >= 20 ? 'text-[#00E600]/80' : savingsRate >= 0 ? 'text-white/70' : 'text-[#FF5555]/80'}`}>
                       {Math.round(savingsRate)}%
                     </p>
                   </div>
@@ -1045,7 +1045,7 @@ export default function Spending() {
               <div className="flex items-center justify-between mb-3">
                 <p className="text-white/60 text-xs font-medium tracking-wide uppercase">Spending by Category</p>
                 {pacingLabel && (
-                  <span className={`text-xs px-2 py-0.5 rounded-full ${pacingDelta! > 0 ? 'bg-[#EF4444]/10 text-[#EF4444]/70' : 'bg-[#22C55E]/10 text-[#22C55E]/70'}`}>
+                  <span className={`text-xs px-2 py-0.5 rounded-full ${pacingDelta! > 0 ? 'bg-[#FF5555]/10 text-[#FF5555]/70' : 'bg-[#00E600]/10 text-[#00E600]/70'}`}>
                     {pacingLabel}
                   </span>
                 )}
@@ -1058,7 +1058,7 @@ export default function Spending() {
                         <span className="text-base flex-shrink-0">{cat.emoji}</span>
                         <span className="text-white/75 text-sm truncate">{cat.name}</span>
                         {change !== null && (
-                          <span className={`text-xs ${change > 15 ? 'text-[#EF4444]/70' : change < -10 ? 'text-[#22C55E]/70' : 'text-white/30'}`}>
+                          <span className={`text-xs ${change > 15 ? 'text-[#FF5555]/70' : change < -10 ? 'text-[#00E600]/70' : 'text-white/30'}`}>
                             {change >= 0 ? '+' : ''}{Math.round(change)}%
                           </span>
                         )}
@@ -1067,7 +1067,7 @@ export default function Spending() {
                         {status !== 'none' && status !== 'healthy' && (
                           <BudgetStatusBadge status={status} pct={budget ? (spent / budget.amount) * 100 : 0} />
                         )}
-                        <span className={`text-sm font-mono ${status === 'exceeded' ? 'text-[#EF4444]' : 'text-white/70'}`}>
+                        <span className={`text-sm font-mono ${status === 'exceeded' ? 'text-[#FF5555]' : 'text-white/70'}`}>
                           {formatCurrency(spent, defaultCurrency)}
                         </span>
                       </div>
@@ -1077,7 +1077,7 @@ export default function Spending() {
                         className="h-full rounded-full transition-all duration-500"
                         style={{
                           width: `${barWidth}%`,
-                          background: status === 'exceeded' ? '#EF4444' : status === 'warning' ? '#F59E0B' : status === 'caution' ? '#EAB308' : cat.color ?? '#10B981',
+                          background: status === 'exceeded' ? '#FF5555' : status === 'warning' ? '#F59E0B' : status === 'caution' ? '#EAB308' : cat.color ?? '#00E600',
                         }}
                       />
                     </div>
@@ -1107,8 +1107,8 @@ export default function Spending() {
                   onClick={() => { setTxTypeFilter(t); setFilterPayment('all'); setFilterCategory(''); }}
                   className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
                     txTypeFilter === t
-                      ? t === 'expense' ? 'bg-[#EF4444]/15 text-[#EF4444]'
-                        : t === 'income' ? 'bg-[#22C55E]/15 text-[#22C55E]'
+                      ? t === 'expense' ? 'bg-[#FF5555]/15 text-[#FF5555]'
+                        : t === 'income' ? 'bg-[#00E600]/15 text-[#00E600]'
                         : 'bg-white/10 text-white'
                       : 'text-white/40 hover:text-white/70 hover:bg-white/5'
                   }`}
@@ -1120,13 +1120,13 @@ export default function Spending() {
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setShowFilters(!showFilters)}
-                className={`inline-flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium transition-all border border-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#10B981]/50 ${showFilters ? 'bg-white/10 text-white' : 'bg-transparent text-white/60 hover:text-white hover:bg-white/[0.07]'}`}
+                className={`inline-flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium transition-all border border-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00E600]/50 ${showFilters ? 'bg-white/10 text-white' : 'bg-transparent text-white/60 hover:text-white hover:bg-white/[0.07]'}`}
               >
                 Filters
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="flex-shrink-0">
                   <path d="M1 3h12M3 7h8M5 11h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
                 </svg>
-                {hasFilters && <span className="px-1.5 py-0.5 bg-[#10B981] text-black rounded text-[10px] font-bold leading-none">{[filterDateFrom, filterDateTo, filterCategory, filterType !== 'all' && filterType, filterPayment !== 'all' && filterPayment].filter(Boolean).length}</span>}
+                {hasFilters && <span className="px-1.5 py-0.5 bg-[#00E600] text-black rounded text-[10px] font-bold leading-none">{[filterDateFrom, filterDateTo, filterCategory, filterType !== 'all' && filterType, filterPayment !== 'all' && filterPayment].filter(Boolean).length}</span>}
               </button>
             </div>
           </div>
@@ -1230,7 +1230,7 @@ export default function Spending() {
                               </div>
                             </div>
                             <div className="flex items-center gap-1.5 flex-shrink-0">
-                              <p className={`font-mono font-semibold text-sm ${tx.type === 'expense' ? 'text-[#EF4444]' : 'text-[#22C55E]'}`}>
+                              <p className={`font-mono font-semibold text-sm ${tx.type === 'expense' ? 'text-[#FF5555]' : 'text-[#00E600]'}`}>
                                 {tx.type === 'expense' ? '−' : '+'}{formatCurrency(txToDefault(tx), defaultCurrency)}
                                 {tx.currency !== defaultCurrency && (
                                   <span className="text-white/25 text-xs ml-1 font-normal">({formatCurrency(tx.amount, tx.currency)})</span>
@@ -1241,7 +1241,7 @@ export default function Spending() {
                                   <button onClick={() => openEditTx(tx)} className="p-1.5 rounded-lg text-white/25 hover:text-white/65 hover:bg-white/8 transition-colors">
                                     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                                   </button>
-                                  <button onClick={() => setDeleteTxId(tx.id)} className="p-1.5 rounded-lg text-white/25 hover:text-[#EF4444] hover:bg-[#EF4444]/10 transition-colors">
+                                  <button onClick={() => setDeleteTxId(tx.id)} className="p-1.5 rounded-lg text-white/25 hover:text-[#FF5555] hover:bg-[#FF5555]/10 transition-colors">
                                     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                                   </button>
                                 </>
@@ -1294,19 +1294,19 @@ export default function Spending() {
                   label="Need attention"
                   value={attentionCount > 0 ? String(attentionCount) : '✓ All good'}
                   sub={attentionCount > 0 ? `over limit or near it` : 'within limits'}
-                  valueColor={attentionCount > 0 ? 'text-[#F59E0B]' : 'text-[#22C55E]'}
+                  valueColor={attentionCount > 0 ? 'text-[#F59E0B]' : 'text-[#00E600]'}
                 />
                 <MetricTile
                   label="Total remaining"
                   value={budgetedCount > 0 ? formatCurrency(totalPositiveRemaining, defaultCurrency) : '—'}
                   sub={budgetedCount > 0 ? `across ${budgetedCount} budget${budgetedCount > 1 ? 's' : ''}` : 'no budgets set'}
-                  valueColor={budgetedCount > 0 ? 'text-[#22C55E]' : 'text-white/30'}
+                  valueColor={budgetedCount > 0 ? 'text-[#00E600]' : 'text-white/30'}
                 />
                 <MetricTile
                   label="Without budget"
                   value={String(unsetCount)}
                   sub={unsetCount > 0 ? 'categories untracked' : 'all categories set'}
-                  valueColor={unsetCount > 0 ? 'text-white/55' : 'text-[#22C55E]'}
+                  valueColor={unsetCount > 0 ? 'text-white/55' : 'text-[#00E600]'}
                 />
               </div>
             );
@@ -1369,7 +1369,7 @@ export default function Spending() {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
                             <p className="text-white/85 text-sm font-medium">{p.name}</p>
-                            <span className={`text-xs px-2 py-0.5 rounded-full ${p.isActive ? 'bg-[#22C55E]/12 text-[#22C55E]/80' : 'bg-white/8 text-white/35'}`}>
+                            <span className={`text-xs px-2 py-0.5 rounded-full ${p.isActive ? 'bg-[#00E600]/12 text-[#00E600]/80' : 'bg-white/8 text-white/35'}`}>
                               {p.isActive ? 'Active' : 'Paused'}
                             </span>
                           </div>
@@ -1385,7 +1385,7 @@ export default function Spending() {
                         </div>
                         <div className="flex items-center gap-1 flex-shrink-0">
                           <div className="mr-1.5 text-right">
-                            <p className={`font-mono font-semibold text-sm ${p.type === 'expense' ? 'text-[#EF4444]' : 'text-[#22C55E]'}`}>
+                            <p className={`font-mono font-semibold text-sm ${p.type === 'expense' ? 'text-[#FF5555]' : 'text-[#00E600]'}`}>
                               {p.type === 'expense' ? '−' : '+'}{formatCurrency(p.amount, p.currency ?? defaultCurrency)}
                             </p>
                             {(() => {
@@ -1402,7 +1402,7 @@ export default function Spending() {
                           <button onClick={() => openEditRecurring(p)} className="p-1.5 rounded-lg text-white/25 hover:text-white/65 hover:bg-white/8 transition-colors">
                             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                           </button>
-                          <button onClick={() => setDeleteRecurringId(p.id)} className="p-1.5 rounded-lg text-white/25 hover:text-[#EF4444] hover:bg-[#EF4444]/10 transition-colors">
+                          <button onClick={() => setDeleteRecurringId(p.id)} className="p-1.5 rounded-lg text-white/25 hover:text-[#FF5555] hover:bg-[#FF5555]/10 transition-colors">
                             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                           </button>
                         </div>
@@ -1438,7 +1438,7 @@ export default function Spending() {
                             <p className="text-white/85 text-sm font-medium">{p.name}</p>
                             <div className="flex items-center gap-2">
                               <p className="text-white/55 font-mono text-xs">{formatCurrency(p.installmentAmount, defaultCurrency)}/mo</p>
-                              <button onClick={() => setDeleteInstId(p.id)} className="p-1.5 rounded-lg text-white/25 hover:text-[#EF4444] hover:bg-[#EF4444]/10 transition-colors">
+                              <button onClick={() => setDeleteInstId(p.id)} className="p-1.5 rounded-lg text-white/25 hover:text-[#FF5555] hover:bg-[#FF5555]/10 transition-colors">
                                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                               </button>
                             </div>
@@ -1481,8 +1481,8 @@ export default function Spending() {
         footer={<><Button variant="ghost" onClick={() => setShowAddTx(false)}>Cancel</Button><Button variant="primary" onClick={handleSaveTx} disabled={!txAmount || !txCategory}>{editingTx ? 'Save Changes' : 'Add Transaction'}</Button></>}>
         <div className="space-y-4">
           <div className="flex gap-2">
-            <button onClick={() => { setTxType('expense'); setTxCategory(''); setTxPayment(defaultExpensePayment); setShowAddDestination(false); setNewDestName(''); }} className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all ${txType === 'expense' ? 'bg-[#EF4444] text-white' : 'bg-white/5 text-white/50 hover:bg-white/10'}`}>Expense</button>
-            <button onClick={() => { setTxType('income'); setTxCategory(''); setTxPayment(defaultIncomeDestination); setShowAddDestination(false); setNewDestName(''); }} className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all ${txType === 'income' ? 'bg-[#22C55E] text-black' : 'bg-white/5 text-white/50 hover:bg-white/10'}`}>Income</button>
+            <button onClick={() => { setTxType('expense'); setTxCategory(''); setTxPayment(defaultExpensePayment); setShowAddDestination(false); setNewDestName(''); }} className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all ${txType === 'expense' ? 'bg-[#FF5555] text-white' : 'bg-white/5 text-white/50 hover:bg-white/10'}`}>Expense</button>
+            <button onClick={() => { setTxType('income'); setTxCategory(''); setTxPayment(defaultIncomeDestination); setShowAddDestination(false); setNewDestName(''); }} className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all ${txType === 'income' ? 'bg-[#00E600] text-black' : 'bg-white/5 text-white/50 hover:bg-white/10'}`}>Income</button>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <Input label="Amount" type="number" inputMode="decimal" placeholder="0.00" value={txAmount} onChange={e => setTxAmount(e.target.value)} required />
@@ -1546,7 +1546,7 @@ export default function Spending() {
                         setNewDestName('');
                       }
                     }}
-                    className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white placeholder-white/25 focus:outline-none focus:border-[#10B981]/50"
+                    className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white placeholder-white/25 focus:outline-none focus:border-[#00E600]/50"
                   />
                   <button
                     disabled={!newDestName.trim()}
@@ -1558,12 +1558,12 @@ export default function Spending() {
                       setNewDestName('');
                       setShowAddDestination(false);
                     }}
-                    className="px-3 py-2 rounded-xl text-sm font-semibold bg-[#10B981]/20 text-[#10B981] hover:bg-[#10B981]/30 disabled:opacity-40 transition-all"
+                    className="px-3 py-2 rounded-xl text-sm font-semibold bg-[#00E600]/20 text-[#00E600] hover:bg-[#00E600]/30 disabled:opacity-40 transition-all"
                   >Add</button>
                   <button onClick={() => { setShowAddDestination(false); setNewDestName(''); }} className="px-3 py-2 rounded-xl text-sm text-white/40 hover:text-white/60 transition-all">✕</button>
                 </div>
               ) : (
-                <button onClick={() => setShowAddDestination(true)} className="text-xs text-[#10B981]/70 hover:text-[#10B981] transition-colors flex items-center gap-1">
+                <button onClick={() => setShowAddDestination(true)} className="text-xs text-[#00E600]/70 hover:text-[#00E600] transition-colors flex items-center gap-1">
                   <span>+</span> Add bank account or other account
                 </button>
               )}
@@ -1571,7 +1571,7 @@ export default function Spending() {
               {txPayment !== 'cash' && incomeDestinations.find(d => d.id === txPayment) && (
                 <button
                   onClick={() => { deleteIncomeDestination(txPayment); setTxPayment(incomeDestinations[0]?.id ?? 'cash'); }}
-                  className="text-xs text-[#EF4444]/60 hover:text-[#EF4444] transition-colors"
+                  className="text-xs text-[#FF5555]/60 hover:text-[#FF5555] transition-colors"
                 >Remove this account</button>
               )}
             </div>
@@ -1587,8 +1587,8 @@ export default function Spending() {
         footer={<><Button variant="ghost" onClick={() => setShowAddRecurring(false)}>Cancel</Button><Button variant="primary" onClick={handleSaveRecurring} disabled={!recName || !recAmount}>{editingRecurring ? 'Save Changes' : 'Add Recurring'}</Button></>}>
         <div className="space-y-4">
           <div className="flex gap-2">
-            <button onClick={() => { setRecType('expense'); setRecCategory(''); }} className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all ${recType === 'expense' ? 'bg-[#EF4444] text-white' : 'bg-white/5 text-white/50 hover:bg-white/10'}`}>Expense</button>
-            <button onClick={() => { setRecType('income'); setRecCategory(''); }} className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all ${recType === 'income' ? 'bg-[#22C55E] text-black' : 'bg-white/5 text-white/50 hover:bg-white/10'}`}>Income</button>
+            <button onClick={() => { setRecType('expense'); setRecCategory(''); }} className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all ${recType === 'expense' ? 'bg-[#FF5555] text-white' : 'bg-white/5 text-white/50 hover:bg-white/10'}`}>Expense</button>
+            <button onClick={() => { setRecType('income'); setRecCategory(''); }} className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all ${recType === 'income' ? 'bg-[#00E600] text-black' : 'bg-white/5 text-white/50 hover:bg-white/10'}`}>Income</button>
           </div>
           <Input label="Name" placeholder="Netflix, Rent, Salary..." value={recName} onChange={e => setRecName(e.target.value)} required />
           <div className="grid grid-cols-2 gap-3">
@@ -1614,7 +1614,7 @@ export default function Spending() {
             <Input label="# Installments" type="number" inputMode="numeric" placeholder="12" value={instCount} onChange={e => setInstCount(e.target.value)} required />
           </div>
           {instTotal && instCount && parseInt(instCount) > 0 && (
-            <p className="text-[#22C55E] text-sm font-mono">{formatCurrency(parseFloat(instTotal) / parseInt(instCount), defaultCurrency)} per installment</p>
+            <p className="text-[#00E600] text-sm font-mono">{formatCurrency(parseFloat(instTotal) / parseInt(instCount), defaultCurrency)} per installment</p>
           )}
           <Select label="Category" value={instCategory} onChange={e => setInstCategory(e.target.value)} options={categories.map(c => ({ value: c.id, label: `${c.emoji} ${c.name}` }))} />
           <Input label="Day of Month" type="number" inputMode="numeric" placeholder="1" value={instDay} onChange={e => setInstDay(e.target.value)} hint="Which day each installment is due" />

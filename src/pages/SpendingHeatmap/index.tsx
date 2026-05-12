@@ -42,13 +42,13 @@ const LABEL_COL_WIDTH = 32; // 30px label + 2px gap
 const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-// Emerald intensity scale — matches app accent (#10B981)
+// New accent intensity scale — matches app accent (#00E600 = rgb(0, 230, 0))
 const INTENSITY_COLORS = [
   '#151515',                    // 0 – no spend
-  'rgba(16,185,129,0.22)',      // 1 – low
-  'rgba(16,185,129,0.44)',      // 2
-  'rgba(16,185,129,0.70)',      // 3
-  '#10B981',                    // 4 – peak
+  'rgba(0,230,0,0.22)',         // 1 – low
+  'rgba(0,230,0,0.44)',         // 2
+  'rgba(0,230,0,0.70)',         // 3
+  '#00E600',                    // 4 – peak
 ];
 
 // ─────────────────────────── types ────────────────────────────────────────
@@ -89,7 +89,7 @@ function HeatmapTooltip({
   const vsAvgLabel = tooltip.vsAvg !== 0
     ? `${tooltip.vsAvg > 0 ? '+' : ''}${tooltip.vsAvg.toFixed(0)}% vs avg`
     : 'At daily average';
-  const vsAvgColor = tooltip.vsAvg > 20 ? '#ef4444' : tooltip.vsAvg < -20 ? '#22c55e' : 'rgba(255,255,255,0.45)';
+  const vsAvgColor = tooltip.vsAvg > 20 ? '#FF5555' : tooltip.vsAvg < -20 ? '#00E600' : 'rgba(255,255,255,0.45)';
 
   return (
     <div

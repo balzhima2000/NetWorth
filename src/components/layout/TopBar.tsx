@@ -14,7 +14,7 @@ export function TopBar({ title, actions, onToggleSidebar }: TopBarProps) {
           <div className="hidden lg:block">
             <button
               onClick={onToggleSidebar}
-              className="p-2 rounded-lg text-white/35 hover:text-white hover:bg-white/[0.07] transition-all duration-150 flex-shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#10B981]/40"
+              className="p-2 rounded-lg text-white/35 hover:text-white hover:bg-white/[0.07] transition-all duration-150 flex-shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D6F377]/40"
               aria-label="Toggle sidebar"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

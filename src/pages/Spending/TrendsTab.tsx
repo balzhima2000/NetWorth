@@ -170,57 +170,63 @@ export default function TrendsTab({
               </div>
               <div className="bg-white/[0.03] rounded-lg p-3">
                 <p className="text-white/40 text-[10px] uppercase tracking-wider mb-1">Highest</p>
-                <p className="text-[#10B981] font-semibold text-sm">{Math.round(savingsStats.high)}%</p>
+                <p className="text-[#D6F377] font-semibold text-sm">{Math.round(savingsStats.high)}%</p>
               </div>
               <div className="bg-white/[0.03] rounded-lg p-3">
                 <p className="text-white/40 text-[10px] uppercase tracking-wider mb-1">Lowest</p>
-                <p className={`font-semibold text-sm ${savingsStats.low < 0 ? 'text-[#EF4444]' : 'text-white'}`}>{Math.round(savingsStats.low)}%</p>
+                <p className={`font-semibold text-sm ${savingsStats.low < 0 ? 'text-[#FF5555]' : 'text-white'}`}>{Math.round(savingsStats.low)}%</p>
               </div>
               <div className="bg-white/[0.03] rounded-lg p-3">
                 <p className="text-white/40 text-[10px] uppercase tracking-wider mb-1">Total Saved</p>
-                <p className={`font-semibold text-sm ${savingsStats.totalSaved >= 0 ? 'text-[#10B981]' : 'text-[#EF4444]'}`}>{formatCurrency(savingsStats.totalSaved, defaultCurrency)}</p>
+                <p className={`font-semibold text-sm ${savingsStats.totalSaved >= 0 ? 'text-[#D6F377]' : 'text-[#F39377]'}`}>{formatCurrency(savingsStats.totalSaved, defaultCurrency)}</p>
               </div>
             </div>
           )}
           <ResponsiveContainer width="100%" height={240}>
             <ComposedChart data={savingsRateData} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-              <XAxis dataKey="label" stroke="rgba(255,255,255,0.25)" fontSize={11} />
+              <CartesianGrid stroke="#3c3c3c" strokeDasharray="0" vertical={false} />
+              <XAxis dataKey="label" stroke="#666" fontSize={11} tick={{ fill: '#666', fontSize: 9, fontFamily: 'var(--font-mono)' }} axisLine={false} tickLine={false} />
               <YAxis
                 yAxisId="amount"
-                stroke="rgba(255,255,255,0.25)"
+                stroke="#666"
                 fontSize={11}
                 width={55}
                 tickFormatter={(v) => formatCurrency(v, defaultCurrency, true)}
+                tick={{ fill: '#666', fontSize: 8, fontFamily: 'var(--font-mono)' }}
+                axisLine={false}
+                tickLine={false}
               />
               <YAxis
                 yAxisId="rate"
                 orientation="right"
-                stroke="rgba(255,255,255,0.25)"
+                stroke="#666"
                 fontSize={11}
                 width={45}
                 tickFormatter={(v) => `${Math.round(v)}%`}
+                tick={{ fill: '#666', fontSize: 8, fontFamily: 'var(--font-mono)' }}
+                axisLine={false}
+                tickLine={false}
               />
               <Tooltip
                 contentStyle={{
-                  background: '#111816',
-                  border: '1px solid rgba(255,255,255,0.09)',
-                  borderRadius: 12,
-                  color: 'white',
+                  backgroundColor: '#3c3c3c',
+                  border: 'none',
+                  borderRadius: 10,
+                  color: '#fff',
                   fontSize: 12,
                 }}
                 formatter={(value?: number, name?: string) => {
                   if (value === undefined) return ['', ''];
-                  if (name === 'saved') return [<span style={{ color: '#10B981' }}>{formatCurrency(value, defaultCurrency)}</span>, 'Saved'];
-                  return [<span style={{ color: '#10B981' }}>{Math.round(value)}%</span>, 'Savings Rate'];
+                  if (name === 'saved') return [<span style={{ color: '#D6F377' }}>{formatCurrency(value, defaultCurrency)}</span>, 'Saved'];
+                  return [<span style={{ color: '#D6F377' }}>{Math.round(value)}%</span>, 'Savings Rate'];
                 }}
               />
-              <ReferenceLine yAxisId="amount" y={0} stroke="rgba(255,255,255,0.15)" strokeDasharray="4 4" />
+              <ReferenceLine yAxisId="amount" y={0} stroke="#3c3c3c" strokeDasharray="4 4" />
               <Bar
                 yAxisId="amount"
                 dataKey="saved"
-                fill="rgba(16,185,129,0.25)"
-                stroke="rgba(16,185,129,0.5)"
+                fill="rgba(214, 243, 119, 0.25)"
+                stroke="rgba(214, 243, 119, 0.5)"
                 strokeWidth={1}
                 radius={[4, 4, 0, 0]}
               />
@@ -228,9 +234,9 @@ export default function TrendsTab({
                 yAxisId="rate"
                 type="monotone"
                 dataKey="savingsRate"
-                stroke="#10B981"
+                stroke="#D6F377"
                 strokeWidth={2}
-                dot={{ r: 3, fill: '#10B981' }}
+                dot={{ r: 3, fill: '#D6F377' }}
                 activeDot={{ r: 5 }}
               />
             </ComposedChart>
@@ -247,31 +253,37 @@ export default function TrendsTab({
           />
           <ResponsiveContainer width="100%" height={180}>
             <BarChart data={dailyTotals} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+              <CartesianGrid stroke="#3c3c3c" strokeDasharray="0" vertical={false} />
               <XAxis
                 dataKey="label"
-                stroke="rgba(255,255,255,0.25)"
+                stroke="#666"
                 fontSize={10}
                 interval={3}
+                tick={{ fill: '#666', fontSize: 8, fontFamily: 'var(--font-mono)' }}
+                axisLine={false}
+                tickLine={false}
               />
               <YAxis
-                stroke="rgba(255,255,255,0.25)"
+                stroke="#666"
                 fontSize={11}
                 width={65}
                 tickFormatter={(v) => formatCurrency(v, defaultCurrency, true)}
+                tick={{ fill: '#666', fontSize: 8, fontFamily: 'var(--font-mono)' }}
+                axisLine={false}
+                tickLine={false}
               />
               <Tooltip
                 contentStyle={{
-                  background: '#111816',
-                  border: '1px solid rgba(255,255,255,0.09)',
-                  borderRadius: 12,
-                  color: 'white',
+                  backgroundColor: '#3c3c3c',
+                  border: 'none',
+                  borderRadius: 10,
+                  color: '#fff',
                   fontSize: 12,
                 }}
                 formatter={(value: number | undefined) => value !== undefined ? [formatCurrency(value, defaultCurrency), 'Spent'] : ['', 'Spent']}
                 labelFormatter={(label) => `Day ${label}`}
               />
-              <Bar dataKey="amount" fill="#F59E0B" radius={[3, 3, 0, 0]} />
+              <Bar dataKey="amount" fill="#F39377" radius={[3, 3, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </GlassCard>

@@ -2,6 +2,8 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { Settings, ExchangeRate } from '../types/index';
 
+type PersistedSettings = Record<string, unknown>;
+
 const today = () => new Date().toISOString().split('T')[0];
 
 interface SettingsStore extends Settings {
@@ -137,30 +139,31 @@ export const useSettingsStore = create<SettingsStore>()(
     {
       name: 'nw-settings',
       version: 4,
-      migrate: (persisted: any, version) => {
+      migrate: (persisted: unknown, version) => {
+        const state = (persisted ?? {}) as PersistedSettings;
         if (version < 2) {
           const t = today();
           // Migrate old single alphaVantageApiKey → pre-fill both stocks and fx slots
-          persisted.stocksApiKey = persisted.alphaVantageApiKey ?? '';
-          persisted.fxApiKey     = persisted.alphaVantageApiKey ?? '';
-          persisted.stocksRequestsToday     = persisted.alphaVantageRequestsUsedToday ?? 0;
-          persisted.fxRequestsToday         = persisted.alphaVantageRequestsUsedToday ?? 0;
-          persisted.stocksRequestsResetDate = persisted.alphaVantageRequestsResetDate ?? t;
-          persisted.fxRequestsResetDate     = persisted.alphaVantageRequestsResetDate ?? t;
-          persisted.israeliApiKey           = '';
-          persisted.israeliRequestsToday    = 0;
-          persisted.israeliRequestsResetDate = t;
+          state.stocksApiKey = state.alphaVantageApiKey ?? '';
+          state.fxApiKey     = state.alphaVantageApiKey ?? '';
+          state.stocksRequestsToday     = state.alphaVantageRequestsUsedToday ?? 0;
+          state.fxRequestsToday         = state.alphaVantageRequestsUsedToday ?? 0;
+          state.stocksRequestsResetDate = state.alphaVantageRequestsResetDate ?? t;
+          state.fxRequestsResetDate     = state.alphaVantageRequestsResetDate ?? t;
+          state.israeliApiKey           = '';
+          state.israeliRequestsToday    = 0;
+          state.israeliRequestsResetDate = t;
         }
         if (version < 3) {
-          persisted.fxProvider = 'alpha-vantage';
+          state.fxProvider = 'alpha-vantage';
         }
         if (version < 4) {
-          persisted.fireAnnualExpenses      = null;
-          persisted.fireMonthlyContribution = null;
-          persisted.fireExpectedReturn      = 7;
-          persisted.fireWithdrawalRate      = 4;
+          state.fireAnnualExpenses      = null;
+          state.fireMonthlyContribution = null;
+          state.fireExpectedReturn      = 7;
+          state.fireWithdrawalRate      = 4;
         }
-        return persisted;
+        return state;
       },
     }
   )

@@ -1,50 +1,106 @@
 /* ── Typefaces ────────────────────────────────────────────
- * Plus Jakarta Sans — premium geometric sans, variable-weight,
- *   polished at small text and large headings alike
- * JetBrains Mono    — crisp tabular numerics for financial data
+ * SF Pro Display/Text — native Apple UI font stack
+ * Favorit Mono        — preferred monospace for financial figures
  */
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@font-face {
+  font-family: 'Favorit Mono';
+  src: url('/src/assets/fonts/ABCFavoritMonoVariable-Trial.woff2') format('woff2'),
+       url('/src/assets/fonts/ABCFavoritMonoVariable-Trial.woff') format('woff');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
 @import "tailwindcss";
 
 /* ── Design tokens ──────────────────────────────────────── */
-:root {
-  /* ── Accent — premium emerald ─────────────────────────── *
-   * #10B981 reads as confident and modern on OLED black.    *
-   * Not neon (#00ff00), not gaming (#39ff14), not Robinhood *
-   * (#00c805). Its slight cool-teal bias keeps it feeling   *
-   * premium and differentiated.                             */
-  --accent:        #10B981;
-  --accent-hover:  #0EA571;
-  --accent-press:  #0D9468;
-  --accent-dim:    rgba(16, 185, 129, 0.12);
-  --accent-border: rgba(16, 185, 129, 0.22);
-  --accent-glow:   rgba(16, 185, 129, 0.10);
+:root {                         
+  --color-bg: #1f1f1f;
+  --color-surface-0: #292929;
+  --color-surface-1: #404040;
+  --color-surface-2: #525252;
+  --color-surface-3: #737373;
+  --color-border: rgba(255, 255, 255, 0.07);
+  --color-accent: #D6F377;
+  --color-negative: #F39377;
+  --color-text-primary: #e5e5e5;
+  --color-text-secondary: #d4d4d4;
+  --color-text-tertiary: #a3a3a3;
+
+  --accent-green:  var(--color-accent);
+  --accent-orange: var(--color-negative);
+  --accent-purple: #7433FF;
+
+  --accent:        var(--color-accent);
+  --accent-hover:  #C6E363;
+  --accent-press:  #B8DC4A;
+  --accent-dim:    #D6F37722;
+  --accent-border: #D6F37738;
 
   /* ── Financial state colours ──────────────────────────── */
-  --positive:      #22C55E;   /* gains — warmer, brighter green   */
-  --positive-bg:   rgba(34, 197, 94,  0.10);
-  --negative:      #EF4444;   /* losses — clean red, not aggressive */
-  --negative-bg:   rgba(239, 68,  68,  0.10);
-  --warning:       #F59E0B;
+  --positive:      var(--color-accent);   /* gains */
+  --positive-bg:   #D6F3771A;
+  --negative:      var(--color-negative);   /* losses */
+  --negative-bg:   #F393771A;
+  --warning:       var(--color-negative);
 
-  /* ── Surface elevation stack — OLED-first ─────────────── *
-   * Each level is a deliberate step up from pure black so   *
-   * OLED panels save power on the base layer while cards    *
-   * still read as lifted and distinct.                      */
-  --bg:            #000000;   /* page — true OLED black         */
-  --surface-0:     #080808;   /* nav chrome: sidebar, topbar    */
-  --surface-1:     #0F0F0F;   /* default card / panel           */
-  --surface-2:     #141414;   /* interactive hover, input bg    */
-  --surface-3:     #1C1C1C;   /* select options, tooltips       */
-
+  /* ── Surface elevation stack — muted dark ─────────────── */
+  --bg:            var(--color-bg);
+  --surface-0:     var(--color-surface-0);
+  --surface-1:     var(--color-surface-1);   /* default card / panel           */
+  --surface-2:     var(--color-surface-2);   /* interactive hover, input bg    */
+  --surface-3:     var(--color-surface-3);   /* select options, tooltips       */
+  
   /* ── Borders ──────────────────────────────────────────── */
-  --border-subtle: rgba(255, 255, 255, 0.05);
-  --border-normal: rgba(255, 255, 255, 0.08);
-  --border-strong: rgba(255, 255, 255, 0.13);
+  --border-subtle: var(--color-border);
+  --border-normal: var(--color-border);
+  --border-strong: var(--color-border);
+
+  /* ── Semantic aliases (first pass) ───────────────────── */
+  --text-primary:        var(--color-text-primary);
+  --text-default:        var(--color-text-primary);
+  --text-secondary:      var(--color-text-secondary);
+  --text-muted:          var(--color-text-secondary);
+  --text-subtle:         var(--color-text-tertiary);
+  --text-faint:          var(--color-text-tertiary);
+  --text-disabled:       var(--color-text-tertiary);
+
+  --surface-soft:        #FFFFFF05;
+  --surface-soft-strong: #FFFFFF0A;
+  --surface-soft-subtle: #FFFFFF03;
+
+  --border-soft:         var(--color-border);
+  --border-soft-2:       var(--color-border);
+
+  --state-alert-fg:            var(--color-negative);
+  --state-alert-bg:            #F393771A;
+  --state-alert-badge-bg:      #F3937738;
+  --state-alert-badge-fg:      #FFFFFF;
+
+  --state-warning-fg:          var(--color-negative);
+  --state-warning-bg:          #F393771A;
+  --state-warning-badge-bg:    #F3937738;
+  --state-warning-badge-fg:    #FFFFFF;
+
+  --state-info-fg:             #7433FF;
+  --state-info-bg:             #7433FF12;
+  --state-info-badge-bg:       #7433FF2E;
+  --state-info-badge-fg:       #FFFFFF;
+
+  --state-positive-fg:         var(--color-accent);
+  --state-positive-bg:         #D6F3771A;
+  --state-positive-badge-bg:   #D6F37738;
+  --state-positive-badge-fg:   #FFFFFF;
+
+  --chart-portfolio:     #7433FF;
+  --chart-cash:          var(--color-accent);
+  --chart-real-estate:   #FFFFFF66;
+  --chart-crypto:        var(--color-negative);
+  --chart-vehicle:       #FFFFFF40;
+  --chart-other:         #FFFFFF2E;
 
   /* ── Typography ───────────────────────────────────────── */
-  --font-ui:   'Plus Jakarta Sans', system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono', 'SF Mono', ui-monospace, monospace;
+  --font-ui:   'SF Pro Display', 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+  --font-mono: 'Favorit Mono', 'SF Mono', ui-monospace, monospace;
 
   /* ── Motion ───────────────────────────────────────────── */
   --spring: cubic-bezier(0.34, 1.56, 0.64, 1); /* bouncy native feel */
@@ -71,17 +127,21 @@ html, body, #root {
 [data-financial] {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
-  font-feature-settings: "tnum" 1;
+  font-feature-settings: "tnum";
 }
 
 /* ── Scrollbar ──────────────────────────────────────────── */
-::-webkit-scrollbar { width: 5px; height: 5px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.09);
-  border-radius: 3px;
+html, body {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
-::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.16); }
+html::-webkit-scrollbar,
+body::-webkit-scrollbar,
+#root::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
 
 /* ── Card / panel surface ───────────────────────────────── *
  * Solid surfaces instead of glass blur — backdrop-filter is *
@@ -94,30 +154,16 @@ html, body, #root {
   border-radius: 16px;
 }
 
-/* ── Page gradient atmosphere ───────────────────────────── *
- * Extremely restrained green-tinted radial gradients give   *
- * the pitch-black page subtle depth without adding noise.   *
- * Think ambient light, not spotlight.                       */
+/* ── Page background ────────────────────────────────────── *
+ * Keep the app background solid black with no decorative    *
+ * color wash.                                               */
 .gradient-bg {
   background: var(--bg);
-  position: relative;
 }
-.gradient-bg::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(ellipse 80% 55% at 85% 5%,  rgba(16, 185, 129, 0.055) 0%, transparent 60%),
-    radial-gradient(ellipse 55% 45% at 5%  95%, rgba(16, 185, 129, 0.040) 0%, transparent 55%),
-    radial-gradient(ellipse 40% 35% at 50% 50%, rgba(16, 185, 129, 0.020) 0%, transparent 40%);
-  pointer-events: none;
-  z-index: 0;
-}
-.gradient-bg > * { position: relative; z-index: 1; }
 
 /* ── Selection colour ───────────────────────────────────── */
 ::selection {
-  background: rgba(16, 185, 129, 0.28);
+  background: #00E60047;
   color: white;
 }
 
@@ -191,13 +237,13 @@ a { color: inherit; text-decoration: none; }
 
 /* ── Floating bottom nav ─────────────────────────────────── */
 .mobile-nav-pill {
-  background: rgba(8, 8, 8, 0.93);
+  background: #080808ED;
   backdrop-filter: blur(28px) saturate(160%);
   -webkit-backdrop-filter: blur(28px) saturate(160%);
-  border: 1px solid rgba(255, 255, 255, 0.07);
+  border: 1px solid #FFFFFF12;
   box-shadow:
-    0 20px 48px rgba(0, 0, 0, 0.70),
-    0 1px 0 rgba(255, 255, 255, 0.05) inset;
+    0 20px 48px #000000B3,
+    0 1px 0 #FFFFFF0D inset;
 }
 
 /* Sliding indicator blob — accent green */
@@ -207,8 +253,8 @@ a { color: inherit; text-decoration: none; }
   left: 0;
   width: 20%;
   height: calc(100% - 10px);
-  background: rgba(16, 185, 129, 0.12);
-  border: 1px solid rgba(16, 185, 129, 0.22);
+  background: #00E6001F;
+  border: 1px solid #00E60038;
   border-radius: 14px;
   pointer-events: none;
   transition: transform 400ms var(--spring);
@@ -264,4 +310,4 @@ a { color: inherit; text-decoration: none; }
 
 /* ── Row hover utility ───────────────────────────────────── */
 .hover-row { transition: background-color 120ms ease; }
-.hover-row:hover { background: rgba(255, 255, 255, 0.05); }
+.hover-row:hover { background: #FFFFFF0D; }

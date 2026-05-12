@@ -29,7 +29,7 @@ export interface PlannerAssignment {
 // ── Color palette for auto-assignment ───────────────────────────────────────
 
 export const PLANNER_COLORS = [
-  '#3B82F6', '#10B981', '#F59E0B', '#EF4444',
+  '#3B82F6', '#00E600', '#F59E0B', '#FF5555',
   '#8B5CF6', '#EC4899', '#06B6D4', '#F97316',
   '#6366F1', '#84CC16', '#14B8A6', '#A855F7',
 ];
@@ -47,24 +47,24 @@ export const PROFILE_TEMPLATES: Record<TemplateKey, TemplateData> = {
   strategy: {
     primary: [
       { name: 'Growth',      color: '#3B82F6' },
-      { name: 'Value',       color: '#10B981' },
+      { name: 'Value',       color: '#00E600' },
       { name: 'Dividend',    color: '#F59E0B' },
-      { name: 'Speculative', color: '#EF4444' },
+      { name: 'Speculative', color: '#FF5555' },
     ],
     secondary: [
       { name: 'Technology', color: '#3B82F6' },
-      { name: 'Healthcare', color: '#10B981' },
+      { name: 'Healthcare', color: '#00E600' },
       { name: 'Financials', color: '#F59E0B' },
       { name: 'Consumer',   color: '#EC4899' },
-      { name: 'Energy',     color: '#EF4444' },
+      { name: 'Energy',     color: '#FF5555' },
       { name: 'Industrial', color: '#6B7280' },
     ],
   },
   risk: {
     primary: [
-      { name: 'Core',          color: '#10B981' },
+      { name: 'Core',          color: '#00E600' },
       { name: 'Moderate Risk', color: '#F59E0B' },
-      { name: 'High Risk',     color: '#EF4444' },
+      { name: 'High Risk',     color: '#FF5555' },
     ],
     secondary: [
       { name: 'Large Cap',       color: '#3B82F6' },
@@ -77,7 +77,7 @@ export const PROFILE_TEMPLATES: Record<TemplateKey, TemplateData> = {
   income: {
     primary: [
       { name: 'High Yield',      color: '#F59E0B' },
-      { name: 'Dividend Growth', color: '#10B981' },
+      { name: 'Dividend Growth', color: '#00E600' },
       { name: 'Fixed Income',    color: '#3B82F6' },
       { name: 'Growth',          color: '#8B5CF6' },
     ],
@@ -92,10 +92,10 @@ export const PROFILE_TEMPLATES: Record<TemplateKey, TemplateData> = {
   sector: {
     primary: [
       { name: 'Technology', color: '#3B82F6' },
-      { name: 'Healthcare', color: '#10B981' },
+      { name: 'Healthcare', color: '#00E600' },
       { name: 'Financials', color: '#F59E0B' },
       { name: 'Consumer',   color: '#EC4899' },
-      { name: 'Energy',     color: '#EF4444' },
+      { name: 'Energy',     color: '#FF5555' },
       { name: 'Other',      color: '#6B7280' },
     ],
     secondary: [

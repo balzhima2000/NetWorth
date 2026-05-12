@@ -44,7 +44,7 @@ export function GlassCard({
         glass rounded-2xl
         ${paddingMap[padding]}
         ${isInteractive
-          ? 'hover:bg-white/[0.06] active:bg-white/[0.08] active:scale-[0.99] transition-all duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#10B981]/35 focus-visible:ring-inset'
+          ? 'hover:bg-white/[0.06] active:bg-white/[0.08] active:scale-[0.99] transition-all duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D6F377]/35 focus-visible:ring-inset'
           : ''}
         ${className}
       `}

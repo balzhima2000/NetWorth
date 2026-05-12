@@ -78,7 +78,7 @@ export default function Step8Sync({ onNext, onBack }: Step8SyncProps) {
             onChange={(e) => setCode(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') void handleVerify(); }}
           />
-          {error && <p className="text-[#EF4444] text-sm">{error}</p>}
+          {error && <p className="text-[#FF5555] text-sm">{error}</p>}
           <Button
             variant="primary"
             size="lg"
@@ -123,7 +123,7 @@ export default function Step8Sync({ onNext, onBack }: Step8SyncProps) {
           onChange={(e) => setEmail(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter') void handleSend(); }}
         />
-        {error && <p className="text-[#EF4444] text-sm">{error}</p>}
+        {error && <p className="text-[#FF5555] text-sm">{error}</p>}
         <Button
           variant="primary"
           size="lg"

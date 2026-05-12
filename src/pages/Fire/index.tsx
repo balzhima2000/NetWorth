@@ -19,16 +19,16 @@ const tabs = [
 ];
 
 const SWR_COLOR_MAP: Record<string, string> = {
-  green: 'text-[#22C55E]',
+  green: 'text-[#00E600]',
   yellow: 'text-amber-400',
   orange: 'text-orange-400',
-  red: 'text-[#EF4444]',
+  red: 'text-[#FF5555]',
 };
 const SWR_BG_MAP: Record<string, string> = {
-  green: 'bg-[#22C55E]/10 border-[#22C55E]/30',
+  green: 'bg-[#00E600]/10 border-[#00E600]/30',
   yellow: 'bg-amber-400/10 border-amber-400/30',
   orange: 'bg-orange-400/10 border-orange-400/30',
-  red: 'bg-[#EF4444]/10 border-[#EF4444]/30',
+  red: 'bg-[#FF5555]/10 border-[#FF5555]/30',
 };
 
 export default function Fire() {
@@ -99,7 +99,7 @@ export default function Fire() {
   }, [ci_initial, ci_monthly, ci_return, ci_years]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div>
         <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1">FIRE Calculators</h1>
         <p className="text-white/50">Plan your path to financial independence. All inputs are manual — nothing is saved.</p>
@@ -110,7 +110,7 @@ export default function Fire() {
       {/* ── TAB 1: FIRE NUMBER ── */}
       {activeTab === 'fire-number' && (
         <div className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <GlassCard padding="lg">
               <h3 className="text-base font-semibold text-white/70 uppercase tracking-wider mb-4">Inputs</h3>
               <div className="space-y-4">
@@ -199,7 +199,7 @@ export default function Fire() {
       {/* ── TAB 2: TIME TO FIRE ── */}
       {activeTab === 'time-to-fire' && (
         <div className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <GlassCard padding="lg">
               <h3 className="text-base font-semibold text-white/70 uppercase tracking-wider mb-4">Inputs</h3>
               <div className="space-y-4">
@@ -241,9 +241,9 @@ export default function Fire() {
               {ttfResult !== null ? (
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="p-4 bg-[#22C55E]/10 rounded-xl border border-[#22C55E]/30">
-                      <p className="text-[#22C55E]/60 text-xs mb-1">Years to FIRE</p>
-                      <p className="text-3xl font-bold text-[#22C55E] font-mono">
+                    <div className="p-4 bg-[#00E600]/10 rounded-xl border border-[#00E600]/30">
+                      <p className="text-[#00E600]/60 text-xs mb-1">Years to FIRE</p>
+                      <p className="text-3xl font-bold text-[#00E600] font-mono">
                         {ttfResult.years < 600 ? ttfResult.years.toFixed(1) : '50+'}
                       </p>
                     </div>
@@ -263,7 +263,7 @@ export default function Fire() {
                     <div className="p-3 bg-white/5 rounded-xl border border-white/10 text-sm text-white/50">
                       <p>You'll reach your FIRE target of{' '}
                         <span className="text-white">{formatCurrency(parseFloat(ttf_target), defaultCurrency)}</span>{' '}
-                        in <span className="text-[#22C55E]">{Math.ceil(ttfResult.years)} years</span> ({ttfResult.targetYear}).
+                        in <span className="text-[#00E600]">{Math.ceil(ttfResult.years)} years</span> ({ttfResult.targetYear}).
                       </p>
                     </div>
                   )}
@@ -318,7 +318,7 @@ export default function Fire() {
                     key={row.rate}
                     className={`p-4 rounded-xl border flex items-center justify-between transition-colors ${
                       row.isHighlighted
-                        ? 'bg-[#10B981]/15 border-[#10B981]/50 ring-1 ring-[#10B981]/30'
+                        ? 'bg-[#00E600]/15 border-[#00E600]/50 ring-1 ring-[#00E600]/30'
                         : SWR_BG_MAP[row.color]
                     }`}
                   >
@@ -331,7 +331,7 @@ export default function Fire() {
                       <div>
                         <p className={`text-sm font-semibold ${SWR_COLOR_MAP[row.color]}`}>{row.label}</p>
                         {row.isHighlighted && (
-                          <p className="text-xs text-[#10B981]/80">Trinity Study standard ⭐</p>
+                          <p className="text-xs text-[#00E600]/80">Trinity Study standard ⭐</p>
                         )}
                       </div>
                     </div>
@@ -363,7 +363,7 @@ export default function Fire() {
       {/* ── TAB 4: COMPOUND INTEREST ── */}
       {activeTab === 'compound' && (
         <div className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <GlassCard padding="lg">
               <h3 className="text-base font-semibold text-white/70 uppercase tracking-wider mb-4">Inputs</h3>
               <div className="space-y-4">
@@ -403,7 +403,7 @@ export default function Fire() {
               <h3 className="text-base font-semibold text-white/70 uppercase tracking-wider mb-4">Result</h3>
               {ciResult !== null ? (
                 <div className="space-y-4">
-                  <div className="p-5 bg-white/5 rounded-xl border border-white/10 text-center">
+                  <div className="p-4 bg-white/5 rounded-xl border border-white/10 text-center">
                     <p className="text-white/40 text-sm mb-1">Final Portfolio Value</p>
                     <p className="text-4xl font-bold text-white font-mono">
                       {formatCurrency(ciResult.finalValue, defaultCurrency)}
@@ -411,15 +411,15 @@ export default function Fire() {
                     <p className="text-white/30 text-sm mt-1">after {ci_years} years</p>
                   </div>
                   <div className="grid grid-cols-2 gap-3">
-                    <div className="p-3 bg-[#10B981]/10 rounded-xl border border-[#10B981]/30">
-                      <p className="text-[#10B981]/70 text-xs mb-1">Total Contributed</p>
+                    <div className="p-3 bg-[#00E600]/10 rounded-xl border border-[#00E600]/30">
+                      <p className="text-[#00E600]/70 text-xs mb-1">Total Contributed</p>
                       <p className="text-lg font-bold text-white font-mono">
                         {formatCurrency(ciResult.totalContributed, defaultCurrency)}
                       </p>
                     </div>
-                    <div className="p-3 bg-[#22C55E]/10 rounded-xl border border-[#22C55E]/30">
-                      <p className="text-[#22C55E]/70 text-xs mb-1">Total Growth</p>
-                      <p className="text-lg font-bold text-[#22C55E] font-mono">
+                    <div className="p-3 bg-[#00E600]/10 rounded-xl border border-[#00E600]/30">
+                      <p className="text-[#00E600]/70 text-xs mb-1">Total Growth</p>
+                      <p className="text-lg font-bold text-[#00E600] font-mono">
                         +{formatCurrency(ciResult.totalGrowth, defaultCurrency)}
                       </p>
                     </div>
@@ -434,7 +434,7 @@ export default function Fire() {
                       </div>
                       <div className="flex justify-between text-sm mt-1">
                         <span className="text-white/50">% growth</span>
-                        <span className="text-[#22C55E] font-mono">
+                        <span className="text-[#00E600] font-mono">
                           +{(((ciResult.finalValue - ciResult.totalContributed) / ciResult.totalContributed) * 100).toFixed(0)}%
                         </span>
                       </div>
@@ -454,13 +454,13 @@ export default function Fire() {
               <h3 className="text-base font-semibold text-white mb-1">Growth Over Time</h3>
               <p className="text-white/40 text-sm mb-4">The power of compound interest — blue is what you put in, green is free growth</p>
               <CompoundInterestChart data={ciResult.chartData} currency={defaultCurrency} />
-              <div className="flex gap-6 mt-4 text-xs text-white/40">
+              <div className="flex gap-4 mt-3 text-xs text-white/40">
                 <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-sm bg-[#10B981]/70" />
+                  <div className="w-3 h-3 rounded-sm bg-[#00E600]/70" />
                   <span>Money you contributed</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-sm bg-[#22C55E]/70" />
+                  <div className="w-3 h-3 rounded-sm bg-[#00E600]/70" />
                   <span>Compound growth</span>
                 </div>
               </div>

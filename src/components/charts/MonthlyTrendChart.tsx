@@ -22,34 +22,40 @@ export function MonthlyTrendChart({ data, currency }: MonthlyTrendChartProps) {
   return (
     <ResponsiveContainer width="100%" height={240}>
       <BarChart data={data} margin={{ top: 10, right: 10, left: 10, bottom: 0 }} barCategoryGap="30%">
-        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-        <XAxis dataKey="label" stroke="rgba(255,255,255,0.25)" fontSize={11} />
+        <CartesianGrid stroke="#3c3c3c" strokeDasharray="0" vertical={false} />
+        <XAxis dataKey="label" stroke="#666" fontSize={11} tick={{ fill: '#666', fontSize: 9, fontFamily: 'var(--font-mono)' }} axisLine={false} tickLine={false} />
         <YAxis
-          stroke="rgba(255,255,255,0.25)"
+          stroke="#666"
           fontSize={11}
           width={65}
           tickFormatter={(v) => formatCurrency(v, currency, true)}
+          tick={{ fill: '#666', fontSize: 8, fontFamily: 'var(--font-mono)' }}
+          axisLine={false}
+          tickLine={false}
         />
         <Tooltip
           contentStyle={{
-            background: '#111816',
-            border: '1px solid rgba(255,255,255,0.09)',
-            borderRadius: 12,
-            color: 'white',
+            backgroundColor: '#3c3c3c',
+            border: 'none',
+            borderRadius: 10,
+            color: '#fff',
             fontSize: 12,
           }}
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          formatter={((value: number | undefined, name: string | undefined) => value !== undefined ? [
-            formatCurrency(value, currency),
-            name === 'expenses' ? 'Expenses' : 'Income',
-          ] : ['', name ?? '']) as any}
+          formatter={(value: number | string | undefined, name: string | undefined) => {
+            const numericValue = typeof value === 'number' ? value : Number(value);
+            if (!Number.isFinite(numericValue)) return ['', name ?? ''];
+            return [
+              formatCurrency(numericValue, currency),
+              name === 'expenses' ? 'Expenses' : 'Income',
+            ];
+          }}
         />
         <Legend
           formatter={(value) => (value === 'expenses' ? 'Expenses' : 'Income')}
-          wrapperStyle={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', paddingTop: 8 }}
+          wrapperStyle={{ fontSize: 11, color: '#a3a3a3', paddingTop: 8 }}
         />
-        <Bar dataKey="expenses" fill="#EF4444" radius={[4, 4, 0, 0]} />
-        <Bar dataKey="income" fill="#22C55E" radius={[4, 4, 0, 0]} />
+        <Bar dataKey="expenses" fill="#F39377" radius={[4, 4, 0, 0]} />
+        <Bar dataKey="income" fill="#D6F377" radius={[4, 4, 0, 0]} />
       </BarChart>
     </ResponsiveContainer>
   );

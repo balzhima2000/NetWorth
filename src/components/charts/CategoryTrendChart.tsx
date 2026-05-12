@@ -12,7 +12,7 @@ import { formatCurrency } from '../../utils/formatters';
 import type { CategoryMonthData } from '../../utils/spendingAnalytics';
 import type { SpendingCategory } from '../../types/index';
 
-const FALLBACK_COLORS = ['#10B981', '#3B82F6', '#F59E0B', '#EF4444', '#8B5CF6'];
+const FALLBACK_COLORS = ['#00E600', '#3B82F6', '#F59E0B', '#FF5555', '#8B5CF6'];
 
 interface CategoryTrendChartProps {
   data: CategoryMonthData[];
@@ -40,38 +40,41 @@ export function CategoryTrendChart({
   return (
     <ResponsiveContainer width="100%" height={240}>
       <BarChart data={data} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-        <XAxis dataKey="label" stroke="rgba(255,255,255,0.25)" fontSize={11} />
+        <CartesianGrid stroke="#3c3c3c" strokeDasharray="0" vertical={false} />
+        <XAxis dataKey="label" stroke="#666" fontSize={11} tick={{ fill: '#666', fontSize: 9, fontFamily: 'var(--font-mono)' }} axisLine={false} tickLine={false} />
         <YAxis
-          stroke="rgba(255,255,255,0.25)"
+          stroke="#666"
           fontSize={11}
           width={65}
           tickFormatter={(v) => formatCurrency(v, currency, true)}
+          tick={{ fill: '#666', fontSize: 8, fontFamily: 'var(--font-mono)' }}
+          axisLine={false}
+          tickLine={false}
         />
         <Tooltip
           contentStyle={{
-            background: '#111816',
-            border: '1px solid rgba(255,255,255,0.09)',
-            borderRadius: 12,
-            color: 'white',
+            backgroundColor: '#3c3c3c',
+            border: 'none',
+            borderRadius: 10,
+            color: '#fff',
             fontSize: 12,
           }}
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          formatter={((value: number | undefined, name: string | undefined) => {
+          formatter={(value: number | string | undefined, name: string | undefined) => {
+            const numericValue = typeof value === 'number' ? value : Number(value);
             if (value === undefined) return ['', name ?? ''];
             const info = categoryInfo.find((c) => c.id === name);
             return [
-              formatCurrency(value, currency),
+              formatCurrency(Number.isFinite(numericValue) ? numericValue : 0, currency),
               info ? `${info.emoji} ${info.name}` : (name ?? ''),
             ];
-          }) as any}
+          }}
         />
         <Legend
           formatter={(value) => {
             const info = categoryInfo.find((c) => c.id === value);
             return info ? `${info.emoji} ${info.name}` : value;
           }}
-          wrapperStyle={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', paddingTop: 8 }}
+          wrapperStyle={{ fontSize: 11, color: '#a3a3a3', paddingTop: 8 }}
         />
         {categories.map((cat, i) => {
           const { color } = getMeta(cat, i);
