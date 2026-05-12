@@ -21,31 +21,25 @@ export function CompoundInterestChart({ data, currency }: CompoundInterestChartP
   return (
     <ResponsiveContainer width="100%" height={300}>
       <AreaChart data={data} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
-        <CartesianGrid stroke="#3c3c3c" strokeDasharray="0" vertical={false} />
+        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
         <XAxis
           dataKey="year"
-          stroke="#666"
+          stroke="rgba(255,255,255,0.3)"
           fontSize={11}
           tickFormatter={(v) => `Yr ${v}`}
-          tick={{ fill: '#666', fontSize: 9, fontFamily: 'var(--font-mono)' }}
-          axisLine={false}
-          tickLine={false}
         />
         <YAxis
-          stroke="#666"
+          stroke="rgba(255,255,255,0.3)"
           fontSize={11}
           width={70}
           tickFormatter={(v) => formatCurrency(v, currency, true)}
-          tick={{ fill: '#666', fontSize: 8, fontFamily: 'var(--font-mono)' }}
-          axisLine={false}
-          tickLine={false}
         />
         <Tooltip
           contentStyle={{
-            backgroundColor: '#3c3c3c',
-            border: 'none',
-            borderRadius: 10,
-            color: '#fff',
+            background: '#111111',
+            border: '1px solid rgba(255,255,255,0.1)',
+            borderRadius: 12,
+            color: 'white',
             fontSize: 12,
           }}
           formatter={(value: number | undefined, name: string | undefined) => [
@@ -66,8 +60,8 @@ export function CompoundInterestChart({ data, currency }: CompoundInterestChartP
           type="monotone"
           dataKey="growth"
           stackId="1"
-          stroke="#D6F377"
-          fill="#D6F377"
+          stroke="#10B981"
+          fill="#10B981"
           fillOpacity={0.35}
         />
       </AreaChart>

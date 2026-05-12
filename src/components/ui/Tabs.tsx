@@ -23,7 +23,7 @@ export function Tabs({ tabs, activeTab, onChange, className = '' }: TabsProps) {
           className={`
             flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium
             transition-all duration-200 flex-1 justify-center min-w-0
-            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D6F377]/50 focus-visible:ring-offset-1 focus-visible:ring-offset-transparent
+            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#10B981]/50 focus-visible:ring-offset-1 focus-visible:ring-offset-transparent
             ${
               activeTab === tab.id
                 ? 'bg-white/[0.09] text-white shadow-sm'

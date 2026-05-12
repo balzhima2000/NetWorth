@@ -25,11 +25,6 @@ import type { StockTrade, CurrentHolding } from '../../types/index';
 
 type AssetCategory = 'stocks' | 'bonds' | 'crypto' | 'other';
 
-const getErrorMessage = (error: unknown, fallback: string): string => {
-  if (error instanceof Error && error.message) return error.message;
-  return fallback;
-};
-
 export default function Portfolio() {
   const trades = usePortfolioStore((s) => s.trades);
   const currentPrices = usePortfolioStore((s) => s.currentPrices);
@@ -178,9 +173,7 @@ export default function Portfolio() {
           setCompanyName(results[0].name);
           setTicker(results[0].symbol); // store uppercase symbol (BTC, ETH) for Coinlayer
         }
-      } catch {
-        // Ignore name lookup failures; user can still enter a name manually.
-      }
+      } catch {}
       setLookingUpName(false);
       return;
     }
@@ -189,9 +182,7 @@ export default function Portfolio() {
     try {
       const result = await searchSymbol(ticker, stocksApiKey);
       if (result) setCompanyName(result.name);
-    } catch {
-      // Ignore symbol lookup failures; user can still enter a name manually.
-    }
+    } catch {}
     setLookingUpName(false);
   };
 
@@ -226,8 +217,8 @@ export default function Portfolio() {
       }
       setPrice(fetched.toString());
       toast.success(`Closing price for ${tradeDate} fetched.`);
-    } catch (error: unknown) {
-      toast.error(getErrorMessage(error, 'Could not fetch historical price.'));
+    } catch (e: any) {
+      toast.error(e.message || 'Could not fetch historical price.');
     } finally {
       setFetchingHistoricalPrice(false);
     }
@@ -296,8 +287,8 @@ export default function Portfolio() {
         updateCurrentPrice(h.ticker, quote.price);
         decrementStocksRequests();
         done++;
-      } catch (error: unknown) {
-        if (error instanceof Error && error.message === 'Rate limit reached') break;
+      } catch (e: any) {
+        if (e.message === 'Rate limit reached') break;
       }
       await new Promise((r) => setTimeout(r, 500));
     }
@@ -326,8 +317,8 @@ export default function Portfolio() {
             const p = prices[h.ticker];
             if (p != null) { updateCurrentPrice(h.ticker, p); done++; }
           }
-        } catch (error: unknown) {
-          toast.error(getErrorMessage(error, 'Crypto price refresh failed.'));
+        } catch (e: any) {
+          toast.error(e.message || 'Crypto price refresh failed.');
         }
       }
     }
@@ -408,7 +399,7 @@ export default function Portfolio() {
   };
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-5">
 
       {/* ── Portfolio Tabs — always at top in detailed mode ── */}
       {portfolioMode === 'detailed' && (
@@ -425,7 +416,7 @@ export default function Portfolio() {
       {/* ── Top Summary — hidden in Planner for full immersion ── */}
       {(portfolioMode !== 'detailed' || activeTab === 'holdings') && (
       <GlassCard padding="lg">
-        <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
+        <div className="flex flex-col lg:flex-row gap-6 lg:gap-10">
 
           {/* Left: financial summary + actions */}
           <div className="flex-1 flex flex-col gap-4">
@@ -439,24 +430,24 @@ export default function Portfolio() {
             </div>
 
             {/* Gain + Return */}
-            <div className="flex items-start gap-4">
+            <div className="flex items-start gap-6">
               <div>
                 <p className="text-white/30 text-xs mb-0.5">Unrealized Gain</p>
-                <p className={`text-lg font-semibold font-mono ${totalGain >= 0 ? 'text-[var(--color-accent)]' : 'text-[var(--color-negative)]'}`}>
+                <p className={`text-xl font-semibold font-mono ${totalGain >= 0 ? 'text-[#22C55E]' : 'text-[#EF4444]'}`}>
                   {totalGain >= 0 ? '+' : ''}{formatCurrency(totalGain, defaultCurrency)}
                 </p>
               </div>
               <div className="w-px bg-white/8 self-stretch" />
               <div>
                 <p className="text-white/30 text-xs mb-0.5">Return</p>
-                <p className={`text-lg font-semibold font-mono ${totalGainPct >= 0 ? 'text-[var(--color-accent)]' : 'text-[var(--color-negative)]'}`}>
+                <p className={`text-xl font-semibold font-mono ${totalGainPct >= 0 ? 'text-[#22C55E]' : 'text-[#EF4444]'}`}>
                   {totalGainPct >= 0 ? '+' : ''}{totalGainPct.toFixed(2)}%
                 </p>
               </div>
             </div>
 
             {/* Actions */}
-            <div className="flex flex-wrap items-center gap-2 pt-0.5">
+            <div className="flex flex-wrap items-center gap-2 pt-1">
               <Button variant="primary" size="sm" onClick={() => openAddTrade()}>+ Add Trade</Button>
               <div className="w-px h-4 bg-white/10" />
               <Button size="sm" variant="secondary" onClick={() => setShowExcelImport(true)}>📥 Import Excel</Button>
@@ -474,7 +465,7 @@ export default function Portfolio() {
             {stocksApiKey && requestsRemaining < ALPHA_VANTAGE_MAX_REQUESTS && (
               <p className="text-white/22 text-xs">{requestsRemaining}/{ALPHA_VANTAGE_MAX_REQUESTS} requests remaining today</p>
             )}
-            {refreshProgress && <p className="text-[var(--color-accent)] text-xs animate-pulse">{refreshProgress}</p>}
+            {refreshProgress && <p className="text-[#22C55E] text-xs animate-pulse">{refreshProgress}</p>}
           </div>
 
           {/* Right: allocation chart */}
@@ -579,7 +570,7 @@ export default function Portfolio() {
                         <AssetCategoryBadge category={h.assetCategory} />
                         {/* Only show drift badge in individual mode — category-level drift on a single stock is confusing */}
                         {allocationMode === 'individual' && driftInfo && Math.abs(driftInfo.drift) >= 2 && (
-                          <span className={`text-xs font-mono ${Math.abs(driftInfo.drift) > 5 ? 'text-[#FF5555]/65' : 'text-amber-400/65'}`}>
+                          <span className={`text-xs font-mono ${Math.abs(driftInfo.drift) > 5 ? 'text-[#EF4444]/65' : 'text-amber-400/65'}`}>
                             {driftInfo.drift > 0 ? '+' : ''}{driftInfo.drift.toFixed(1)}%
                           </span>
                         )}
@@ -592,7 +583,7 @@ export default function Portfolio() {
                     </p>
 
                     {/* Gain row */}
-                    <div className={`flex items-baseline gap-2 mb-3 ${h.unrealizedGain >= 0 ? 'text-[#00E600]' : 'text-[#FF5555]'}`}>
+                    <div className={`flex items-baseline gap-2 mb-3 ${h.unrealizedGain >= 0 ? 'text-[#22C55E]' : 'text-[#EF4444]'}`}>
                       <span className="text-sm font-mono font-medium">
                         {h.unrealizedGain >= 0 ? '+' : ''}{formatCurrency(h.unrealizedGain, defaultCurrency)}
                       </span>
@@ -650,7 +641,7 @@ export default function Portfolio() {
                   <div key={trade.id} className="p-3 bg-white/5 rounded-xl border border-white/10">
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
-                        <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${isSell ? 'bg-[#FF5555]/20 text-[#FF5555]' : 'bg-[#00E600]/20 text-[#00E600]'}`}>
+                        <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${isSell ? 'bg-[#EF4444]/20 text-[#EF4444]' : 'bg-[#22C55E]/20 text-[#22C55E]'}`}>
                           {isSell ? 'SELL' : 'BUY'}
                         </span>
                         <span className="text-white font-mono text-sm">{trade.quantity} shares</span>
@@ -659,7 +650,7 @@ export default function Portfolio() {
                         <button onClick={() => { openEditTrade(trade); setDrawerTicker(null); }} className="w-9 h-9 flex items-center justify-center rounded-lg text-white/30 hover:text-white/70 hover:bg-white/10 active:bg-white/15 active:scale-[0.92] transition-all duration-150">
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                         </button>
-                        <button onClick={() => { setDeleteTradeId(trade.id); }} className="w-9 h-9 flex items-center justify-center rounded-lg text-white/30 hover:text-[#FF5555] hover:bg-[#FF5555]/10 active:bg-[#FF5555]/20 active:scale-[0.92] transition-all duration-150">
+                        <button onClick={() => { setDeleteTradeId(trade.id); }} className="w-9 h-9 flex items-center justify-center rounded-lg text-white/30 hover:text-[#EF4444] hover:bg-[#EF4444]/10 active:bg-[#EF4444]/20 active:scale-[0.92] transition-all duration-150">
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                         </button>
                       </div>
@@ -683,8 +674,8 @@ export default function Portfolio() {
         footer={<><Button variant="ghost" onClick={() => setShowTradeModal(false)}>Cancel</Button><Button variant="primary" onClick={handleSaveTrade} disabled={!ticker || (inputMode === 'units' ? !quantity : !totalAmount) || !price}>{editingTrade ? 'Save Changes' : tradeType === 'buy' ? 'Add Buy' : 'Add Sell'}</Button></>}>
         <div className="space-y-4">
           <div className="flex gap-2">
-            <button onClick={() => setTradeType('buy')} className={`flex-1 py-3 rounded-xl text-sm font-semibold transition-all active:scale-[0.97] ${tradeType === 'buy' ? 'bg-[#00E600] text-black' : 'bg-white/5 text-white/50 hover:bg-white/10'}`}>Buy</button>
-            <button onClick={() => setTradeType('sell')} className={`flex-1 py-3 rounded-xl text-sm font-semibold transition-all active:scale-[0.97] ${tradeType === 'sell' ? 'bg-[#FF5555] text-white' : 'bg-white/5 text-white/50 hover:bg-white/10'}`}>Sell</button>
+            <button onClick={() => setTradeType('buy')} className={`flex-1 py-3 rounded-xl text-sm font-semibold transition-all active:scale-[0.97] ${tradeType === 'buy' ? 'bg-[#22C55E] text-black' : 'bg-white/5 text-white/50 hover:bg-white/10'}`}>Buy</button>
+            <button onClick={() => setTradeType('sell')} className={`flex-1 py-3 rounded-xl text-sm font-semibold transition-all active:scale-[0.97] ${tradeType === 'sell' ? 'bg-[#EF4444] text-white' : 'bg-white/5 text-white/50 hover:bg-white/10'}`}>Sell</button>
           </div>
           {assetCategory !== 'crypto' && (
             <label className="flex items-center gap-2 text-sm text-white/60 cursor-pointer select-none w-fit">
@@ -692,7 +683,7 @@ export default function Portfolio() {
                 type="checkbox"
                 checked={tradeMkt === 'tase'}
                 onChange={(e) => { const mkt = e.target.checked ? 'tase' : 'global'; setTradeMkt(mkt); setTradeCurrency(mkt === 'tase' ? 'ILS' : 'USD'); setTicker(''); setCompanyName(''); setTickerError(''); }}
-                className="w-4 h-4 rounded accent-[#00E600]"
+                className="w-4 h-4 rounded accent-[#10B981]"
               />
               🇮🇱 Tel Aviv Stock Exchange (TASE)
             </label>
@@ -779,7 +770,7 @@ export default function Portfolio() {
           <p className="text-white/50 text-sm">Set target percentages to track drift from your ideal portfolio allocation.</p>
           <div className="space-y-2">
             {(['none', 'category', 'individual'] as const).map((mode) => (
-              <button key={mode} onClick={() => setAllocMode(mode)} className={`w-full text-left p-3 rounded-xl border transition-all ${allocMode === mode ? 'border-[#00E600] bg-[#00E600]/10' : 'border-white/10 bg-white/5 hover:bg-white/8'}`}>
+              <button key={mode} onClick={() => setAllocMode(mode)} className={`w-full text-left p-3 rounded-xl border transition-all ${allocMode === mode ? 'border-[#10B981] bg-[#10B981]/10' : 'border-white/10 bg-white/5 hover:bg-white/8'}`}>
                 <p className="text-white font-medium">{mode === 'none' ? '❌ None — No targets' : mode === 'category' ? '📦 By Category — Stocks / Bonds / Crypto / Other' : '🎯 By Individual Asset — Per ticker'}</p>
               </button>
             ))}

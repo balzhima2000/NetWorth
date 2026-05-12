@@ -64,7 +64,9 @@ function _squarifyStep(
     rowSize += items[i].area;
     const rowDim = rowSize / short;
     let worst = 0;
+    let running = 0;
     for (let j = 0; j <= i; j++) {
+      running += items[j].area;
       const slot = items[j].area / rowDim;
       worst = Math.max(worst, Math.max(rowDim / slot, slot / rowDim));
     }
@@ -131,9 +133,7 @@ const TEMPLATE_OPTIONS = [
   { id: 'risk',     label: 'Risk Level',    desc: 'Core / Moderate / High Risk' },
   { id: 'income',   label: 'Income Focus',  desc: 'Yield / Dividend Growth / Fixed Income' },
   { id: 'sector',   label: 'Sector',        desc: 'Technology / Healthcare / Financials…' },
-] as const;
-
-type ProfileTemplate = (typeof TEMPLATE_OPTIONS)[number]['id'];
+];
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
@@ -318,7 +318,6 @@ function TreemapCanvas({
   const [pan,  setPan]  = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [isDragging, setIsDragging] = useState(false);
-  const [isPanning, setIsPanning] = useState(false);
   const dragRef = useRef({ x: 0, y: 0, panX: 0, panY: 0, moved: false });
 
   const fitToContainer = useCallback((w: number) => {
@@ -328,31 +327,21 @@ function TreemapCanvas({
     setZoom(z);
   }, []);
 
-  useEffect(() => {
-    const timer = window.setTimeout(() => fitToContainer(containerW), 0);
-    return () => window.clearTimeout(timer);
-  }, [containerW, fitToContainer]);
+  useEffect(() => { fitToContainer(containerW); }, [containerW, fitToContainer]);
 
   const handleMouseDown = (e: React.MouseEvent) => {
     if (e.button !== 0) return;
     dragRef.current = { x: e.clientX, y: e.clientY, panX: pan.x, panY: pan.y, moved: false };
-    setIsPanning(false);
     setIsDragging(true);
   };
   const handleMouseMove = (e: React.MouseEvent) => {
     if (!isDragging) return;
     const dx = e.clientX - dragRef.current.x;
     const dy = e.clientY - dragRef.current.y;
-    if (Math.hypot(dx, dy) > 4) {
-      dragRef.current.moved = true;
-      setIsPanning(true);
-    }
+    if (Math.hypot(dx, dy) > 4) dragRef.current.moved = true;
     setPan({ x: dragRef.current.panX + dx, y: dragRef.current.panY + dy });
   };
-  const handleMouseUp = () => {
-    setIsDragging(false);
-    setIsPanning(false);
-  };
+  const handleMouseUp = () => setIsDragging(false);
   const handleWheel = (e: React.WheelEvent) => {
     e.preventDefault();
     const factor = e.deltaY < 0 ? 1.12 : 0.9;
@@ -446,6 +435,8 @@ function TreemapCanvas({
   if (containerW === 0) {
     return <div ref={containerRef} style={{ height: VIEWPORT_H }} className="w-full" />;
   }
+
+  const isPanning = isDragging && dragRef.current.moved;
 
   return (
     <div
@@ -795,7 +786,7 @@ function HoldingDetailPanel({
   const [editingPrimary, setEditingPrimary] = useState(assignment?.primaryCategoryId ?? null);
   const [editingSecondary, setEditingSecondary] = useState(assignment?.secondaryCategoryId ?? null);
 
-  const gainColor = holding.unrealizedGain >= 0 ? 'text-[#00E600]' : 'text-[#FF5555]';
+  const gainColor = holding.unrealizedGain >= 0 ? 'text-[#22C55E]' : 'text-[#EF4444]';
 
   return (
     <GlassCard padding="md">
@@ -986,7 +977,7 @@ function CategoryManagerModal({
                 <span className="text-white/75 text-sm flex-1">{cat.name}</span>
                 <button
                   onClick={() => setDeleteId(cat.id)}
-                  className="text-white/20 hover:text-[#FF5555] transition-colors p-1"
+                  className="text-white/20 hover:text-[#EF4444] transition-colors p-1"
                 >
                   <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -1057,11 +1048,11 @@ function CreateProfileModal({
   isOpen: boolean;
   onClose: () => void;
   existingProfiles: PlannerProfile[];
-  onCreateFromTemplate: (name: string, template: ProfileTemplate) => void;
+  onCreateFromTemplate: (name: string, template: string) => void;
   onDuplicate: (name: string, fromId: string) => void;
 }) {
   const [name, setName] = useState('');
-  const [selected, setSelected] = useState<ProfileTemplate>('strategy');
+  const [selected, setSelected] = useState('strategy');
   const [dupFrom, setDupFrom] = useState<string | null>(null);
 
   const handleCreate = () => {
@@ -1103,7 +1094,7 @@ function CreateProfileModal({
                 onClick={() => { setSelected(t.id); setDupFrom(null); }}
                 className={`w-full text-left p-3 rounded-xl border transition-all ${
                   selected === t.id && !dupFrom
-                    ? 'border-[#00E600]/50 bg-[#00E600]/8'
+                    ? 'border-[#10B981]/50 bg-[#10B981]/8'
                     : 'border-white/7 bg-white/[0.03] hover:bg-white/[0.05]'
                 }`}
               >
@@ -1118,10 +1109,10 @@ function CreateProfileModal({
                 {existingProfiles.map(p => (
                   <button
                     key={p.id}
-                    onClick={() => { setDupFrom(p.id); setSelected('blank'); }}
+                    onClick={() => { setDupFrom(p.id); setSelected(''); }}
                     className={`w-full text-left p-3 rounded-xl border transition-all ${
                       dupFrom === p.id
-                        ? 'border-[#00E600]/50 bg-[#00E600]/8'
+                        ? 'border-[#10B981]/50 bg-[#10B981]/8'
                         : 'border-white/7 bg-white/[0.03] hover:bg-white/[0.05]'
                     }`}
                   >
@@ -1169,10 +1160,9 @@ function AssignHoldingsModal({
         const a = profileAssignments.find(x => x.assetId === h.ticker);
         init[h.ticker] = { primary: a?.primaryCategoryId ?? null, secondary: a?.secondaryCategoryId ?? null };
       });
-      const timer = window.setTimeout(() => setLocalAssignments(init), 0);
-      return () => window.clearTimeout(timer);
+      setLocalAssignments(init);
     }
-  }, [isOpen, holdings, profileAssignments]);
+  }, [isOpen]);
 
   const handleSave = () => {
     Object.entries(localAssignments).forEach(([ticker, { primary, secondary }]) => {
@@ -1349,7 +1339,7 @@ export default function PlannerPage({ holdings, totalValue, defaultCurrency }: P
           isOpen={showCreateProfile}
           onClose={() => setShowCreateProfile(false)}
           existingProfiles={profiles}
-          onCreateFromTemplate={(name, template) => createProfile(name, template)}
+          onCreateFromTemplate={(name, template) => createProfile(name, template as any)}
           onDuplicate={(name, fromId) => createProfile(name, 'blank', fromId)}
         />
       </div>
@@ -1384,13 +1374,13 @@ export default function PlannerPage({ holdings, totalValue, defaultCurrency }: P
                     onClick={() => { setActiveProfile(p.id); setShowProfileMenu(false); }}
                     className={`w-full text-left px-3 py-2.5 text-sm transition-colors flex items-center justify-between ${
                       p.id === activeProfileId
-                        ? 'bg-[#00E600]/12 text-white'
+                        ? 'bg-[#10B981]/12 text-white'
                         : 'text-white/65 hover:bg-white/5'
                     }`}
                   >
                     <span>{p.name}</span>
                     {p.id === activeProfileId && (
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#00E600]" />
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#10B981]" />
                     )}
                   </button>
                 ))}
@@ -1407,7 +1397,7 @@ export default function PlannerPage({ holdings, totalValue, defaultCurrency }: P
                   </button>
                   <button
                     onClick={() => { setShowDeleteProfile(true); setShowProfileMenu(false); }}
-                    className="w-full text-left px-2.5 py-1.5 rounded-lg text-xs text-[#FF5555]/60 hover:text-[#FF5555] hover:bg-[#FF5555]/8 transition-colors"
+                    className="w-full text-left px-2.5 py-1.5 rounded-lg text-xs text-[#EF4444]/60 hover:text-[#EF4444] hover:bg-[#EF4444]/8 transition-colors"
                   >
                     Delete profile
                   </button>
@@ -1533,7 +1523,7 @@ export default function PlannerPage({ holdings, totalValue, defaultCurrency }: P
                 <button
                   key={h.ticker}
                   onClick={() => setSelectedTicker(h.ticker)}
-                  className={`px-2.5 py-1 bg-white/[0.05] hover:bg-white/[0.09] border border-white/8 rounded-lg text-xs font-mono text-white/55 hover:text-white/80 transition-colors ${selectedTicker === h.ticker ? 'border-[#00E600]/40 text-white/80' : ''}`}
+                  className={`px-2.5 py-1 bg-white/[0.05] hover:bg-white/[0.09] border border-white/8 rounded-lg text-xs font-mono text-white/55 hover:text-white/80 transition-colors ${selectedTicker === h.ticker ? 'border-[#10B981]/40 text-white/80' : ''}`}
                 >
                   {h.ticker}
                 </button>
@@ -1549,7 +1539,7 @@ export default function PlannerPage({ holdings, totalValue, defaultCurrency }: P
         isOpen={showCreateProfile}
         onClose={() => setShowCreateProfile(false)}
         existingProfiles={profiles}
-        onCreateFromTemplate={(name, template) => createProfile(name, template)}
+        onCreateFromTemplate={(name, template) => createProfile(name, template as any)}
         onDuplicate={(name, fromId) => createProfile(name, 'blank', fromId)}
       />
 

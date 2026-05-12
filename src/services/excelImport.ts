@@ -154,8 +154,8 @@ export async function parsePortfolioExcel(
         });
 
         resolve(rows);
-      } catch (err: unknown) {
-        reject(new Error(err instanceof Error ? err.message : 'Failed to parse Excel file'));
+      } catch (err: any) {
+        reject(new Error(err?.message ?? 'Failed to parse Excel file'));
       }
     };
 

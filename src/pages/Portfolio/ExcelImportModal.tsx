@@ -41,8 +41,8 @@ export function ExcelImportModal({
       const parsed = await parsePortfolioExcel(file, existingTrades);
       if (parsed.length === 0) throw new Error('No holdings found in file. Make sure the sheet has the expected column headers.');
       setRows(parsed);
-    } catch (err: unknown) {
-      setParseError(err instanceof Error ? err.message : 'Failed to parse file');
+    } catch (err: any) {
+      setParseError(err.message ?? 'Failed to parse file');
     } finally {
       setParsing(false);
     }
@@ -136,7 +136,7 @@ export function ExcelImportModal({
             onChange={handleFileChange}
           />
           {parseError && (
-            <p className="text-[#FF5555] text-sm bg-[#FF5555]/10 rounded-lg px-3 py-2">{parseError}</p>
+            <p className="text-[#EF4444] text-sm bg-[#EF4444]/10 rounded-lg px-3 py-2">{parseError}</p>
           )}
         </div>
       )}
@@ -178,7 +178,7 @@ export function ExcelImportModal({
                       checked={rows.length > 0 && rows.every((r) => r.selected)}
                       onChange={toggleAll}
                       className="rounded"
-                      style={{ accentColor: '#00E600' }}
+                      style={{ accentColor: '#10B981' }}
                     />
                   </th>
                   <th className="pb-2 pr-4 text-left">Name / Symbol</th>
@@ -205,7 +205,7 @@ export function ExcelImportModal({
                           checked={row.selected}
                           onChange={() => toggleSelect(row.rowKey)}
                           className="rounded"
-                          style={{ accentColor: '#00E600' }}
+                          style={{ accentColor: '#10B981' }}
                         />
                       </td>
 
@@ -236,12 +236,12 @@ export function ExcelImportModal({
                       </td>
 
                       {/* P&L (preview-only) */}
-                      <td className={`py-2.5 pr-3 text-right font-mono text-xs ${row.totalPL >= 0 ? 'text-[#00E600]' : 'text-[#FF5555]'}`}>
+                      <td className={`py-2.5 pr-3 text-right font-mono text-xs ${row.totalPL >= 0 ? 'text-[#22C55E]' : 'text-[#EF4444]'}`}>
                         {row.totalPL >= 0 ? '+' : ''}{fmtNum(row.totalPL, row.currency)}
                       </td>
 
                       {/* Yield (preview-only) */}
-                      <td className={`py-2.5 pr-3 text-right font-mono text-xs ${row.totalYield >= 0 ? 'text-[#00E600]' : 'text-[#FF5555]'}`}>
+                      <td className={`py-2.5 pr-3 text-right font-mono text-xs ${row.totalYield >= 0 ? 'text-[#22C55E]' : 'text-[#EF4444]'}`}>
                         {fmtPct(row.totalYield)}
                       </td>
 
@@ -255,7 +255,7 @@ export function ExcelImportModal({
                         <select
                           value={row.assetCategory}
                           onChange={(e) => updateRow(row.rowKey, { assetCategory: e.target.value as AssetCategory })}
-                          className="bg-white/[0.06] border border-white/10 rounded-lg px-2 py-1 text-xs text-white w-full focus:outline-none focus:ring-1 focus:ring-[#00E600]/50"
+                          className="bg-white/[0.06] border border-white/10 rounded-lg px-2 py-1 text-xs text-white w-full focus:outline-none focus:ring-1 focus:ring-[#10B981]/50"
                           style={{ colorScheme: 'dark' }}
                         >
                           {CATEGORY_OPTIONS.map((o) => (

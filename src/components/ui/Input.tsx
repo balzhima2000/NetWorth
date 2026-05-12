@@ -27,7 +27,7 @@ export function Input({
       {label && (
         <label htmlFor={inputId} className="text-sm font-medium text-white/65">
           {label}
-          {props.required && <span className="text-[#FF5555] ml-1">*</span>}
+          {props.required && <span className="text-[#EF4444] ml-1">*</span>}
         </label>
       )}
       <div className="relative flex items-center">
@@ -41,11 +41,11 @@ export function Input({
           className={`
             w-full bg-[#141414] border rounded-xl px-3 py-3 text-sm text-white min-h-[44px]
             placeholder:text-white/25
-            focus:outline-none focus:ring-2 focus:ring-[#D6F377]/50 focus:border-[#D6F377]/55
+            focus:outline-none focus:ring-2 focus:ring-[#10B981]/50 focus:border-[#10B981]/55
             transition-all duration-150
             disabled:opacity-40 disabled:cursor-not-allowed
             ${error
-              ? 'border-[#FF5555]/50 focus:ring-[#FF5555]/30'
+              ? 'border-[#EF4444]/50 focus:ring-[#EF4444]/30'
               : 'border-white/[0.08] hover:border-white/[0.14]'
             }
             ${leftAddon  ? 'pl-9' : ''}
@@ -60,7 +60,7 @@ export function Input({
           </div>
         )}
       </div>
-      {error  && <p className="text-xs text-[#FF5555]">{error}</p>}
+      {error  && <p className="text-xs text-[#EF4444]">{error}</p>}
       {hint && !error && <p className="text-xs text-white/35">{hint}</p>}
     </div>
   );
@@ -168,7 +168,7 @@ export function Select({
       {label && (
         <label htmlFor={selectId} className="text-sm font-medium text-white/65">
           {label}
-          {required && <span className="text-[#FF5555] ml-1">*</span>}
+          {required && <span className="text-[#EF4444] ml-1">*</span>}
         </label>
       )}
       <div className="relative">
@@ -187,10 +187,10 @@ export function Select({
           className={`
             w-full bg-[#141414] border rounded-xl px-3 py-3 text-sm text-white min-h-[44px]
             text-left flex items-center justify-between
-            focus:outline-none focus:ring-2 focus:ring-[#D6F377]/50 focus:border-[#D6F377]/55
+            focus:outline-none focus:ring-2 focus:ring-[#10B981]/50 focus:border-[#10B981]/55
             transition-all duration-150
             disabled:opacity-40 disabled:cursor-not-allowed
-            ${error ? 'border-[#FF5555]/50' : 'border-white/[0.08] hover:border-white/[0.14]'}
+            ${error ? 'border-[#EF4444]/50' : 'border-white/[0.08] hover:border-white/[0.14]'}
             ${className}
           `}
         >
@@ -218,7 +218,7 @@ export function Select({
                 aria-selected={opt.value === value}
                 className={`
                   px-3 py-2.5 text-sm cursor-pointer transition-colors
-                  ${opt.value === value ? 'text-[#D6F377] bg-white/[0.06]' : 'text-white'}
+                  ${opt.value === value ? 'text-[#10B981] bg-white/[0.06]' : 'text-white'}
                   ${i === highlightIdx ? 'bg-white/[0.1]' : 'hover:bg-white/[0.06]'}
                 `}
                 onClick={() => handleSelect(opt.value)}
@@ -230,7 +230,7 @@ export function Select({
           </div>
         )}
       </div>
-      {error  && <p className="text-xs text-[#FF5555]">{error}</p>}
+      {error  && <p className="text-xs text-[#EF4444]">{error}</p>}
       {hint && !error && <p className="text-xs text-white/35">{hint}</p>}
     </div>
   );

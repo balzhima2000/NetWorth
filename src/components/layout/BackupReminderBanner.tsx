@@ -34,7 +34,7 @@ export function BackupReminderBanner() {
 
   // Calculate days since last backup
   const daysSince = lastBackupDate
-    ? Math.floor((new Date().getTime() - new Date(lastBackupDate).getTime()) / 86_400_000)
+    ? Math.floor((Date.now() - new Date(lastBackupDate).getTime()) / 86_400_000)
     : null;
 
   const isDue = daysSince === null || daysSince >= BACKUP_INTERVAL_DAYS;

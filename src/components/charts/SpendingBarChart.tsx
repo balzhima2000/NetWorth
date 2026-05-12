@@ -23,32 +23,29 @@ interface SpendingBarChartProps {
 export function SpendingBarChart({
   data,
   currency,
-  color = '#D6F377',
+  color = '#10B981',
 }: SpendingBarChartProps) {
-  // Default to the new accent colour
-  const resolvedColor = color === '#00E600' ? '#D6F377' : color;
+  // Default to the accent colour, not the old blue
+  const resolvedColor = color === '#10B981' ? '#10B981' : color;
   if (data.length === 0) return null;
 
   return (
     <ResponsiveContainer width="100%" height={250}>
       <BarChart data={data} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
-        <CartesianGrid stroke="#3c3c3c" strokeDasharray="0" vertical={false} />
-        <XAxis dataKey="label" stroke="#666" fontSize={11} tick={{ fill: '#666', fontSize: 9, fontFamily: 'var(--font-mono)' }} axisLine={false} tickLine={false} />
+        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+        <XAxis dataKey="label" stroke="rgba(255,255,255,0.25)" fontSize={11} />
         <YAxis
-          stroke="#666"
+          stroke="rgba(255,255,255,0.25)"
           fontSize={11}
           width={60}
           tickFormatter={(v) => formatCurrency(v, currency, true)}
-          tick={{ fill: '#666', fontSize: 8, fontFamily: 'var(--font-mono)' }}
-          axisLine={false}
-          tickLine={false}
         />
         <Tooltip
           contentStyle={{
-            backgroundColor: '#3c3c3c',
-            border: 'none',
-            borderRadius: 10,
-            color: '#fff',
+            background: '#111111',
+            border: '1px solid rgba(255,255,255,0.09)',
+            borderRadius: 12,
+            color: 'white',
             fontSize: 12,
           }}
           formatter={(value: number | undefined) => value !== undefined ? [formatCurrency(value, currency), 'Spent'] : ['', 'Spent']}

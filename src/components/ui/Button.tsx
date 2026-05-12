@@ -13,22 +13,22 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variantStyles: Record<ButtonVariant, string> = {
-  // Primary — lime green accent
+  // Primary — emerald, with a very subtle ambient glow that feels premium on OLED
   primary:
-    'bg-[#D6F377] hover:bg-[#C6E363] active:bg-[#B8DC4A] text-[#1f1f1f] border-transparent ' +
-    'shadow-none',
+    'bg-[#10B981] hover:bg-[#0EA571] active:bg-[#0D9468] text-white border-transparent ' +
+    'shadow-[0_0_18px_rgba(16,185,129,0.22)] hover:shadow-[0_0_24px_rgba(16,185,129,0.30)]',
   // Secondary — slightly elevated surface, refined border
   secondary:
     'bg-white/[0.07] hover:bg-white/[0.11] active:bg-white/[0.15] text-white border-white/[0.10]',
   // Ghost — transparent, low-key
   ghost:
     'bg-transparent hover:bg-white/[0.07] active:bg-white/[0.11] text-white/60 hover:text-white border-transparent',
-  // Danger — muted orange tint
+  // Danger — muted red tint
   danger:
-    'bg-[#F39377]/15 hover:bg-[#F39377]/25 active:bg-[#F39377]/35 text-[#F39377] border-[#F39377]/25',
-  // Success — positive lime tint
+    'bg-[#EF4444]/15 hover:bg-[#EF4444]/25 active:bg-[#EF4444]/35 text-[#EF4444] border-[#EF4444]/25',
+  // Success — positive green tint
   success:
-    'bg-[#D6F377]/15 hover:bg-[#D6F377]/25 active:bg-[#D6F377]/35 text-[#D6F377] border-[#D6F377]/25',
+    'bg-[#22C55E]/15 hover:bg-[#22C55E]/25 active:bg-[#22C55E]/35 text-[#22C55E] border-[#22C55E]/25',
 };
 
 const sizeStyles: Record<ButtonSize, string> = {
@@ -58,7 +58,7 @@ export function Button({
         transition-all duration-150 select-none
         active:scale-[0.96]
         disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100
-        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D6F377]/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#000000]
+        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#10B981]/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#000000]
         ${variantStyles[variant]}
         ${sizeStyles[size]}
         ${fullWidth ? 'w-full' : ''}

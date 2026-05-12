@@ -35,11 +35,7 @@ export const useNetWorthStore = create<NetWorthStore>()(
         })),
       addSnapshot: (snapshot) =>
         set((state) => {
-          // Keep one snapshot per day: replace the existing day entry with the newest values.
-          const withoutSameDay = state.snapshots.filter((s) => s.date !== snapshot.date);
-          const newSnapshots = [...withoutSameDay, snapshot].sort((a, b) =>
-            new Date(a.date).getTime() - new Date(b.date).getTime()
-          );
+          const newSnapshots = [...state.snapshots, snapshot];
           // Prune to MAX_SNAPSHOTS, keeping newest
           const pruned = newSnapshots.slice(-MAX_SNAPSHOTS);
           return {
@@ -48,9 +44,7 @@ export const useNetWorthStore = create<NetWorthStore>()(
           };
         }),
       getSnapshotsByRange: (days) => {
-        const snapshots = [...get().snapshots].sort(
-          (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
-        );
+        const snapshots = get().snapshots;
         if (days === null) return snapshots;
         const cutoff = new Date();
         cutoff.setDate(cutoff.getDate() - days);

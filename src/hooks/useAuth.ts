@@ -12,10 +12,10 @@ export interface AuthState {
 
 export function useAuth(): AuthState {
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(supabaseConfigured);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (!supabaseConfigured) return;
+    if (!supabaseConfigured) { setIsLoading(false); return; }
 
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {

@@ -2,12 +2,6 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { StockTrade } from '../types/index';
 
-type PersistedPortfolio = {
-  trades?: StockTrade[];
-  currentPrices?: Record<string, number>;
-  priceSources?: Record<string, 'excel' | 'live'>;
-};
-
 interface PortfolioStore {
   trades: StockTrade[];
   currentPrices: Record<string, number>;
@@ -46,10 +40,9 @@ export const usePortfolioStore = create<PortfolioStore>()(
     {
       name: 'nw-portfolio',
       version: 2,
-      migrate: (persisted: unknown, version: number) => {
-        const state = (persisted ?? {}) as PersistedPortfolio;
+      migrate: (persisted: any, version: number) => {
         if (version < 1) {
-          state.trades = (state.trades ?? []).map((t) => ({
+          persisted.trades = (persisted.trades ?? []).map((t: any) => ({
             ...t,
             currency: t.currency ?? (t.market === 'tase' ? 'ILS' : 'USD'),
           }));
@@ -57,14 +50,14 @@ export const usePortfolioStore = create<PortfolioStore>()(
         if (version < 2) {
           // Backfill priceSources: any existing price has no source recorded,
           // which means it came from a prior Excel import (no live refresh had run yet).
-          const prices = state.currentPrices ?? {};
+          const prices = persisted.currentPrices ?? {};
           const sources: Record<string, 'excel' | 'live'> = {};
           for (const ticker of Object.keys(prices)) {
             sources[ticker] = 'excel';
           }
-          state.priceSources = sources;
+          persisted.priceSources = sources;
         }
-        return state;
+        return persisted;
       },
     }
   )

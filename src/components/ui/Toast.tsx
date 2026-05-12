@@ -1,4 +1,3 @@
-/* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useCallback, useContext, useRef, useState } from 'react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -81,14 +80,14 @@ function ToastContainer() {
 // ─── Individual Toast Card ────────────────────────────────────────────────────
 
 const variantStyles: Record<ToastVariant, { bar: string; icon: string }> = {
-  success: { bar: 'bg-[#00E600]', icon: '✓' },
-  error:   { bar: 'bg-[#FF5555]', icon: '✕' },
+  success: { bar: 'bg-[#10B981]', icon: '✓' },
+  error:   { bar: 'bg-[#EF4444]', icon: '✕' },
   info:    { bar: 'bg-[#3B82F6]', icon: 'ℹ' },
 };
 
 const variantIconBg: Record<ToastVariant, string> = {
-  success: 'bg-[#00E600]/[0.15] text-[#00E600]',
-  error:   'bg-[#FF5555]/[0.15] text-[#FF5555]',
+  success: 'bg-[#10B981]/[0.15] text-[#10B981]',
+  error:   'bg-[#EF4444]/[0.15] text-[#EF4444]',
   info:    'bg-[#3B82F6]/[0.15] text-[#3B82F6]',
 };
 

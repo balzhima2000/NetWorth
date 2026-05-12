@@ -1,69 +1,31 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useQuickAddStore } from '../../stores/quickAddStore';
-import { NavIcon } from '../layout/NavIcons';
-
-type QuickActionKey = 'expense' | 'income' | 'trade';
-
-function QuickActionIcon({ action }: { action: QuickActionKey }) {
-  if (action === 'trade') {
-    return <NavIcon name="portfolio" className="w-5 h-5" />;
-  }
-
-  if (action === 'income') {
-    return (
-      <svg
-        className="w-5 h-5"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth={1.75}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <path d="M12 19V5" />
-        <path d="M7 10l5-5 5 5" />
-      </svg>
-    );
-  }
-
-  return (
-    <svg
-      className="w-5 h-5"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={1.75}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M12 5v14" />
-      <path d="M7 14l5 5 5-5" />
-    </svg>
-  );
-}
 
 const actions = [
   {
     key: 'expense' as const,
+    emoji: '💸',
     label: 'Expense',
     sublabel: 'Log spending',
     route: '/spending',
-    accent: '#FF5555',
+    accent: '#EF4444',
   },
   {
     key: 'income' as const,
+    emoji: '💰',
     label: 'Income',
     sublabel: 'Add income',
     route: '/spending',
-    accent: '#D6F377',
+    accent: '#22C55E',
   },
   {
     key: 'trade' as const,
+    emoji: '📈',
     label: 'Trade',
     sublabel: 'Log a position',
     route: '/portfolio',
-    accent: '#D6F377',
+    accent: '#10B981',
   },
 ];
 
@@ -85,13 +47,7 @@ export function QuickAddFAB() {
   const isSettings = location.pathname.startsWith('/settings');
 
   // Always show when route changes
-  useEffect(() => {
-    const timer = window.setTimeout(() => {
-      setVisible(true);
-      setOpen(false);
-    }, 0);
-    return () => window.clearTimeout(timer);
-  }, [location.pathname]);
+  useEffect(() => { setVisible(true); setOpen(false); }, [location.pathname]);
 
   // Same scroll-direction logic as MobileNav
   useEffect(() => {
@@ -116,7 +72,7 @@ export function QuickAddFAB() {
     return () => scroller.removeEventListener('scroll', onScroll);
   }, []);
 
-  const handleAction = (key: QuickActionKey, route: string) => {
+  const handleAction = (key: 'expense' | 'income' | 'trade', route: string) => {
     setOpen(false);
     setTarget(key);
     if (location.pathname !== route) navigate(route);
@@ -163,10 +119,10 @@ export function QuickAddFAB() {
               }}
             >
               <span
-                className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
-                style={{ background: `${action.accent}1a`, color: action.accent }}
+                className="w-9 h-9 rounded-xl flex items-center justify-center text-lg flex-shrink-0"
+                style={{ background: `${action.accent}1a` }}
               >
-                <QuickActionIcon action={action.key} />
+                {action.emoji}
               </span>
               <div className="text-left">
                 <p className="text-sm font-semibold text-white leading-tight">{action.label}</p>
@@ -185,10 +141,10 @@ export function QuickAddFAB() {
         style={{
           right: '16px',
           bottom: FAB_BOTTOM,
-          background: 'linear-gradient(145deg, var(--color-accent), #009900)',
+          background: 'linear-gradient(145deg, #10B981, #065F46)',
           boxShadow: open
-            ? '0 4px 16px rgba(0, 230, 0, 0.30)'
-            : '0 8px 28px rgba(0, 230, 0, 0.45)',
+            ? '0 4px 16px rgba(16, 185, 129, 0.30)'
+            : '0 8px 28px rgba(16, 185, 129, 0.45)',
           opacity: showFAB ? 1 : 0,
           translate: showFAB ? '0 0' : '0 16px',
           transition: showFAB
