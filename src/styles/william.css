@@ -62,7 +62,11 @@
 
   --w-font-sans: 'Inter', system-ui, sans-serif;
   --w-font-mono: 'Geist Mono', 'JetBrains Mono', ui-monospace, monospace;
-  --w-radius-card: 16px;
+  /* Radius scale (Figma Radius collection) */
+  --w-radius-sm: 8px;
+  --w-radius-md: 12px;
+  --w-radius-lg: 20px;   /* standard card */
+  --w-radius-card: 20px; /* alias for the standard card radius */
 
   background-color: var(--w-canvas);
   color: var(--w-ink);
