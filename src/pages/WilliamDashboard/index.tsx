@@ -123,8 +123,8 @@ export default function WilliamDashboard() {
           {/* Left column */}
           <div className="flex flex-col gap-5">
             {/* Net Worth Card — grey wrapper (r24, pad 12/18, gap 14), white inner (r18, pad 20) */}
-            <div className="flex flex-col gap-3.5 rounded-[24px] bg-raised p-3 pb-[18px]">
-              <div className="flex flex-col gap-1.5 rounded-[18px] bg-surface p-5">
+            <div className="flex flex-col gap-3.5 rounded-[24px] bg-raised p-2.5 pb-4 md:p-3 md:pb-[18px]">
+              <div className="flex flex-col gap-1.5 rounded-[18px] bg-surface p-[18px] md:p-5">
                 <p className="ty-label text-muted">CURRENT NET WORTH</p>
                 <p className={cn('num font-black leading-none tracking-[-0.02em] text-[34px] md:text-[52px]', d.netWorth < 0 ? 'text-negative' : 'text-ink')}>
                   {formatCurrency(d.netWorth, d.defaultCurrency)}
@@ -145,7 +145,7 @@ export default function WilliamDashboard() {
 
             {/* Breakdown */}
             {d.breakdown.length > 0 && (
-              <Card className="p-5">
+              <Card className="p-[18px] md:p-5">
                 <p className="ty-label text-muted mb-4">NET WORTH BREAKDOWN</p>
                 <BreakdownBar items={d.breakdown} currency={d.defaultCurrency} />
               </Card>
@@ -163,7 +163,7 @@ export default function WilliamDashboard() {
               />
             </div>
 
-            <Card className="flex flex-1 flex-col gap-[18px] p-6">
+            <Card className="flex flex-1 flex-col gap-[18px] p-[18px] md:p-6">
               <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                 <div className="flex flex-col gap-1">
                   <div className="flex flex-wrap items-center gap-2">
@@ -224,7 +224,7 @@ export default function WilliamDashboard() {
         <div className="grid grid-cols-2 gap-5 md:grid-cols-3 lg:grid-cols-[2.2fr_1fr_1fr]">
 
           {/* FIRE — full width on mobile, first column on desktop */}
-          <Card className="col-span-2 flex flex-col gap-2.5 p-5 md:col-span-1">
+          <Card className="col-span-2 flex flex-col gap-2.5 p-[18px] md:col-span-1 md:p-5">
             <div className="flex items-center justify-between">
               <p className="ty-label text-muted">FIRE PROGRESS</p>
               <button
@@ -249,7 +249,7 @@ export default function WilliamDashboard() {
           </Card>
 
           {/* Portfolio */}
-          <Card className="flex flex-col gap-2.5 p-5">
+          <Card className="flex flex-col gap-2.5 p-4 md:p-5">
             <p className="ty-label text-muted">PORTFOLIO</p>
             <p className="ty-h1 num text-ink">{formatCurrency(d.portfolioValue, d.defaultCurrency)}</p>
             {d.holdings.length > 0 && (
@@ -260,7 +260,7 @@ export default function WilliamDashboard() {
           </Card>
 
           {/* This Month */}
-          <Card className="flex flex-col gap-2.5 p-5">
+          <Card className="flex flex-col gap-2.5 p-4 md:p-5">
             <p className="ty-label text-muted">THIS MONTH</p>
             <p className={cn('ty-h1 num', d.monthNet < 0 ? 'text-negative' : d.monthNet > 0 ? 'text-positive' : 'text-ink')}>
               {d.monthNet > 0 ? '+' : d.monthNet < 0 ? '−' : ''}{formatCurrency(Math.abs(d.monthNet), d.defaultCurrency)}
@@ -278,7 +278,7 @@ export default function WilliamDashboard() {
             {d.recentActivity.map((tx) => {
               const isExpense = tx.type === 'expense';
               return (
-                <div key={tx.id} className="flex items-center justify-between rounded-2xl border border-line bg-surface px-[18px] py-4">
+                <div key={tx.id} className="flex items-center justify-between rounded-2xl border border-line bg-surface px-4 py-3.5 md:px-[18px] md:py-4">
                   <div className="flex flex-col gap-1">
                     <p className={cn('ty-label', isExpense ? 'text-negative' : 'text-positive')}>
                       {isExpense ? 'EXPENSE LOGGED' : 'INCOME ADDED'}
@@ -297,7 +297,7 @@ export default function WilliamDashboard() {
             <button
               type="button"
               onClick={() => navigate('/spending')}
-              className="flex w-full items-center justify-between rounded-2xl border border-line bg-surface px-[18px] py-2 transition-colors hover:bg-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink"
+              className="flex w-full items-center justify-between rounded-2xl border border-line bg-surface px-4 py-2 transition-colors hover:bg-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink md:px-[18px]"
             >
               <span className="ty-body text-ink">See all</span>
               <span className="text-muted" aria-hidden="true">→</span>
