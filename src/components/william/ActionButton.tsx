@@ -27,12 +27,12 @@ export function ActionButton({ action, label, onClick, className }: ActionButton
     >
       <span
         className={cn(
-          'flex h-[54px] w-[54px] items-center justify-center rounded-full bg-inverse text-canvas',
+          'flex h-[34px] w-[54px] items-center justify-center rounded-full bg-inverse text-canvas',
           'transition-transform group-active:scale-95',
           'group-focus-visible:ring-2 group-focus-visible:ring-ink group-focus-visible:ring-offset-2 group-focus-visible:ring-offset-canvas',
         )}
       >
-        <Icon name={action} size={26} />
+        <Icon name={action} size={22} />
       </span>
       <span className="text-[13px] font-medium text-secondary">{label ?? defaultLabels[action]}</span>
     </button>

@@ -50,7 +50,9 @@ export function FloatingNav() {
               'flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[14px] font-medium transition-colors',
               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink',
               item.iconOnly && 'px-2',
-              active ? 'bg-surface text-ink' : 'text-muted hover:text-ink',
+              active ? 'bg-accent-bg text-ink' : 'text-secondary hover:text-ink',
+              // account chip always carries a subtle background
+              item.iconOnly && !active && 'bg-accent-bg text-ink',
             )}
           >
             <Icon name={item.icon} size={18} />

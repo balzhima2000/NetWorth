@@ -171,7 +171,7 @@ export default function WilliamDashboard() {
               <RangeSelector options={RANGES} value={range} onChange={(v) => setRange(v as RangeOption)} />
             </div>
 
-            <div className="h-[220px] md:h-[240px]">
+            <div className="min-h-[200px] flex-1">
               <NetWorthChart
                 data={d.chartData}
                 comparison={d.comparisonData}
@@ -229,8 +229,8 @@ export default function WilliamDashboard() {
           {/* This Month */}
           <Card className="flex flex-col gap-2 p-6">
             <p className="ty-label text-muted">THIS MONTH</p>
-            <p className={cn('ty-h1 num', d.monthNet >= 0 ? 'text-ink' : 'text-negative')}>
-              {d.monthNet >= 0 ? '' : '−'}{formatCurrency(Math.abs(d.monthNet), d.defaultCurrency)}
+            <p className={cn('ty-h1 num', d.monthNet < 0 ? 'text-negative' : d.monthNet > 0 ? 'text-positive' : 'text-ink')}>
+              {d.monthNet > 0 ? '+' : d.monthNet < 0 ? '−' : ''}{formatCurrency(Math.abs(d.monthNet), d.defaultCurrency)}
             </p>
             <p className="ty-body text-secondary">
               {d.monthTransactions.length} transaction{d.monthTransactions.length !== 1 ? 's' : ''}
@@ -264,7 +264,7 @@ export default function WilliamDashboard() {
             <Card
               role="button"
               onClick={() => navigate('/spending')}
-              className="flex cursor-pointer items-center justify-between px-5 py-4 hover:bg-raised transition-colors"
+              className="flex cursor-pointer items-center justify-between px-5 py-2 hover:bg-raised transition-colors"
             >
               <span className="ty-body text-ink">See all</span>
               <span className="text-muted">→</span>
