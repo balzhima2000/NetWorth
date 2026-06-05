@@ -240,7 +240,7 @@ Pre-dev audit pass added the missing interaction/data states and cleaned duplica
 | Action Button | 197:60 | Action {Trade/Income/Expense} — **single source of truth** (dupes 209:1782, 216:2787 deleted; dark frames re-pointed here) |
 | Segment | 231:54 | State {Default/Selected/Focus} |
 | RangeSelector | 231:55 | composed 1W/1M/1Y/YTD/ALL (1M selected) |
-| Card | 13:11 | State {Default/Hover} |
+| Card | 13:11 | State {Default/Hover/Pressed/Focus} — Hover=accent border, Pressed=raised fill, Focus=accent ring |
 | Badge | 14:12 | Tone {Positive/Negative/Neutral} (junk Blue/Violet/Rose/Tone7 removed; dupe 209:3135 deleted) |
 | Chip | 30:9 | Neutral/Outline/Inverse |
 | Skeleton | 237:3 | loading placeholder (animate shimmer in code) |
