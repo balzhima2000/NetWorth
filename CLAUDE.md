@@ -148,6 +148,8 @@ src/
 | Screens/Dashboard | 15:2 | Dashboard v2 Desktop (22:3, 1440×1140) + Mobile (26:3, 375×1622) |
 | Chip & Layering | 30:2 | Chip component (Neutral/Outline/Inverse) |
 | Icons | 92:2 | All icon components (see below) |
+| States | — | Skeleton / EmptyState / Alert / ChartTooltip / loading + edge-case reference |
+| Documentation | — | **Visual component reference** — every dashboard component with spec + live instances (`Dashboard Components` frame). Each component master also carries a `description` (shows in Dev Mode). |
 | Archive | 150:1750 | Old/reference frames |
 
 ### Icon components (Icons page, 92:2)
@@ -223,6 +225,10 @@ Violet was considered and rejected. Do not reintroduce it. Primitives were renam
 **No shadows.** All `DROP_SHADOW` effects removed (non-Archive pages); the stale `Elevation/sm·md·lg` effect styles were also deleted. Elevation = 1px `color/border` hairline only, never shadow. Do not add drop shadows.
 
 **Frosted glass on floating surfaces.** FloatingNav (desktop) + TabBar (mobile): translucent white fill (`neutral/0` @ ~72% opacity) + `BACKGROUND_BLUR` radius ~24 + translucent white hairline. Apply this pattern to any floating/overlay chrome (nav, modals, popovers).
+
+### Radius + card padding scale (verified against Figma, 2026-06)
+Radius: `sm 8 · md 12 · lg 20 · full 999`. **Standard card radius = 20 (`lg`).** Exceptions: net-worth grey wrapper 24, white inner balance card 18, activity rows / See-all 16, insight callout / chart tooltip 12.
+Card padding: **20px** standard (`p-5`); graph card **24** (`p-6`); activity rows 16/18; net-worth wrapper 12 (18 bottom). Code: `--w-radius-card: 20px`. (The earlier code used r16/p-6 — corrected.)
 
 ### Components & states (handoff-ready, 2026-06)
 Pre-dev audit pass added the missing interaction/data states and cleaned duplicates.
