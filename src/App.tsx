@@ -12,6 +12,7 @@ import Portfolio from './pages/Portfolio';
 import Spending from './pages/Spending';
 import Fire from './pages/Fire';
 import Settings from './pages/Settings';
+import WilliamPreview from './pages/WilliamPreview';
 
 const NotFound = () => (
   <div className="flex items-center justify-center h-screen">
@@ -35,6 +36,9 @@ function AppInner() {
     <Routes>
       {/* Setup route */}
       <Route path="/setup" element={<Setup />} />
+
+      {/* William redesign — standalone primitives preview */}
+      <Route path="/william" element={<WilliamPreview />} />
 
       {/* Main app routes */}
       <Route element={<AppShell />}>

@@ -1,0 +1,122 @@
+/* ============================================================
+   William — redesign token layer  (SCOPED to .william)
+   ------------------------------------------------------------
+   Direction: cool grey + white · Inter + Geist Mono ·
+   no shadows (hairline borders) · color ONLY on money
+   direction (lime = up / orange = down, everything else mono).
+   Values ported 1:1 from Figma "William — Design System v1".
+
+   Scoping: all tokens live on `.william`. The old global design
+   system in index.css is untouched. Use these utilities only
+   inside a `.william` subtree.
+   ============================================================ */
+
+/* Tailwind v4: expose semantic color utilities (bg-surface, text-ink,
+   text-positive, border-line, …). `inline` emits the var() reference
+   directly, so each utility resolves to the scoped `--w-*` value. */
+@theme inline {
+  --color-canvas:       var(--w-canvas);
+  --color-surface:      var(--w-surface);
+  --color-raised:       var(--w-raised);
+  --color-inverse:      var(--w-inverse);
+
+  --color-ink:          var(--w-ink);
+  --color-secondary:    var(--w-secondary);
+  --color-muted:        var(--w-muted);
+
+  --color-line:         var(--w-line);
+
+  --color-accent:       var(--w-accent);
+  --color-accent-hover: var(--w-accent-hover);
+  --color-accent-bg:    var(--w-accent-bg);
+
+  --color-positive:     var(--w-positive);
+  --color-positive-bg:  var(--w-positive-bg);
+  --color-negative:     var(--w-negative);
+  --color-negative-bg:  var(--w-negative-bg);
+
+  --color-info:         var(--w-info);
+  --color-info-bg:      var(--w-info-bg);
+}
+
+/* ── Light (default) ─────────────────────────────────────── */
+.william {
+  --w-canvas:       #ffffff;  /* page bg                       */
+  --w-surface:      #ffffff;  /* card surface                  */
+  --w-raised:       #f5f5f5;  /* subtle raised / track         */
+  --w-inverse:      #a3a3a3;  /* PRIMARY button / action circle
+                                 — mid-grey, intentional        */
+  --w-ink:          #171717;  /* text primary + accent         */
+  --w-secondary:    #525252;
+  --w-muted:        #737373;
+  --w-line:         #e5e5e5;  /* hairline border               */
+  --w-accent:       #171717;  /* accent is NEUTRAL, not orange  */
+  --w-accent-hover: #171717;
+  --w-accent-bg:    #f5f5f5;
+  --w-positive:     #65a30d;  /* lime — gains                  */
+  --w-positive-bg:  #ecfccb;
+  --w-negative:     #f97316;  /* orange — losses ONLY          */
+  --w-negative-bg:  #fed7aa;
+  --w-info:         #3b82f6;  /* categorical (chart)           */
+  --w-info-bg:      #dbeafe;
+
+  --w-font-sans: 'Inter', system-ui, sans-serif;
+  --w-font-mono: 'Geist Mono', 'JetBrains Mono', ui-monospace, monospace;
+  --w-radius-card: 16px;
+
+  background-color: var(--w-canvas);
+  color: var(--w-ink);
+  font-family: var(--w-font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Dark ────────────────────────────────────────────────── */
+.william[data-theme="dark"],
+.dark .william {
+  --w-canvas:       #171717;
+  --w-surface:      #171717;
+  --w-raised:       #262626;
+  --w-inverse:      #e5e5e5;
+  --w-ink:          #ffffff;
+  --w-secondary:    #d4d4d4;
+  --w-muted:        #a3a3a3;
+  --w-line:         #404040;
+  --w-accent:       #ffffff;
+  --w-accent-hover: #fafafa;
+  --w-accent-bg:    #262626;
+  --w-positive:     #bef264;
+  --w-positive-bg:  #1a2e05;
+  --w-negative:     #f97316;
+  --w-negative-bg:  #431407;
+  --w-info:         #60a5fa;
+  --w-info-bg:      #172554;
+}
+
+/* ── Type scale (ported from Figma text styles) ──────────── */
+.william .ty-display {
+  font-weight: 900; font-size: 56px; line-height: 1; letter-spacing: -0.02em;
+}
+.william .ty-h1 {
+  font-weight: 700; font-size: 32px; line-height: 1.1; letter-spacing: -0.01em;
+}
+.william .ty-h2 {
+  font-weight: 600; font-size: 20px; line-height: 1.3;
+}
+.william .ty-body {
+  font-weight: 400; font-size: 15px; line-height: 1.5;
+}
+.william .ty-label {
+  font-family: var(--w-font-mono);
+  font-weight: 500; font-size: 12px; line-height: 1.3;
+  letter-spacing: 0.05em; text-transform: uppercase;
+}
+
+/* Tabular figures — every financial number uses these */
+.william .num {
+  font-feature-settings: "tnum" 1;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Radius helper */
+.william .rounded-card { border-radius: var(--w-radius-card); }
