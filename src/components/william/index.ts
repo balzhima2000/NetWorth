@@ -9,3 +9,4 @@ export { Segment, RangeSelector } from './Segment';
 export { Skeleton } from './Skeleton';
 export { ActionButton } from './ActionButton';
 export { Card } from './Card';
+export { FloatingNav, TabBar } from './Nav';

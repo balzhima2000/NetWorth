@@ -10,11 +10,21 @@ import { useSettingsStore } from '../../stores/settingsStore';
 import { calculateCurrentHoldings } from '../../utils/calculations';
 import { getCurrentMonthYear } from '../../utils/formatters';
 
-export type RangeOption = '30D' | '3M' | '6M' | '1Y' | 'All';
+export type RangeOption = '1W' | '1M' | '1Y' | 'YTD' | 'ALL';
 
-const RANGE_DAYS: Record<RangeOption, number | null> = {
-  '30D': 30, '3M': 90, '6M': 180, '1Y': 365, 'All': null,
-};
+function rangeToDays(range: RangeOption): number | null {
+  switch (range) {
+    case '1W': return 7;
+    case '1M': return 30;
+    case '1Y': return 365;
+    case 'YTD': {
+      const now = new Date();
+      const jan1 = new Date(now.getFullYear(), 0, 1);
+      return Math.ceil((now.getTime() - jan1.getTime()) / 86400000);
+    }
+    case 'ALL': return null;
+  }
+}
 
 export function useDashboardData(range: RangeOption) {
   const trades          = usePortfolioStore((s) => s.trades);
@@ -50,13 +60,13 @@ export function useDashboardData(range: RangeOption) {
 
   // Chart snapshots for selected range
   const chartData = useMemo(() => {
-    const snaps = getSnapshotsByRange(RANGE_DAYS[range]);
+    const snaps = getSnapshotsByRange(rangeToDays(range));
     return snaps.map((s) => ({ date: s.date, value: s.netWorth }));
   }, [getSnapshotsByRange, range]);
 
   // Comparison: same-length window before the chart window
   const comparisonData = useMemo(() => {
-    const days = RANGE_DAYS[range];
+    const days = rangeToDays(range);
     if (!days || snapshots.length === 0) return [];
     const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - days);
     const prevCutoff = new Date(cutoff); prevCutoff.setDate(prevCutoff.getDate() - days);
@@ -104,6 +114,13 @@ export function useDashboardData(range: RangeOption) {
   const fireProgress = effectiveFireTarget && effectiveFireTarget > 0
     ? Math.min((netWorth / effectiveFireTarget) * 100, 100)
     : null;
+  // Projected FIRE year (assumes ~7% annual growth incl. contributions)
+  const fireYear = useMemo(() => {
+    if (!effectiveFireTarget || netWorth <= 0 || netWorth >= effectiveFireTarget) return null;
+    const years = Math.log(effectiveFireTarget / netWorth) / Math.log(1.07);
+    if (!isFinite(years) || years <= 0) return null;
+    return new Date().getFullYear() + Math.ceil(years);
+  }, [effectiveFireTarget, netWorth]);
 
   // Recent activity — last 10 transactions
   const recentActivity = useMemo(
@@ -126,7 +143,7 @@ export function useDashboardData(range: RangeOption) {
     portfolioValue, holdings,
     chartData, comparisonData, periodDelta,
     monthNet, monthIncome, monthExpense, monthTransactions,
-    fireProgress, effectiveFireTarget,
+    fireProgress, effectiveFireTarget, fireYear,
     recentActivity,
     breakdown,
     defaultCurrency, userName,
