@@ -235,7 +235,13 @@ Violet was considered and rejected. Do not reintroduce it. Primitives were renam
 
 **No shadows.** All `DROP_SHADOW` effects removed (non-Archive pages); the stale `Elevation/sm·md·lg` effect styles were also deleted. Elevation = 1px `color/border` hairline only, never shadow. Do not add drop shadows.
 
-**Frosted glass on floating surfaces.** FloatingNav (desktop) + TabBar (mobile): translucent white fill (`neutral/0` @ ~72% opacity) + `BACKGROUND_BLUR` radius ~24 + translucent white hairline. Apply this pattern to any floating/overlay chrome (nav, modals, popovers).
+**Nav surfaces are OPAQUE (not frosted).** The NavPill masters use a solid fill + 1px border, NOT translucency/blur (a frosted treatment was trialled in code but caused dark-mode discoloration and didn't match the masters — reverted). Exact specs:
+- **FloatingNav (desktop, 202:2605):** fill `color/surface`, border `color/border`, r999, pad 8 (10 left), gap 6. Items r999, icon 20 + label 14. Active = `accent-bg` pill + `accent` text (pad 10/14); inactive = `text-secondary` (pad 10); **account = 36×36 `accent-bg` circle**.
+- **TabBar (mobile, 202:2606):** fill `color/bg`, border `color/border`, r999, ~340w, gap 30, pad 6/20. 4 items (50px): icon 24 + label 11. Active = `text-primary`; inactive = `text-muted` (no pill on mobile). Account is NOT in the tab bar (it's in the mobile header).
+
+**Button state fills (masters):** Primary hover = `color/surface-inverse-hover` (#737373 / #a3a3a3 dark), pressed = darker; Secondary/Ghost hover & pressed = `color/surface-raised`; disabled = `color/border` fill + `text-muted`. Code mirrors via `--w-inverse-hover`.
+
+**RangeSelector/Segment:** track + segments are **`rounded-full`** (r999); selected segment = `color/surface` fill, **no border**; segment pad 6/14.
 
 ### Radius + card padding scale (verified against Figma, 2026-06)
 Radius: `sm 8 · md 12 · lg 20 · full 999`. **Standard card radius = 20 (`lg`).** Exceptions: net-worth grey wrapper 24, white inner balance card 18, activity rows / See-all 16, insight callout / chart tooltip 12.

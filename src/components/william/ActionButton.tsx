@@ -35,7 +35,7 @@ export function ActionButton({ action, label, onClick, className }: ActionButton
       >
         <Icon name={action} size={22} />
       </span>
-      <span className="text-[13px] font-medium text-secondary transition-colors group-hover:text-ink">
+      <span className="text-[13px] font-medium text-secondary">
         {label ?? defaultLabels[action]}
       </span>
     </button>

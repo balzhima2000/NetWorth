@@ -4,8 +4,12 @@ import { Icon, type IconName } from './Icon';
 
 /**
  * FloatingNav (desktop top pill) + TabBar (mobile bottom).
- * Frosted glass: translucent white + backdrop blur + hairline.
- * Active item = surface pill + text-ink; inactive = text-muted.
+ * Specs match the Figma NavPill masters exactly:
+ *  - Desktop: opaque color/surface + border, r999, pad 8 (10 left), gap 6.
+ *    Active item = accent-bg pill + accent text; inactive = text-secondary;
+ *    account = 36×36 accent-bg circle. Icons 20px, labels 14px.
+ *  - Mobile: opaque color/bg + border, r999, 340w, gap 30, 4 items (50px),
+ *    icon 24 + label 11. Active = text-primary; inactive = text-muted.
  */
 interface NavItem {
   id: string;
@@ -23,10 +27,6 @@ const ITEMS: NavItem[] = [
   { id: 'account',   label: 'Account',   icon: 'account',   path: '/settings', iconOnly: true },
 ];
 
-const frosted =
-  'border border-line bg-[rgba(255,255,255,0.72)] backdrop-blur-xl ' +
-  'dark:bg-[rgba(38,38,38,0.72)]';
-
 export function FloatingNav() {
   const navigate = useNavigate();
   const { pathname } = useLocation();
@@ -34,30 +34,38 @@ export function FloatingNav() {
   return (
     <nav
       className={cn(
-        'fixed left-1/2 top-5 z-50 -translate-x-1/2 hidden md:flex',
-        'items-center gap-1.5 rounded-full p-1.5',
-        frosted,
+        'fixed left-1/2 top-5 z-50 hidden -translate-x-1/2 md:flex',
+        'items-center gap-1.5 rounded-full border border-line bg-surface p-2 pl-2.5',
       )}
     >
       {ITEMS.map((item) => {
         const active = pathname === item.path;
+        if (item.iconOnly) {
+          return (
+            <button
+              key={item.id}
+              onClick={() => navigate(item.path)}
+              aria-label={item.label}
+              aria-current={active ? 'page' : undefined}
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-accent-bg text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink"
+            >
+              <Icon name={item.icon} size={20} />
+            </button>
+          );
+        }
         return (
           <button
             key={item.id}
             onClick={() => navigate(item.path)}
             aria-current={active ? 'page' : undefined}
-            aria-label={item.iconOnly ? item.label : undefined}
             className={cn(
-              'flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[14px] font-medium transition-colors',
+              'flex items-center gap-1.5 rounded-full py-1.5 text-[14px] font-medium transition-colors',
               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink',
-              item.iconOnly && 'px-2',
-              active ? 'bg-accent-bg text-ink' : 'text-secondary hover:text-ink',
-              // account chip always carries a subtle background
-              item.iconOnly && !active && 'bg-accent-bg text-ink',
+              active ? 'bg-accent-bg pl-2.5 pr-3.5 text-ink' : 'px-2.5 text-secondary hover:text-ink',
             )}
           >
-            <Icon name={item.icon} size={18} />
-            {!item.iconOnly && <span>{item.label}</span>}
+            <Icon name={item.icon} size={20} />
+            <span>{item.label}</span>
           </button>
         );
       })}
@@ -68,15 +76,13 @@ export function FloatingNav() {
 export function TabBar() {
   const navigate = useNavigate();
   const { pathname } = useLocation();
-  // Mobile tab bar carries the 4 primary destinations; account lives in the header.
-  const tabs = ITEMS.filter((i) => !i.iconOnly);
+  const tabs = ITEMS.filter((i) => !i.iconOnly); // 4 items; account lives in the header
 
   return (
     <nav
       className={cn(
         'fixed bottom-4 left-1/2 z-50 flex -translate-x-1/2 md:hidden',
-        'items-center gap-7 rounded-full px-5 py-3',
-        frosted,
+        'items-center gap-[30px] rounded-full border border-line bg-canvas px-5 py-1.5',
       )}
     >
       {tabs.map((item) => {
@@ -87,8 +93,8 @@ export function TabBar() {
             onClick={() => navigate(item.path)}
             aria-current={active ? 'page' : undefined}
             className={cn(
-              'flex min-w-[48px] flex-col items-center gap-1 transition-colors',
-              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink rounded-lg',
+              'flex w-[50px] flex-col items-center gap-0.5 rounded-lg py-0.5 transition-colors',
+              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink',
               active ? 'text-ink' : 'text-muted',
             )}
           >

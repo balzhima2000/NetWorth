@@ -18,11 +18,9 @@ export function Segment({ selected = false, children, onClick }: SegmentProps) {
       onClick={onClick}
       aria-pressed={selected}
       className={cn(
-        'rounded-lg px-3.5 py-2 text-[13px] font-medium transition-colors',
+        'rounded-full px-3.5 py-1.5 text-[13px] font-medium transition-colors',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink',
-        selected
-          ? 'bg-surface text-ink border border-line'
-          : 'text-muted hover:text-ink border border-transparent',
+        selected ? 'bg-surface text-ink' : 'text-muted hover:text-ink',
       )}
     >
       {children}
@@ -49,7 +47,7 @@ export function RangeSelector({
     <div
       role="tablist"
       className={cn(
-        'items-center gap-0.5 rounded-[10px] bg-raised p-1',
+        'items-center gap-0.5 rounded-full bg-raised p-1',
         fullWidth ? 'flex w-full justify-between' : 'inline-flex',
         className,
       )}

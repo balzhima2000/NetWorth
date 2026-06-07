@@ -25,13 +25,16 @@ const base =
   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2 focus-visible:ring-offset-canvas ' +
   'disabled:pointer-events-none';
 
+// State fills match the Figma Button masters:
+// Primary: hover = surface-inverse-hover, pressed = darker; Secondary/Ghost:
+// hover/pressed = surface-raised. Disabled = border fill / muted text.
 const variants: Record<Variant, string> = {
   primary:
-    'bg-inverse text-canvas hover:brightness-95 active:brightness-90 disabled:bg-raised disabled:text-muted',
+    'bg-inverse text-on-inverse hover:bg-inverse-hover active:brightness-90 disabled:bg-line disabled:text-muted',
   secondary:
-    'bg-surface text-ink border border-line hover:bg-raised active:brightness-95 disabled:text-muted disabled:bg-surface',
+    'bg-surface text-ink border border-line hover:bg-raised active:bg-raised disabled:text-muted disabled:bg-surface',
   ghost:
-    'bg-transparent text-ink hover:bg-raised active:brightness-95 disabled:text-muted',
+    'bg-transparent text-ink hover:bg-raised active:bg-raised disabled:text-muted',
 };
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(function Button(
