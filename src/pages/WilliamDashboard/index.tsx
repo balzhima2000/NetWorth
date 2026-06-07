@@ -11,7 +11,9 @@ import { formatCurrency, formatDate } from '../../utils/formatters';
 import { cn } from '../../components/william/cn';
 
 const RANGES: RangeOption[] = ['1W', '1M', '1Y', 'YTD', 'ALL'];
-const BREAKDOWN_COLORS = ['var(--w-accent)', 'var(--w-positive-bg)', 'var(--w-info-bg)', 'var(--w-accent-bg)'];
+// Allocation bar: Stocks=accent, Cash=lime, Crypto=blue, Other=grey.
+// Lime/blue are pale tints in light, BRIGHT in dark (matches Figma — do not change).
+const BREAKDOWN_COLORS = ['var(--w-accent)', 'var(--w-alloc-lime)', 'var(--w-alloc-blue)', 'var(--w-accent-bg)'];
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 

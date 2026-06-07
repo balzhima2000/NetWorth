@@ -229,6 +229,8 @@ Violet was considered and rejected. Do not reintroduce it. Primitives were renam
 - Money: `positive · positive-bg · negative · negative-bg`
 - Categorical **chart palette**: `chart-1` blue · `chart-2` teal · `chart-3` amber · `chart-4` indigo · `chart-5` rose (for allocation/FIRE charts; avoids lime/orange which are reserved for money direction). `blue`/`blue-bg` retained.
 - **Fixed:** inactive nav-pill icons were mis-bound to a non-existent `color/chart-5` → rebound to `color/text-secondary`.
+
+**⚠️ Allocation / net-worth breakdown bar — per-theme colors (do NOT change):** Stocks = `accent` · Cash = lime · Crypto = blue · Other = `accent-bg`. Cash/Crypto use the **pale `-bg` tint in light** (`positive-bg`/`blue-bg`) but the **BRIGHT token in dark** (`positive` #bef264 / `blue` #60a5fa) — the dark `-bg` tints are nearly invisible on a dark surface. Balzhima set the dark board's segments to the bright tokens by hand. Code mirrors this via mode-aware `--w-alloc-lime` / `--w-alloc-blue`. **The Documentation Light & Dark boards intentionally differ here — do not "re-sync" the dark board by re-cloning the light one, or you'll overwrite this.**
 - Code mirror in `src/styles/william.css` (`--w-sunken`, `--w-on-inverse`, `--w-focus`, `--w-chart-1..5`).
 
 **No shadows.** All `DROP_SHADOW` effects removed (non-Archive pages); the stale `Elevation/sm·md·lg` effect styles were also deleted. Elevation = 1px `color/border` hairline only, never shadow. Do not add drop shadows.
