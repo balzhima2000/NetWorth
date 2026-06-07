@@ -238,7 +238,7 @@ Pre-dev audit pass added the missing interaction/data states and cleaned duplica
 |---|---|---|
 | Button | 11:21 | Style {Primary/Secondary/Ghost} × State {Default/Hover/Pressed/Focus/Disabled/Loading} (18) |
 | Action Button | 197:60 | Action {Trade/Income/Expense} — **single source of truth** (dupes 209:1782, 216:2787 deleted; dark frames re-pointed here) |
-| Segment | 231:54 | State {Default/Selected/Focus} |
+| Segment | 231:54 | State {Default/Hover/Selected/Pressed/Focus} |
 | RangeSelector | 231:55 | composed 1W/1M/1Y/YTD/ALL (1M selected) |
 | Card | 13:11 | State {Default/Hover/Pressed/Focus} — Hover=accent border, Pressed=raised fill, Focus=accent ring. **Static cards use Default only** |
 | Card / Interactive | 292:26 | **Clickable/navigational card** — whole surface is the action (trailing → affordance) + Default/Hover/Pressed/Focus. Used by the FIRE card. Static cards omit these states |
@@ -248,6 +248,8 @@ Pre-dev audit pass added the missing interaction/data states and cleaned duplica
 | EmptyState | 237:4 | icon + H2 + body + CTA (swap per context) |
 | Alert | 237:37 | Tone {Error/Info} — inline fetch-failure banner + Retry |
 | ChartTooltip | 240:24 | hover date + value |
+
+**Interaction states:** every interactive component documents Default/Hover/Pressed/Focus (+Disabled/Loading for Button, Selected for Segment). **Focus ring = `color/accent` (neutral)** — there is no `color/focus` token (it was removed; focus rings were briefly bound to `color/blue` #3b82f6 by mistake and rebound to accent). Static elements (Badge, Skeleton, Icon, ChartTooltip, breakdown bar) are stateless by design. The Documentation page shows all states in light + dark.
 
 **States page** holds Skeleton / EmptyState / Alert / ChartTooltip / a `NetWorthCard / Loading` example / an `Edge cases (reference)` frame (negative net worth, long numbers, 0%/100% FIRE).
 
