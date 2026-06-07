@@ -224,16 +224,17 @@ export default function WilliamDashboard() {
         <div className="grid grid-cols-2 gap-5 md:grid-cols-3 lg:grid-cols-[2.2fr_1fr_1fr]">
 
           {/* FIRE — full width on mobile, first column on desktop */}
-          <Card className="col-span-2 flex flex-col gap-2.5 p-[18px] md:col-span-1 md:p-5">
+          <Card
+            role="button"
+            tabIndex={0}
+            aria-label="FIRE progress — open FIRE page"
+            onClick={() => navigate('/fire')}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate('/fire'); } }}
+            className="group col-span-2 flex cursor-pointer flex-col gap-2.5 p-[18px] transition-colors hover:border-accent active:bg-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink md:col-span-1 md:p-5"
+          >
             <div className="flex items-center justify-between">
               <p className="ty-label text-muted">FIRE PROGRESS</p>
-              <button
-                onClick={() => navigate('/fire')}
-                aria-label="Open FIRE page"
-                className="-m-2 flex h-10 w-10 items-center justify-center rounded-lg text-muted transition-colors hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink"
-              >
-                <span aria-hidden="true">→</span>
-              </button>
+              <span aria-hidden="true" className="text-accent transition-transform group-hover:translate-x-0.5">→</span>
             </div>
             {d.fireProgress !== null ? (
               <>
