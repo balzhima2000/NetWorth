@@ -82,8 +82,8 @@ export function TabBar() {
   return (
     <nav
       className={cn(
-        'fixed bottom-4 left-1/2 z-50 flex h-[70px] -translate-x-1/2 md:hidden',
-        'items-center gap-[30px] rounded-full border border-line bg-canvas px-5',
+        'fixed bottom-4 left-1/2 z-50 flex h-[70px] w-[340px] -translate-x-1/2 md:hidden',
+        'items-center justify-center gap-[30px] rounded-full border border-line bg-canvas px-5',
       )}
     >
       {tabs.map((item) => {
