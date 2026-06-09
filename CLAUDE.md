@@ -166,6 +166,13 @@ Pixel dot-matrix style. Master size 64×64. DOT=6, GAP=2, UNIT=8.
 | Icon/Trade | 118:1274 | 118:1275 | Action button |
 | Icon/Income | 118:1330 | 118:1368 | Action button |
 | Icon/Expense | 118:1331 | 118:1369 | Action button |
+| Icon/Star | 215:2217 | — | Misc |
+| Icon/Refresh | 387:1065 | — | Portfolio "Refresh prices" (circular arrow) |
+| Icon/Import | 387:1076 | — | Portfolio "Import" (download → tray) |
+| Icon/Target | 429:1084 | — | "Set/Edit targets" (ring + bullseye) |
+| Icon/Plus | 429:1098 | — | "Add trade" / add actions |
+
+**Icon button rule (Portfolio toolbar):** every toolbar/action button leads with a dot-matrix icon + label (Refresh / Import / Add trade / Set targets). Icons sized via `rescale(16/64)` (≈16px) inside buttons. The Refresh glyph alone (circular-arrow/spinner ring) tested as not legible enough, so it keeps the "Refresh" **text label** — do not make it icon-only.
 
 ### Action Button component (Button page, set 197:60)
 Dashboard action buttons (Trade/Income/Expense). Variant property `Action`.
@@ -304,6 +311,49 @@ These rules prevent wasted iterations:
 5. **TEXT nodes have no `layoutMode`** — guard with `if (!('children' in node)) return` before accessing layout properties in `findAll` callbacks.
 6. **Instances vs components** — always call `component.createInstance()` to place a component in a frame; never move the component master itself.
 7. **`setCurrentPageAsync`** — use `await figma.setCurrentPageAsync(page)` to switch pages; `figma.currentPage = page` is not supported.
+
+---
+
+## Portfolio screen + Forms (designed 2026-06, Screens/Dashboard page 15:2)
+
+The Portfolio surface was designed in Figma (desktop 1440 + mobile 375), reusing William tokens/components. Frames live on **page 15:2** in two sections: **"Portfolio — Final"** (370:1455) and the modal/menu sections below.
+
+### Portfolio screen structure
+- **Header**: title + actions — `Refresh` · `Import` · `+ Add trade` (desktop right-aligned; mobile = compact action row, Add trade primary fills width).
+- **Bento row**: *Portfolio Value* summary card (value, gain merged line `↑ +$… · +%`, invested, # positions) + *Allocation* card.
+- **Allocation card**: documented breakdown bar (**gap 3, segment r4**, palette `accent · positive-bg · blue-bg · accent-bg`) + legend (top-3 holdings + "Other" = real sum). Header has a **"Set targets"** button (entry to rebalancing).
+- **Holdings table**: columns **Asset · Price · Shares · Market Value · Gain ($) · Return (%)**. Gain $ and Return % are **separate columns** (so all three are sortable).
+
+### Sorting = sortable columns (NOT a segmented control)
+- The old Value/Gain/Return segment implied *view switching*; replaced with **sortable column headers** — active column shows a `↓` arrow + `text-primary` label, others `text-muted`. Desktop variants exist: `— Gain` (sort by $), `— Return` (sort by %).
+- **Mobile** has no columns → a compact **"Value ▾" sort dropdown** in the Holdings header; its open state = the **Menu** component (Value selected + check / Gain / Return).
+- **Many-holdings edge case**: `— Many holdings` desktop frame (14 rows) confirms the table scales (page grows / scrolls).
+
+### Add modals (Trade / Income / Expense) — section "Add Transaction Modals" (497:1973)
+- **Desktop** = centered dialog on a 45% black scrim; **mobile** = bottom sheet (drag handle, top-rounded r24, full-width primary CTA, ✕ dismisses).
+- **Trade** fields: Buy/Sell · Ticker + Name · Global/TASE · Quantity · Price(+currency) · Date · Asset category · Notes.
+- **Income/Expense** fields: type segment · **Amount** · Category · Date · Payment method (expense) / Destination (income) · Notes.
+- **Money-direction carries into inputs**: the Amount renders **orange (expense) / lime (income)** — the only chromatic color in the form.
+
+### Set Targets modal + drift state
+- **Set Targets modal** (section "Sort Menu & Set Targets" 503:2167): By category / By holding segment · row per holding (current % + target % input) · running **Total allocated** with a `Balanced` badge at 100% · footer `Turn off targets` · Cancel · Save.
+- **Allocation drift state** (section "Allocation — Targets / Drift" 508:2167): once targets set, the allocation bar shows **target tick markers** (thin vertical lines at each target boundary) + legend **"vs target" drift chips** (+2% / −1% …); "Set targets" → **"Edit targets"**.
+- **⚠️ Drift is NEUTRAL, never money-direction color.** Over/under target is not a gain/loss — drift chips + ticks use neutral/`text-secondary`, NOT orange/lime. (The black `accent` first segment hides a black tick → that segment was set to **grey** in the drift card by Balzhima for tick contrast.)
+
+### Conventions locked this round
+- **Date format = `DD.MM.YYYY`** (e.g. `09.06.2026`) everywhere.
+- **All dropdown/select arrows are `Geist Mono` Medium** (▾ / ↓) — matches the tabular-number treatment. Apply to every future dropdown.
+
+### Forms components (Forms page 509:140) — new, formalized 2026-06
+Field/menu styles were extracted from the modals into reusable components. Shared style: fill `surface-sunken`, 1px `border`, **r12**, 44px height, label 13 `text-secondary`, value 15 `text-primary` / placeholder `text-muted`.
+| Component | ID | Variants |
+|---|---|---|
+| Input | 509:149 | State {Default / Focus (accent 2px border) / Error (negative border) / Disabled} |
+| Select | 510:146 | State {Default / Focus}; trailing `▾` Geist Mono |
+| Textarea | 510:147 | single (76px, top-aligned) |
+| MenuItem | 511:145 | State {Default / Selected (accent-bg + accent + ✓)} |
+| Menu | 511:146 | popover: surface + border r12, pad 6, item gap 2 |
+- The modal **type toggles** (Buy/Sell, Expense/Income, By category/By holding) reuse the **Segment** pattern (sunken track, selected = `surface` pill).
 
 ---
 
