@@ -2,13 +2,14 @@
  * William Portfolio — redesigned implementation, matched to Figma "Portfolio v2".
  * Scoped under .william. Route: /william/portfolio
  *
- * Display-only for now: action buttons (Add trade / Refresh / Import / Set targets)
- * bridge to the existing /portfolio flow until the redesigned modals are built.
+ * Add trade + Set targets open the redesigned modals (./modals). Refresh / Import
+ * still bridge to the existing /portfolio flow.
  */
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, Button, Icon, FloatingNav, TabBar } from '../../components/william';
 import { usePortfolioData, type SortKey } from './usePortfolioData';
+import { AddTradeModal, SetTargetsModal } from './modals';
 import { formatCurrency } from '../../utils/formatters';
 import { cn } from '../../components/william/cn';
 import type { CurrentHolding } from '../../types/index';
@@ -216,8 +217,11 @@ function HoldingsList({ d, sortBy, setSortBy }: { d: ReturnType<typeof usePortfo
 export default function WilliamPortfolio() {
   const navigate = useNavigate();
   const [sortBy, setSortBy] = useState<SortKey>('value');
+  const [modal, setModal] = useState<null | 'trade' | 'targets'>(null);
   const d = usePortfolioData(sortBy);
-  const goPortfolio = () => navigate('/portfolio'); // bridge to working flow
+  const goPortfolio = () => navigate('/portfolio'); // Refresh/Import bridge to working flow
+  const addTrade = () => setModal('trade');
+  const setTargets = () => setModal('targets');
 
   return (
     <div className="william min-h-screen bg-canvas pb-28 pt-6 md:pt-24">
@@ -248,13 +252,13 @@ export default function WilliamPortfolio() {
           <div className="flex items-center gap-2.5">
             <Button pill variant="secondary" onClick={goPortfolio}><Icon name="refresh" size={16} /> Refresh</Button>
             <Button pill variant="secondary" onClick={goPortfolio}><Icon name="import" size={16} /> Import</Button>
-            <Button pill variant="primary" onClick={goPortfolio}><Icon name="plus" size={16} /> Add trade</Button>
+            <Button pill variant="primary" onClick={addTrade}><Icon name="plus" size={16} /> Add trade</Button>
           </div>
         </div>
 
         {/* Mobile actions */}
         <div className="flex items-center gap-2 md:hidden">
-          <Button pill variant="primary" onClick={goPortfolio} className="flex-1"><Icon name="plus" size={16} /> Add trade</Button>
+          <Button pill variant="primary" onClick={addTrade} className="flex-1"><Icon name="plus" size={16} /> Add trade</Button>
           <Button pill variant="secondary" onClick={goPortfolio} className="!px-3" aria-label="Refresh prices"><Icon name="refresh" size={18} /></Button>
           <Button pill variant="secondary" onClick={goPortfolio}><Icon name="import" size={16} /> Import</Button>
         </div>
@@ -264,19 +268,22 @@ export default function WilliamPortfolio() {
             <Icon name="portfolio" size={40} className="text-muted" />
             <h2 className="text-[20px] font-semibold text-ink">No holdings yet</h2>
             <p className="max-w-sm text-[14px] text-secondary">Add your first stock trade to start tracking your portfolio.</p>
-            <Button pill variant="primary" onClick={goPortfolio} className="mt-1"><Icon name="plus" size={16} /> Add trade</Button>
+            <Button pill variant="primary" onClick={addTrade} className="mt-1"><Icon name="plus" size={16} /> Add trade</Button>
           </Card>
         ) : (
           <>
             <div className="flex flex-col gap-[18px] md:grid md:grid-cols-[400px_1fr] md:gap-5">
               <SummaryCard d={d} />
-              <AllocationCard d={d} onSetTargets={goPortfolio} />
+              <AllocationCard d={d} onSetTargets={setTargets} />
             </div>
             <HoldingsTable d={d} sortBy={sortBy} setSortBy={setSortBy} />
             <HoldingsList d={d} sortBy={sortBy} setSortBy={setSortBy} />
           </>
         )}
       </main>
+
+      <AddTradeModal open={modal === 'trade'} onClose={() => setModal(null)} />
+      <SetTargetsModal open={modal === 'targets'} onClose={() => setModal(null)} holdings={d.holdings} totalValue={d.totalValue} />
     </div>
   );
 }

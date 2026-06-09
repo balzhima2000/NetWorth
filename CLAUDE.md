@@ -355,6 +355,13 @@ Field/menu styles were extracted from the modals into reusable components. Share
 | Menu | 511:146 | popover: surface + border r12, pad 6, item gap 2 |
 - The modal **type toggles** (Buy/Sell, Expense/Income, By category/By holding) reuse the **Segment** pattern (sunken track, selected = `surface` pill).
 
+### Code implementation (shipped)
+- **Screen**: `src/pages/WilliamPortfolio/` (`index.tsx` + `usePortfolioData.ts`), route `/william/portfolio`. Display via `calculateCurrentHoldings`; sortable columns (desktop) / sort dropdown (mobile); allocation top-3 + Other.
+- **Modals**: `src/pages/WilliamPortfolio/modals.tsx` — `AddTradeModal`, `AddTransactionModal` (income/expense), `SetTargetsModal`, wired to real stores (`addTrade`, `addTransaction`, `allocationStore.setAllocation`). Mounted on **both** the Portfolio screen (Add trade, Set targets) and the **Dashboard** action buttons (Trade/Income/Expense). Refresh/Import still bridge to old `/portfolio`.
+- **New william components**: `Modal` (responsive — desktop dialog / mobile bottom sheet, scrim, Esc + scroll-lock) and `Field` primitives (`Field`, `TextInput`, `Textarea`, `SelectInput` with mono `↓`, `SegmentToggle`). `Button` gained a **`pill`** prop (toolbar/action buttons are pill; generic master stays r12).
+- **Date fields** use a **text input in `DD.MM.YYYY`** (helpers `isoToDDMM`/`ddmmToISO`) — not native date input — to honor the format.
+- **Icon**: added `refresh / import / target / plus` dot-matrix glyphs (coords re-extracted from masters incl. Balzhima's Refresh edit).
+
 ---
 
 ## Portfolio case study (ongoing — keep this in mind)

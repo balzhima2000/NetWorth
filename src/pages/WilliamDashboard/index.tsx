@@ -7,6 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import { Card, ActionButton, RangeSelector, Icon, FloatingNav, TabBar, Button, Badge } from '../../components/william';
 import { NetWorthChart } from './NetWorthChart';
 import { useDashboardData, type RangeOption } from './useDashboardData';
+import { AddTradeModal, AddTransactionModal } from '../WilliamPortfolio/modals';
 import { formatCurrency, formatDate } from '../../utils/formatters';
 import { cn } from '../../components/william/cn';
 
@@ -94,6 +95,7 @@ function GreenDelta({ children }: { children: React.ReactNode }) {
 export default function WilliamDashboard() {
   const navigate = useNavigate();
   const [range, setRange] = useState<RangeOption>('1M');
+  const [modal, setModal] = useState<null | 'trade' | 'income' | 'expense'>(null);
   const d = useDashboardData(range);
 
   if (d.isEmpty) {
@@ -142,9 +144,9 @@ export default function WilliamDashboard() {
               </div>
               {/* Actions on the grey zone */}
               <div className="flex justify-around">
-                <ActionButton action="trade" onClick={() => navigate('/portfolio')} />
-                <ActionButton action="income" onClick={() => navigate('/spending')} />
-                <ActionButton action="expense" onClick={() => navigate('/spending')} />
+                <ActionButton action="trade" onClick={() => setModal('trade')} />
+                <ActionButton action="income" onClick={() => setModal('income')} />
+                <ActionButton action="expense" onClick={() => setModal('expense')} />
               </div>
             </div>
 
@@ -310,6 +312,10 @@ export default function WilliamDashboard() {
           </div>
         )}
       </main>
+
+      <AddTradeModal open={modal === 'trade'} onClose={() => setModal(null)} />
+      <AddTransactionModal open={modal === 'income'} onClose={() => setModal(null)} initialType="income" />
+      <AddTransactionModal open={modal === 'expense'} onClose={() => setModal(null)} initialType="expense" />
     </div>
   );
 }
