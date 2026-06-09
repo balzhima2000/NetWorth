@@ -52,10 +52,30 @@ export function usePortfolioData(sortBy: SortKey) {
     }));
   }, [holdings, totalValue]);
 
+  // "Updated" relative time from the most recent price refresh
+  const lastUpdatedLabel = useMemo(() => {
+    const stamps = Object.values(lastPriceUpdates).filter(Boolean) as string[];
+    if (stamps.length === 0) return null;
+    const latest = stamps.reduce((a, b) => (a > b ? a : b));
+    const diffMs = Date.now() - new Date(latest).getTime();
+    if (isNaN(diffMs)) return null;
+    const min = Math.floor(diffMs / 60000);
+    if (min < 1) return 'just now';
+    if (min < 60) return `${min}m ago`;
+    const hr = Math.floor(min / 60);
+    if (hr < 24) return `${hr}h ago`;
+    return `${Math.floor(hr / 24)}d ago`;
+  }, [lastPriceUpdates]);
+
+  const positionsCount = holdings.length;
+  const subtitle = `${positionsCount} holding${positionsCount === 1 ? '' : 's'}`
+    + (lastUpdatedLabel ? ` · Updated ${lastUpdatedLabel}` : '');
+
   return {
     holdings: sorted,
     totalValue, totalInvested, totalGain, totalGainPct,
-    positionsCount: holdings.length,
+    positionsCount,
+    subtitle,
     allocation,
     defaultCurrency,
     isEmpty: holdings.length === 0,

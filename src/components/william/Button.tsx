@@ -17,10 +17,12 @@ type Variant = 'primary' | 'secondary' | 'ghost';
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: Variant;
   loading?: boolean;
+  /** Pill shape (rounded-full) — used by toolbar/action buttons. Default is rounded-xl (Button master). */
+  pill?: boolean;
 }
 
 const base =
-  'inline-flex items-center justify-center gap-2 rounded-xl h-[42px] px-5 text-[15px] font-semibold ' +
+  'inline-flex items-center justify-center gap-2 h-[42px] px-5 text-[15px] font-semibold ' +
   'transition-[background-color,filter,color] duration-150 select-none ' +
   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2 focus-visible:ring-offset-canvas ' +
   'disabled:pointer-events-none';
@@ -38,13 +40,13 @@ const variants: Record<Variant, string> = {
 };
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(function Button(
-  { variant = 'primary', loading = false, disabled, children, className, ...rest },
+  { variant = 'primary', loading = false, pill = false, disabled, children, className, ...rest },
   ref,
 ) {
   return (
     <button
       ref={ref}
-      className={cn(base, variants[variant], className)}
+      className={cn(base, pill ? 'rounded-full' : 'rounded-xl', variants[variant], className)}
       disabled={disabled || loading}
       aria-busy={loading || undefined}
       {...rest}

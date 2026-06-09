@@ -156,12 +156,12 @@ function SortDropdown({ sortBy, setSortBy }: { sortBy: SortKey; setSortBy: (k: S
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="inline-flex items-center gap-1.5 rounded-full bg-sunken px-3 py-1.5 text-[13px] font-medium text-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink"
+        className="num inline-flex items-center gap-1.5 rounded-full bg-sunken px-3 py-1.5 text-[13px] font-medium text-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink"
       >
-        {current.label === 'Market value' ? 'Value' : current.label} <span className="num text-[12px]">{open ? '▴' : '▾'}</span>
+        {current.label === 'Market value' ? 'Value' : current.label} <span className="text-[12px]">↓</span>
       </button>
       {open && (
-        <div className="absolute right-0 z-10 mt-2 w-44 rounded-xl border border-line bg-surface p-1.5">
+        <div className="absolute right-0 z-10 mt-2 w-[180px] rounded-xl border border-line bg-surface p-1.5">
           {SORT_COLS.map((c) => {
             const active = c.key === sortBy;
             return (
@@ -226,11 +226,14 @@ export default function WilliamPortfolio() {
       <main className="mx-auto flex max-w-[1100px] flex-col gap-[18px] px-4 md:gap-5 md:px-6">
 
         {/* Mobile header */}
-        <div className="flex items-center justify-between md:hidden">
-          <h1 className="text-[24px] font-semibold tracking-[-0.02em] text-ink">Portfolio</h1>
+        <div className="flex items-start justify-between md:hidden">
+          <div className="flex flex-col gap-0.5">
+            <h1 className="text-[24px] font-semibold tracking-[-0.02em] text-ink">Portfolio</h1>
+            <p className="text-[13px] font-medium text-secondary">{d.subtitle}</p>
+          </div>
           <button
             type="button" aria-label="Account" onClick={() => navigate('/settings')}
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-accent-bg text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink"
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-accent-bg text-ink transition-[filter] hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink"
           >
             <Icon name="account" size={20} />
           </button>
@@ -240,20 +243,20 @@ export default function WilliamPortfolio() {
         <div className="hidden items-end justify-between md:flex">
           <div className="flex flex-col gap-1">
             <h1 className="text-[28px] font-semibold tracking-[-0.02em] text-ink">Portfolio</h1>
-            <p className="text-[14px] font-medium text-secondary">{d.positionsCount} holdings</p>
+            <p className="text-[14px] font-medium text-secondary">{d.subtitle}</p>
           </div>
           <div className="flex items-center gap-2.5">
-            <Button variant="secondary" onClick={goPortfolio}><Icon name="refresh" size={16} /> Refresh</Button>
-            <Button variant="ghost" onClick={goPortfolio}><Icon name="import" size={16} /> Import</Button>
-            <Button variant="primary" onClick={goPortfolio}><Icon name="plus" size={16} /> Add trade</Button>
+            <Button pill variant="secondary" onClick={goPortfolio}><Icon name="refresh" size={16} /> Refresh</Button>
+            <Button pill variant="secondary" onClick={goPortfolio}><Icon name="import" size={16} /> Import</Button>
+            <Button pill variant="primary" onClick={goPortfolio}><Icon name="plus" size={16} /> Add trade</Button>
           </div>
         </div>
 
         {/* Mobile actions */}
         <div className="flex items-center gap-2 md:hidden">
-          <Button variant="primary" onClick={goPortfolio} className="flex-1"><Icon name="plus" size={16} /> Add trade</Button>
-          <Button variant="secondary" onClick={goPortfolio} className="!px-3" aria-label="Refresh prices"><Icon name="refresh" size={18} /></Button>
-          <Button variant="secondary" onClick={goPortfolio}><Icon name="import" size={16} /> Import</Button>
+          <Button pill variant="primary" onClick={goPortfolio} className="flex-1"><Icon name="plus" size={16} /> Add trade</Button>
+          <Button pill variant="secondary" onClick={goPortfolio} className="!px-3" aria-label="Refresh prices"><Icon name="refresh" size={18} /></Button>
+          <Button pill variant="secondary" onClick={goPortfolio}><Icon name="import" size={16} /> Import</Button>
         </div>
 
         {d.isEmpty ? (
@@ -261,7 +264,7 @@ export default function WilliamPortfolio() {
             <Icon name="portfolio" size={40} className="text-muted" />
             <h2 className="text-[20px] font-semibold text-ink">No holdings yet</h2>
             <p className="max-w-sm text-[14px] text-secondary">Add your first stock trade to start tracking your portfolio.</p>
-            <Button variant="primary" onClick={goPortfolio} className="mt-1"><Icon name="plus" size={16} /> Add trade</Button>
+            <Button pill variant="primary" onClick={goPortfolio} className="mt-1"><Icon name="plus" size={16} /> Add trade</Button>
           </Card>
         ) : (
           <>
