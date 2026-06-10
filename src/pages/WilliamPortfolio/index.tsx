@@ -277,17 +277,17 @@ export default function WilliamPortfolio() {
             <p className="text-[14px] font-medium text-secondary">{d.subtitle}</p>
           </div>
           <div className="flex items-center gap-2.5">
-            <Button pill variant="secondary" onClick={goPortfolio}><Icon name="refresh" size={16} /> Refresh</Button>
-            <Button pill variant="secondary" onClick={goPortfolio}><Icon name="import" size={16} /> Import</Button>
-            <Button pill variant="primary" onClick={addTrade}><Icon name="plus" size={16} /> Add trade</Button>
+            <Button pill size="toolbar" variant="secondary" onClick={goPortfolio}><Icon name="refresh" size={18} /> Refresh</Button>
+            <Button pill size="toolbar" variant="secondary" onClick={goPortfolio}><Icon name="import" size={18} /> Import</Button>
+            <Button pill size="toolbar" variant="primary" onClick={addTrade} className="font-semibold"><Icon name="plus" size={16} /> Add trade</Button>
           </div>
         </div>
 
         {/* Mobile actions — [Add trade] [Refresh] [Import], icon+text pills (Figma 488:6940) */}
         <div className="flex items-center gap-2 md:hidden">
-          <Button pill variant="primary" onClick={addTrade} className="!gap-1.5 !px-3.5 !text-[14px]"><Icon name="plus" size={16} /> Add trade</Button>
-          <Button pill variant="secondary" onClick={goPortfolio} className="!gap-1.5 !px-3.5 !text-[14px]"><Icon name="refresh" size={16} /> Refresh</Button>
-          <Button pill variant="secondary" onClick={goPortfolio} className="!gap-1.5 !px-3.5 !text-[14px]"><Icon name="import" size={16} /> Import</Button>
+          <Button pill size="toolbar" variant="primary" onClick={addTrade} className="font-semibold"><Icon name="plus" size={16} /> Add trade</Button>
+          <Button pill size="toolbar" variant="secondary" onClick={goPortfolio}><Icon name="refresh" size={18} /> Refresh</Button>
+          <Button pill size="toolbar" variant="secondary" onClick={goPortfolio}><Icon name="import" size={18} /> Import</Button>
         </div>
 
         {d.isEmpty ? (
