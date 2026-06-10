@@ -82,7 +82,7 @@ function AllocationCard({ d, onSetTargets }: { d: ReturnType<typeof usePortfolio
             {d.allocation.map((a) => <div key={a.label} style={{ width: `${a.percent}%`, background: a.color }} />)}
           </div>
           {ticks.map((t, i) => (
-            <div key={i} className="absolute top-1/2 h-6 w-0.5 -translate-y-1/2 rounded-full bg-ink" style={{ left: `calc(${t}% - 1px)` }} />
+            <div key={i} className="absolute top-0 h-full w-0.5 bg-muted" style={{ left: `calc(${t}% - 1px)` }} />
           ))}
         </div>
       ) : (
