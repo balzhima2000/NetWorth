@@ -82,7 +82,7 @@ function AllocationCard({ d, onSetTargets }: { d: ReturnType<typeof usePortfolio
             {d.allocation.map((a) => <div key={a.label} style={{ width: `${a.percent}%`, background: a.color }} />)}
           </div>
           {ticks.map((t, i) => (
-            <div key={i} className="absolute top-0 h-full w-0.5 bg-muted" style={{ left: `calc(${t}% - 1px)` }} />
+            <div key={i} className="absolute top-1/2 h-2.5 w-0.5 -translate-y-1/2 rounded-full bg-muted" style={{ left: `calc(${t}% - 1px)` }} />
           ))}
         </div>
       ) : (
@@ -90,7 +90,11 @@ function AllocationCard({ d, onSetTargets }: { d: ReturnType<typeof usePortfolio
           {d.allocation.map((a) => <div key={a.label} className="rounded-[4px]" style={{ width: `${a.percent}%`, background: a.color }} />)}
         </div>
       )}
-      {hasTargets && <span className="-mt-1 text-[11px] font-medium text-muted">▏ marks your target weight</span>}
+      {hasTargets && (
+        <span className="-mt-1 flex items-center gap-2 text-[11px] font-medium text-muted">
+          <span className="h-2.5 w-0.5 rounded-full bg-muted" /> marks your target weight
+        </span>
+      )}
       <div className="flex flex-col gap-2.5">
         {d.allocation.map((a) => (
           <div key={a.label} className="flex items-center justify-between">
@@ -180,12 +184,12 @@ function SortDropdown({ sortBy, setSortBy }: { sortBy: SortKey; setSortBy: (k: S
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="num inline-flex items-center gap-1.5 rounded-full bg-sunken px-3 py-1.5 text-[13px] font-medium uppercase tracking-[0.03em] text-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink"
+        className="num inline-flex items-center gap-1.5 rounded-full bg-sunken px-3 py-1.5 text-[12px] font-medium uppercase tracking-[0.6px] text-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink"
       >
-        {current.key === 'value' ? 'VALUE' : current.label.toUpperCase()} <span className="text-[12px]">{open ? '↑' : '↓'}</span>
+        {current.key === 'value' ? 'VALUE' : current.label.toUpperCase()} <span>{open ? '↑' : '↓'}</span>
       </button>
       {open && (
-        <div className="absolute right-0 z-10 mt-2 w-[180px] rounded-xl border border-line bg-surface p-1.5">
+        <div className="absolute right-0 z-10 mt-2 flex w-[180px] flex-col gap-0.5 rounded-xl border border-line bg-surface p-1.5">
           {SORT_COLS.map((c) => {
             const active = c.key === sortBy;
             return (
@@ -194,11 +198,11 @@ function SortDropdown({ sortBy, setSortBy }: { sortBy: SortKey; setSortBy: (k: S
                 type="button"
                 onClick={() => { setSortBy(c.key); setOpen(false); }}
                 className={cn(
-                  'num flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-[13px] font-medium uppercase tracking-[0.03em]',
+                  'num flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-[12px] font-medium uppercase tracking-[0.6px]',
                   active ? 'bg-accent-bg text-accent' : 'text-ink hover:bg-raised',
                 )}
               >
-                {c.key === 'value' ? 'VALUE' : c.label.toUpperCase()}{active && <span className="num">✓</span>}
+                {c.key === 'value' ? 'VALUE' : c.label.toUpperCase()}{active && <span className="font-sans text-[13px] tracking-normal">✓</span>}
               </button>
             );
           })}
