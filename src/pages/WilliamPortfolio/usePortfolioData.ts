@@ -11,10 +11,11 @@ import { calculateCurrentHoldings } from '../../utils/calculations';
 import type { CurrentHolding } from '../../types/index';
 
 export type SortKey = 'value' | 'gain' | 'return';
+export type SortDir = 'asc' | 'desc';
 
 const ALLOC_COLORS = ['var(--w-accent)', 'var(--w-alloc-lime)', 'var(--w-alloc-blue)', 'var(--w-accent-bg)'];
 
-export function usePortfolioData(sortBy: SortKey) {
+export function usePortfolioData(sortBy: SortKey, sortDir: SortDir = 'desc') {
   const trades           = usePortfolioStore((s) => s.trades);
   const currentPrices    = usePortfolioStore((s) => s.currentPrices);
   const lastPriceUpdates = usePortfolioStore((s) => s.lastPriceUpdates);
@@ -36,8 +37,9 @@ export function usePortfolioData(sortBy: SortKey) {
   const sorted = useMemo(() => {
     const key = (h: CurrentHolding) =>
       sortBy === 'value' ? h.currentValue : sortBy === 'gain' ? h.unrealizedGain : h.unrealizedGainPercent;
-    return [...holdings].sort((a, b) => key(b) - key(a));
-  }, [holdings, sortBy]);
+    const mult = sortDir === 'desc' ? 1 : -1;
+    return [...holdings].sort((a, b) => (key(b) - key(a)) * mult);
+  }, [holdings, sortBy, sortDir]);
 
   // Allocation: top 3 holdings by value + "Other" = sum of the rest.
   // When per-holding targets are set, each row carries target % + drift.

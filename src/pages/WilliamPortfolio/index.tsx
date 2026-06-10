@@ -8,7 +8,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, Button, Icon, FloatingNav, TabBar } from '../../components/william';
-import { usePortfolioData, type SortKey } from './usePortfolioData';
+import { usePortfolioData, type SortKey, type SortDir } from './usePortfolioData';
 import { AddTradeModal, SetTargetsModal } from './modals';
 import { formatCurrency } from '../../utils/formatters';
 import { cn } from '../../components/william/cn';
@@ -127,17 +127,17 @@ const SORT_COLS: { key: SortKey; label: string; col: string }[] = [
   { key: 'return', label: 'Return', col: 'return' },
 ];
 
-function ColHeader({ label, sortKey, active, onSort }: { label: string; sortKey?: SortKey; active: boolean; onSort?: () => void }) {
+function ColHeader({ label, sortKey, active, dir, onSort }: { label: string; sortKey?: SortKey; active: boolean; dir: SortDir; onSort?: () => void }) {
   const cls = 'num text-[11px] font-medium uppercase tracking-[0.03em] text-right';
   if (!sortKey) return <span className={cn(cls, 'text-muted')}>{label}</span>;
   return (
     <button type="button" onClick={onSort} className={cn(cls, 'inline-flex items-center justify-end gap-1 hover:text-ink focus-visible:outline-none', active ? 'text-ink' : 'text-muted')}>
-      {label}{active && <span className="num">↓</span>}
+      {label}{active && <span className="num">{dir === 'desc' ? '↓' : '↑'}</span>}
     </button>
   );
 }
 
-function HoldingsTable({ d, sortBy, setSortBy }: { d: ReturnType<typeof usePortfolioData>; sortBy: SortKey; setSortBy: (k: SortKey) => void }) {
+function HoldingsTable({ d, sortBy, sortDir, onSort }: { d: ReturnType<typeof usePortfolioData>; sortBy: SortKey; sortDir: SortDir; onSort: (k: SortKey) => void }) {
   return (
     <Card className="hidden flex-col px-5 pb-2 pt-5 md:flex">
       <h2 className="mb-3.5 text-[18px] font-semibold tracking-[-0.01em] text-ink">Holdings</h2>
@@ -146,7 +146,7 @@ function HoldingsTable({ d, sortBy, setSortBy }: { d: ReturnType<typeof usePortf
         <span className="num text-[11px] font-medium uppercase tracking-[0.03em] text-right text-muted">Price</span>
         <span className="num text-[11px] font-medium uppercase tracking-[0.03em] text-right text-muted">Shares</span>
         {SORT_COLS.map((c) => (
-          <ColHeader key={c.key} label={c.label} sortKey={c.key} active={sortBy === c.key} onSort={() => setSortBy(c.key)} />
+          <ColHeader key={c.key} label={c.label} sortKey={c.key} active={sortBy === c.key} dir={sortDir} onSort={() => onSort(c.key)} />
         ))}
       </div>
       {d.holdings.map((h, i) => (
@@ -170,7 +170,10 @@ function HoldingsTable({ d, sortBy, setSortBy }: { d: ReturnType<typeof usePortf
 }
 
 // ── Holdings: mobile list + sort dropdown ────────────────────────────────────────
-function SortDropdown({ sortBy, setSortBy }: { sortBy: SortKey; setSortBy: (k: SortKey) => void }) {
+const sortArrow = (dir: SortDir) => (dir === 'desc' ? '↓' : '↑');
+const colLabel = (c: { key: SortKey; label: string }) => (c.key === 'value' ? 'VALUE' : c.label.toUpperCase());
+
+function SortDropdown({ sortBy, sortDir, onSelectField, onToggleDir }: { sortBy: SortKey; sortDir: SortDir; onSelectField: (k: SortKey) => void; onToggleDir: () => void }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -179,45 +182,50 @@ function SortDropdown({ sortBy, setSortBy }: { sortBy: SortKey; setSortBy: (k: S
     return () => document.removeEventListener('mousedown', onDoc);
   }, []);
   const current = SORT_COLS.find((c) => c.key === sortBy)!;
+  const menuItem = 'num flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-[12px] font-medium uppercase tracking-[0.6px]';
   return (
     <div ref={ref} className="relative">
+      {/* Outline pill so it reads as an adjustable control; arrow = current sort direction (↓ desc / ↑ asc). */}
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="num inline-flex items-center gap-1.5 rounded-full bg-sunken px-3 py-1.5 text-[12px] font-medium uppercase tracking-[0.6px] text-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink"
+        aria-label={`Sort by ${colLabel(current)}, ${sortDir === 'desc' ? 'descending' : 'ascending'}`}
+        className="num inline-flex items-center gap-1.5 rounded-full border border-line bg-surface px-3 py-1.5 text-[12px] font-medium uppercase tracking-[0.6px] text-ink transition-colors hover:bg-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink"
       >
-        {current.key === 'value' ? 'VALUE' : current.label.toUpperCase()} <span>{open ? '↑' : '↓'}</span>
+        {colLabel(current)} <span>{sortArrow(sortDir)}</span>
       </button>
       {open && (
-        <div className="absolute right-0 z-10 mt-2 flex w-[180px] flex-col gap-0.5 rounded-xl border border-line bg-surface p-1.5">
+        <div className="absolute right-0 z-10 mt-2 flex w-[200px] flex-col gap-0.5 rounded-xl border border-line bg-surface p-1.5">
           {SORT_COLS.map((c) => {
             const active = c.key === sortBy;
             return (
               <button
                 key={c.key}
                 type="button"
-                onClick={() => { setSortBy(c.key); setOpen(false); }}
-                className={cn(
-                  'num flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-[12px] font-medium uppercase tracking-[0.6px]',
-                  active ? 'bg-accent-bg text-accent' : 'text-ink hover:bg-raised',
-                )}
+                onClick={() => { onSelectField(c.key); setOpen(false); }}
+                className={cn(menuItem, active ? 'bg-accent-bg text-accent' : 'text-ink hover:bg-raised')}
               >
-                {c.key === 'value' ? 'VALUE' : c.label.toUpperCase()}{active && <span className="font-sans text-[13px] tracking-normal">✓</span>}
+                {colLabel(c)}{active && <span className="font-sans text-[13px] tracking-normal">✓</span>}
               </button>
             );
           })}
+          <div className="my-1 h-px bg-line" />
+          {/* Explicit direction toggle (stays open so the change is visible). */}
+          <button type="button" onClick={onToggleDir} className={cn(menuItem, 'text-ink hover:bg-raised')}>
+            {sortDir === 'desc' ? 'DESCENDING' : 'ASCENDING'} <span className="num text-[13px]">{sortArrow(sortDir)}</span>
+          </button>
         </div>
       )}
     </div>
   );
 }
 
-function HoldingsList({ d, sortBy, setSortBy }: { d: ReturnType<typeof usePortfolioData>; sortBy: SortKey; setSortBy: (k: SortKey) => void }) {
+function HoldingsList({ d, sortBy, sortDir, onSelectField, onToggleDir }: { d: ReturnType<typeof usePortfolioData>; sortBy: SortKey; sortDir: SortDir; onSelectField: (k: SortKey) => void; onToggleDir: () => void }) {
   return (
     <Card className="flex flex-col px-[18px] pb-1.5 pt-[18px] md:hidden">
       <div className="mb-3 flex items-center justify-between">
         <h2 className="text-[18px] font-semibold text-ink">Holdings</h2>
-        <SortDropdown sortBy={sortBy} setSortBy={setSortBy} />
+        <SortDropdown sortBy={sortBy} sortDir={sortDir} onSelectField={onSelectField} onToggleDir={onToggleDir} />
       </div>
       {d.holdings.map((h, i) => (
         <div key={h.ticker} className={cn('flex items-center justify-between py-3.5', i < d.holdings.length - 1 && 'border-b border-line')}>
@@ -244,8 +252,15 @@ function HoldingsList({ d, sortBy, setSortBy }: { d: ReturnType<typeof usePortfo
 export default function WilliamPortfolio() {
   const navigate = useNavigate();
   const [sortBy, setSortBy] = useState<SortKey>('value');
+  const [sortDir, setSortDir] = useState<SortDir>('desc');
   const [modal, setModal] = useState<null | 'trade' | 'targets'>(null);
-  const d = usePortfolioData(sortBy);
+  const d = usePortfolioData(sortBy, sortDir);
+  const toggleDir = () => setSortDir((dir) => (dir === 'desc' ? 'asc' : 'desc'));
+  // Desktop column header: click active column flips direction; click another resets to desc.
+  const onSortCol = (k: SortKey) => {
+    if (k === sortBy) toggleDir();
+    else { setSortBy(k); setSortDir('desc'); }
+  };
   const goPortfolio = () => navigate('/portfolio'); // Refresh/Import bridge to working flow
   const addTrade = () => setModal('trade');
   const setTargets = () => setModal('targets');
@@ -303,8 +318,8 @@ export default function WilliamPortfolio() {
               <SummaryCard d={d} />
               <AllocationCard d={d} onSetTargets={setTargets} />
             </div>
-            <HoldingsTable d={d} sortBy={sortBy} setSortBy={setSortBy} />
-            <HoldingsList d={d} sortBy={sortBy} setSortBy={setSortBy} />
+            <HoldingsTable d={d} sortBy={sortBy} sortDir={sortDir} onSort={onSortCol} />
+            <HoldingsList d={d} sortBy={sortBy} sortDir={sortDir} onSelectField={setSortBy} onToggleDir={toggleDir} />
           </>
         )}
       </main>
