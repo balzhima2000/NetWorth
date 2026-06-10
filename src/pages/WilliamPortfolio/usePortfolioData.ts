@@ -6,6 +6,7 @@
 import { useMemo } from 'react';
 import { usePortfolioStore } from '../../stores/portfolioStore';
 import { useSettingsStore } from '../../stores/settingsStore';
+import { useAllocationStore } from '../../stores/allocationStore';
 import { calculateCurrentHoldings } from '../../utils/calculations';
 import type { CurrentHolding } from '../../types/index';
 
@@ -19,6 +20,8 @@ export function usePortfolioData(sortBy: SortKey) {
   const lastPriceUpdates = usePortfolioStore((s) => s.lastPriceUpdates);
   const defaultCurrency  = useSettingsStore((s) => s.defaultCurrency);
   const exchangeRates    = useSettingsStore((s) => s.exchangeRates);
+  const allocationMode   = useAllocationStore((s) => s.mode);
+  const allocationTargets = useAllocationStore((s) => s.targets);
 
   const holdings = useMemo(
     () => calculateCurrentHoldings(trades, currentPrices, lastPriceUpdates, exchangeRates),
@@ -36,21 +39,29 @@ export function usePortfolioData(sortBy: SortKey) {
     return [...holdings].sort((a, b) => key(b) - key(a));
   }, [holdings, sortBy]);
 
-  // Allocation: top 3 holdings by value + "Other" = sum of the rest
+  // Allocation: top 3 holdings by value + "Other" = sum of the rest.
+  // When per-holding targets are set, each row carries target % + drift.
+  const indiv = allocationMode === 'individual';
   const allocation = useMemo(() => {
-    if (totalValue <= 0) return [] as { label: string; value: number; percent: number; color: string }[];
+    if (totalValue <= 0) return [] as { label: string; value: number; percent: number; color: string; target: number | null; drift: number | null }[];
     const byValue = [...holdings].sort((a, b) => b.currentValue - a.currentValue);
     const top = byValue.slice(0, 3);
     const rest = byValue.slice(3);
-    const items = top.map((h) => ({ label: h.ticker, value: h.currentValue }));
-    const otherTotal = rest.reduce((s, h) => s + h.currentValue, 0);
-    if (otherTotal > 0) items.push({ label: 'Other', value: otherTotal });
-    return items.map((it, i) => ({
-      ...it,
-      percent: (it.value / totalValue) * 100,
-      color: ALLOC_COLORS[i % ALLOC_COLORS.length],
+    const items: { label: string; value: number; target: number | null }[] = top.map((h) => ({
+      label: h.ticker, value: h.currentValue, target: indiv && allocationTargets[h.ticker] != null ? allocationTargets[h.ticker] : null,
     }));
-  }, [holdings, totalValue]);
+    const otherTotal = rest.reduce((s, h) => s + h.currentValue, 0);
+    if (otherTotal > 0) {
+      const otherTarget = indiv ? rest.reduce((s, h) => s + (allocationTargets[h.ticker] ?? 0), 0) : 0;
+      items.push({ label: 'Other', value: otherTotal, target: indiv ? otherTarget : null });
+    }
+    return items.map((it, i) => {
+      const percent = (it.value / totalValue) * 100;
+      return { ...it, percent, color: ALLOC_COLORS[i % ALLOC_COLORS.length], drift: it.target != null ? percent - it.target : null };
+    });
+  }, [holdings, totalValue, indiv, allocationTargets]);
+
+  const hasTargets = allocationMode !== 'none' && allocation.some((a) => a.target != null);
 
   // "Updated" relative time from the most recent price refresh
   const lastUpdatedLabel = useMemo(() => {
@@ -77,6 +88,7 @@ export function usePortfolioData(sortBy: SortKey) {
     positionsCount,
     subtitle,
     allocation,
+    hasTargets,
     defaultCurrency,
     isEmpty: holdings.length === 0,
   };

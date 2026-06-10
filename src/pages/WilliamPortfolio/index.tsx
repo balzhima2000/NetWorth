@@ -57,6 +57,13 @@ function SummaryCard({ d }: { d: ReturnType<typeof usePortfolioData> }) {
 
 // ── Allocation ──────────────────────────────────────────────────────────────────
 function AllocationCard({ d, onSetTargets }: { d: ReturnType<typeof usePortfolioData>; onSetTargets: () => void }) {
+  const { hasTargets } = d;
+  // Cumulative target-% boundaries for the tick markers (drift state).
+  const ticks: number[] = [];
+  if (hasTargets) {
+    let c = 0;
+    for (let i = 0; i < d.allocation.length - 1; i++) { c += d.allocation[i].target ?? 0; ticks.push(c); }
+  }
   return (
     <Card className="flex flex-col gap-3.5 p-5">
       <div className="flex items-center justify-between">
@@ -66,14 +73,24 @@ function AllocationCard({ d, onSetTargets }: { d: ReturnType<typeof usePortfolio
           onClick={onSetTargets}
           className="inline-flex items-center gap-1.5 rounded-full border border-line bg-surface px-3 py-1.5 text-[13px] font-medium text-ink transition-colors hover:bg-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink"
         >
-          <Icon name="target" size={14} /> Set targets
+          <Icon name="target" size={14} /> {hasTargets ? 'Edit targets' : 'Set targets'}
         </button>
       </div>
-      <div className="flex h-3.5 w-full gap-[3px]">
-        {d.allocation.map((a) => (
-          <div key={a.label} className="rounded-[4px]" style={{ width: `${a.percent}%`, background: a.color }} />
-        ))}
-      </div>
+      {hasTargets ? (
+        <div className="relative">
+          <div className="flex h-3.5 w-full overflow-hidden rounded-full">
+            {d.allocation.map((a) => <div key={a.label} style={{ width: `${a.percent}%`, background: a.color }} />)}
+          </div>
+          {ticks.map((t, i) => (
+            <div key={i} className="absolute top-1/2 h-6 w-0.5 -translate-y-1/2 rounded-full bg-ink" style={{ left: `calc(${t}% - 1px)` }} />
+          ))}
+        </div>
+      ) : (
+        <div className="flex h-3.5 w-full gap-[3px]">
+          {d.allocation.map((a) => <div key={a.label} className="rounded-[4px]" style={{ width: `${a.percent}%`, background: a.color }} />)}
+        </div>
+      )}
+      {hasTargets && <span className="-mt-1 text-[11px] font-medium text-muted">▏ marks your target weight</span>}
       <div className="flex flex-col gap-2.5">
         {d.allocation.map((a) => (
           <div key={a.label} className="flex items-center justify-between">
@@ -81,9 +98,15 @@ function AllocationCard({ d, onSetTargets }: { d: ReturnType<typeof usePortfolio
               <span className="h-2 w-2 rounded-full" style={{ background: a.color }} />
               <span className="text-[14px] font-medium text-ink">{a.label}</span>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2.5">
               <span className="num text-[14px] font-medium text-ink">{a.percent.toFixed(0)}%</span>
-              <span className="num text-[14px] font-medium text-secondary">{formatCurrency(a.value, d.defaultCurrency, true)}</span>
+              {hasTargets && a.drift != null ? (
+                <span className="num rounded-full bg-sunken px-2 py-0.5 text-[11px] font-medium text-secondary">
+                  {a.drift >= 0 ? '+' : '−'}{Math.abs(a.drift).toFixed(0)}%<span className="hidden md:inline"> vs target</span>
+                </span>
+              ) : (
+                <span className="num text-[14px] font-medium text-secondary">{formatCurrency(a.value, d.defaultCurrency, true)}</span>
+              )}
             </div>
           </div>
         ))}
