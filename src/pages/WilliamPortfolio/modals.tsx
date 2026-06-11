@@ -59,8 +59,8 @@ export function AddTradeModal({ open, onClose }: { open: boolean; onClose: () =>
   return (
     <Modal open={open} onClose={onClose} title="Add trade" footer={
       <>
-        <Button pill variant="secondary" className="flex-1 md:flex-none md:ml-auto" onClick={onClose}>Cancel</Button>
-        <Button pill variant="primary" className="flex-1 md:flex-none" disabled={!valid} onClick={submit}>Add trade</Button>
+        <Button pill size="l" variant="secondary" className="flex-1 md:flex-none md:ml-auto" onClick={onClose}>Cancel</Button>
+        <Button pill size="l" variant="primary" className="flex-1 md:flex-none" disabled={!valid} onClick={submit}>Add trade</Button>
       </>
     }>
       <SegmentToggle options={[{ value: 'buy', label: 'Buy' }, { value: 'sell', label: 'Sell' }]} value={type} onChange={setType} />
@@ -140,8 +140,8 @@ export function AddTransactionModal({ open, onClose, initialType }: { open: bool
   return (
     <Modal open={open} onClose={onClose} title={type === 'income' ? 'Add income' : 'Add expense'} maxWidth={440} footer={
       <>
-        <Button pill variant="secondary" className="flex-1 md:flex-none md:ml-auto" onClick={onClose}>Cancel</Button>
-        <Button pill variant="primary" className="flex-1 md:flex-none" disabled={!valid} onClick={submit}>{type === 'income' ? 'Add income' : 'Add expense'}</Button>
+        <Button pill size="l" variant="secondary" className="flex-1 md:flex-none md:ml-auto" onClick={onClose}>Cancel</Button>
+        <Button pill size="l" variant="primary" className="flex-1 md:flex-none" disabled={!valid} onClick={submit}>{type === 'income' ? 'Add income' : 'Add expense'}</Button>
       </>
     }>
       <SegmentToggle options={[{ value: 'expense', label: 'Expense' }, { value: 'income', label: 'Income' }]} value={type} onChange={switchType} />
@@ -210,8 +210,8 @@ export function SetTargetsModal({ open, onClose, holdings, totalValue }: { open:
       <>
         <button type="button" onClick={turnOff} className="text-[14px] font-medium text-secondary hover:text-ink">Turn off targets</button>
         <div className="ml-auto flex gap-2.5">
-          <Button pill variant="secondary" onClick={onClose}>Cancel</Button>
-          <Button pill variant="primary" onClick={save}>Save targets</Button>
+          <Button pill size="l" variant="secondary" onClick={onClose}>Cancel</Button>
+          <Button pill size="l" variant="primary" onClick={save}>Save targets</Button>
         </div>
       </>
     }>

@@ -68,13 +68,9 @@ function AllocationCard({ d, onSetTargets }: { d: ReturnType<typeof usePortfolio
     <Card className="flex flex-col gap-3.5 p-5">
       <div className="flex items-center justify-between">
         <Eyebrow>Allocation</Eyebrow>
-        <button
-          type="button"
-          onClick={onSetTargets}
-          className="inline-flex items-center gap-1.5 rounded-full border border-line bg-surface px-3 py-1.5 text-[13px] font-medium text-ink transition-colors hover:bg-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink"
-        >
-          <Icon name="target" size={14} /> {hasTargets ? 'Edit targets' : 'Set targets'}
-        </button>
+        <Button pill size="s" variant="secondary" onClick={onSetTargets}>
+          <Icon name="target" size={16} /> {hasTargets ? 'Edit targets' : 'Set targets'}
+        </Button>
       </div>
       {hasTargets ? (
         <div className="relative">
@@ -200,7 +196,7 @@ function SortDropdown({ sortBy, sortDir, onSelectField, onToggleDir }: { sortBy:
         type="button"
         onClick={() => setOpen((o) => !o)}
         aria-label={`Sort by ${colLabel(current)}, ${sortDir === 'desc' ? 'descending' : 'ascending'}`}
-        className="num inline-flex items-center gap-1.5 rounded-full border border-line bg-surface px-3 py-1.5 text-[12px] font-medium uppercase tracking-[0.6px] text-ink transition-colors hover:bg-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink"
+        className="num inline-flex h-7 items-center gap-1.5 rounded-full border border-line bg-surface px-3 text-[12px] font-medium uppercase tracking-[0.6px] text-ink transition-colors hover:bg-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink"
       >
         {colLabel(current)} <span>{sortArrow(sortDir)}</span>
       </button>
@@ -302,17 +298,17 @@ export default function WilliamPortfolio() {
             <p className="text-[14px] font-medium text-secondary">{d.subtitle}</p>
           </div>
           <div className="flex items-center gap-2.5">
-            <Button pill size="toolbar" variant="secondary" onClick={goPortfolio}><Icon name="refresh" size={18} /> Refresh</Button>
-            <Button pill size="toolbar" variant="secondary" onClick={goPortfolio}><Icon name="import" size={18} /> Import</Button>
-            <Button pill size="toolbar" variant="primary" onClick={addTrade} className="font-semibold"><Icon name="plus" size={16} /> Add trade</Button>
+            <Button pill size="m" variant="secondary" onClick={goPortfolio}><Icon name="refresh" size={18} /> Refresh</Button>
+            <Button pill size="m" variant="secondary" onClick={goPortfolio}><Icon name="import" size={18} /> Import</Button>
+            <Button pill size="m" variant="primary" onClick={addTrade} className="font-semibold"><Icon name="plus" size={16} /> Add trade</Button>
           </div>
         </div>
 
         {/* Mobile actions — [Add trade] [Refresh] [Import], icon+text pills (Figma 488:6940) */}
         <div className="flex items-center gap-2 md:hidden">
-          <Button pill size="toolbar" variant="primary" onClick={addTrade} className="font-semibold"><Icon name="plus" size={16} /> Add trade</Button>
-          <Button pill size="toolbar" variant="secondary" onClick={goPortfolio}><Icon name="refresh" size={18} /> Refresh</Button>
-          <Button pill size="toolbar" variant="secondary" onClick={goPortfolio}><Icon name="import" size={18} /> Import</Button>
+          <Button pill size="m" variant="primary" onClick={addTrade} className="font-semibold"><Icon name="plus" size={16} /> Add trade</Button>
+          <Button pill size="m" variant="secondary" onClick={goPortfolio}><Icon name="refresh" size={18} /> Refresh</Button>
+          <Button pill size="m" variant="secondary" onClick={goPortfolio}><Icon name="import" size={18} /> Import</Button>
         </div>
 
         {d.isEmpty ? (
@@ -320,7 +316,7 @@ export default function WilliamPortfolio() {
             <Icon name="portfolio" size={40} className="text-muted" />
             <h2 className="text-[20px] font-semibold text-ink">No holdings yet</h2>
             <p className="max-w-sm text-[14px] text-secondary">Add your first stock trade to start tracking your portfolio.</p>
-            <Button pill variant="primary" onClick={addTrade} className="mt-1"><Icon name="plus" size={16} /> Add trade</Button>
+            <Button pill size="l" variant="primary" onClick={addTrade} className="mt-1"><Icon name="plus" size={18} /> Add trade</Button>
           </Card>
         ) : (
           <>

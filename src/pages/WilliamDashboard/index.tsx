@@ -106,7 +106,7 @@ export default function WilliamDashboard() {
         <p className="ty-body text-secondary text-center max-w-sm">
           Add your first trade or transaction to start tracking your net worth.
         </p>
-        <Button variant="primary" onClick={() => navigate('/portfolio')}>Add your first trade</Button>
+        <Button size="l" variant="primary" onClick={() => navigate('/portfolio')}>Add your first trade</Button>
       </div>
     );
   }
