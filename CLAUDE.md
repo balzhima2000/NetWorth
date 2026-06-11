@@ -362,7 +362,19 @@ Field/menu styles were extracted from the modals into reusable components. Share
 - **Screen**: `src/pages/WilliamPortfolio/` (`index.tsx` + `usePortfolioData.ts`), route `/william/portfolio`. Display via `calculateCurrentHoldings`; sortable columns (desktop) / sort dropdown (mobile); allocation top-3 + Other.
 - **Allocation drift state** (coded): when `allocationStore.mode === 'individual'`, the hook adds per-row `target` + `drift`; the card shows **target tick markers** (neutral grey `bg-muted` #737373, **2×10px rounded, vertically centered** on the 14px bar — `top-1/2 h-2.5 w-0.5 -translate-y-1/2 rounded-full` — grey reads on every segment incl. the black NVDA one, so no segment recolor needed; the "marks your target weight" caption uses a matching 2×10 rect prefix, not a glyph; matches Figma 508:2167 where ticks are 2×10 `rounded-rectangle`s), **neutral "vs target" drift chips** (`vs target` is `hidden md:inline`), and **"Set targets" → "Edit targets"**. Bar is continuous (no gaps) in drift mode so ticks align to cumulative target %.
 - **Modals**: `src/pages/WilliamPortfolio/modals.tsx` — `AddTradeModal`, `AddTransactionModal` (income/expense), `SetTargetsModal`, wired to real stores (`addTrade`, `addTransaction`, `allocationStore.setAllocation`). Mounted on **both** the Portfolio screen (Add trade, Set targets) and the **Dashboard** action buttons (Trade/Income/Expense). Refresh/Import still bridge to old `/portfolio`.
-- **New william components**: `Modal` (responsive — desktop dialog / mobile bottom sheet, scrim, Esc + scroll-lock) and `Field` primitives (`Field`, `TextInput`, `Textarea`, `SelectInput` with mono `↓`, `SegmentToggle`). `Button` gained a **`pill`** prop (toolbar/action buttons are pill; generic master stays r12) and a **`size`** prop (`default` = 42px generic master used by modal CTAs; `toolbar` = 38px Portfolio toolbar pills, sourced from Figma — see the Toolbar-button-dims note above).
+- **New william components**: `Modal` (responsive — desktop dialog / mobile bottom sheet, scrim, Esc + scroll-lock) and `Field` primitives (`Field`, `TextInput`, `Textarea`, `SelectInput` with mono `↓`, `SegmentToggle`). `Button` gained a **`pill`** prop (toolbar/action buttons are pill; generic master stays r12) and a **`size`** prop — see the Button size scale below.
+
+### Button size scale — L / M / S / XS (38px = the standard)
+**`M = 38px` is the default and the standard button height.** The William `Button` (`src/components/william/Button.tsx`) takes `size?: 'l'|'m'|'s'|'xs'` (default `m`):
+| Size | Height | H-pad | Label | Icon | Used for |
+|---|---|---|---|---|---|
+| **L** | 44px | px-5 | 15px Semi Bold | 18 | prominent CTAs — modal confirm/cancel, empty-state + dashboard "Add trade" |
+| **M** | **38px** | px-4 | 14px Medium | 18 (plus=16) | **default** — Portfolio toolbar pills (Refresh/Import/Add trade) |
+| **S** | 32px | px-3 | 13px Medium | 16 | compact secondary — Set/Edit targets |
+| **XS** | 28px | px-3 | 12px Medium | 14 | chips / inline — the sort-trigger pill mirrors this (`h-7`, mono uppercase, bespoke) |
+- Heights are the locked scale **44 / 38 / 32 / 28** (picked by Balzhima). The Add-trade primary keeps `font-semibold` + 16px plus glyph at M (see Toolbar-button-dims note).
+- The old `size` values (`default` 42 / `toolbar` 38) were **replaced** by this scale; modal CTAs moved 42→44 (L), Set targets migrated from a bespoke `<button>` to `<Button size="s">`.
+- Figma: the **Button — Sizes** reference (Button page) documents L/M/S/XS; the Button master's standard height is **38 (M)**.
 - **Date fields** use a **text input in `DD.MM.YYYY`** (helpers `isoToDDMM`/`ddmmToISO`) — not native date input — to honor the format.
 - **Icon**: added `refresh / import / target / plus` dot-matrix glyphs (coords re-extracted from masters incl. Balzhima's Refresh edit).
 
