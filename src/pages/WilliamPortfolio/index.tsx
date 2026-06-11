@@ -128,11 +128,21 @@ const SORT_COLS: { key: SortKey; label: string; col: string }[] = [
 ];
 
 function ColHeader({ label, sortKey, active, dir, onSort }: { label: string; sortKey?: SortKey; active: boolean; dir: SortDir; onSort?: () => void }) {
-  const cls = 'num text-[11px] font-medium uppercase tracking-[0.03em] text-right';
-  if (!sortKey) return <span className={cn(cls, 'text-muted')}>{label}</span>;
+  const cls = 'num text-[11px] uppercase tracking-[0.03em] text-right';
+  if (!sortKey) return <span className={cn(cls, 'font-medium text-muted')}>{label}</span>;
+  // Sortable: always show an arrow so the column reads as sortable. Inactive = faint
+  // (default-desc hint) + brightens on hover; active = bold ink + the live direction arrow.
   return (
-    <button type="button" onClick={onSort} className={cn(cls, 'inline-flex items-center justify-end gap-1 hover:text-ink focus-visible:outline-none', active ? 'text-ink' : 'text-muted')}>
-      {label}{active && <span className="num">{dir === 'desc' ? '↓' : '↑'}</span>}
+    <button
+      type="button"
+      onClick={onSort}
+      className={cn(
+        cls, 'group inline-flex cursor-pointer items-center justify-end gap-1 transition-colors focus-visible:outline-none',
+        active ? 'font-semibold text-ink' : 'font-medium text-muted hover:text-ink',
+      )}
+    >
+      {label}
+      <span className={cn('num', !active && 'opacity-40 transition-opacity group-hover:opacity-100')}>{active ? (dir === 'desc' ? '↓' : '↑') : '↓'}</span>
     </button>
   );
 }
